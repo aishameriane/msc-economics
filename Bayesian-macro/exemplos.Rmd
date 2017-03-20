@@ -1,0 +1,159 @@
+---
+title: "Bayesian Statistics"
+author: "Aishameriane Schmidt"
+date: "19 de março de 2017"
+output: html_document
+---
+
+
+## Exemplo 1 - Conjugada da Bernoulli/Binomial
+
+Suponha que dois estudantes recebem uma prova com 40 questões de múltipla escolha, cada uma com 4 alternativas. É desconhecido o quanto os estudantes estudaram para a prova, porém a sua priori é que eles irão melhor do que se apenas chutassem as respostas.
+
+Responda as seguintes questões:
+
+**1. Quais são os parâmetros de interesse?**
+
+*O primeiro parâmetro de interesse é $\theta_1$, que representa a probabilidade de que o primeiro aluno acerte uma questão e o segundo parâmetro é $\theta_2$, que representa a mesma probabilidade para o segundo aluno.*
+
+**2. Qual é a verossimilhança?**
+
+*Assumindo que os alunos respondem as questões de forma independente e que seu conhecimento sobre cada uma é o mesmo, teremos como verossimilhança uma distribuição $Binomial(n=40, \theta)$*.
+
+3. Qual priori deve ser utilizada?
+
+*A distribuição conjugada da Binomial é a distribuição Beta. Ela é apropriada neste caso pois o suporte de seus valores está no intervalo $[0,1]$ e é uma distribuição contínua, podendo modelar bem uma probabilidade (como é o caso do nosso $\theta$ de interesse). O gráfico da função beta pode ser visto abaixo:*
+
+```{r}
+# Cria um vetor com os valores para theta
+theta = seq(from=0, to=1, by=0.01)
+
+# Plota a densidade de uma beta com parâmetros alfa = beta = 1 (que é uma uniforme)
+plot(theta, dbeta(theta, 1,1), type = 'l')
+```
+
+*Mas como nós temos o palpite de que os alunos irão ter desempenho melhor do que simplesmente chutando ao acaso, isso significa que temos uma crença sobre $\theta$ que é diferente do que uma distribuição uniforme representa. No caso da distribuição uniforme como priori, significa que estamos dando mesmo "peso" para todos os valores no intervalo de zero a um. Como o enunciado diz que achamos que os alunos irão ir relativamente bem em relação ao acaso, vamos tentar modelar uma distribuição beta com parâmetros $4$ e $2$. Isso nos dá uma média a priori de $\frac{4}{4+2} = \frac{2}{3} \approx 0.67$*.
+
+```{r}
+theta = seq(from=0, to=1, by=0.01)
+
+# Plota a densidade de uma beta com parâmetros alfa = 4 e beta = 2 
+plot(theta, dbeta(theta, 4,2), type = 'l')
+```
+
+*A densidade acima ainda tem muitos valores concentrados em torno do $\frac{1}{4}$, que é o valor do chute. Vamos mudar a priori para $\alpha = 8$ e $\beta = 4$ de maneira ainda a ter uma média a priori de $\frac{2}{3}$, porém com um formato diferente.*
+
+```{r}
+theta = seq(from=0, to=1, by=0.01)
+
+# Plota a densidade de uma beta com parâmetros alfa = 4 e beta = 2 
+plot(theta, dbeta(theta, 8,4), type = 'l')
+```
+
+4. Calcule as probabilidades a priori:
+  * $\mathbb{P}(\theta > 0.25)$
+```{r}
+# Acumulada da beta
+1-pbeta(.25, 8, 4)
+```
+  * $\mathbb{P}(\theta > 0.5)$
+```{r}
+# Acumulada da beta
+1-pbeta(.5, 8, 4)
+```
+  * $\mathbb{P}(\theta > 0.8)$
+```{r}
+# Acumulada da beta
+1-pbeta(.8, 8, 4)
+```
+
+5. Suponha que o primeiro estudante acertou 33 (`r round(33/44,2)`) questões. Qual é a distribuição à posteriori para $\theta_1$? Calcule $\mathbb{P}(\theta_1 > 0.25)$, $\mathbb{P}(\theta_1 > 0.5)$ e $\mathbb{P}(\theta_1 > 0.8)$. Dê um intervalo de 95% de credibilidade a posteriori para $\theta_1$.
+
+*A posteriori será uma distribuição Beta de parâmetros $\alpha + \sum_{i=1}^40 y_i$ e $\beta = \beta + 40 - \sum_{i=1}^40 y_i$, onde $y_i$ é a indicadora de acerto na questão $i$ e portanto $\sum_{i=1}^40$ é o total de questões acertadas pelo estudante. Para o estudante 1 teremos como posteriori $f(\theta|y) \sim Beta(8+33, 4+40-33)$, isto é, $f(\theta|y) \sim Beta(41, 11)$. A média à posteriori será dada por $\frac{41}{41+11} = \frac{41}{52} =$ `r round(41/52,4)`. Podemos comparar com a estimativa de máxima verossimilhança, que é $\frac{33}{40} =$ `r round(33/40, 4)`. Isso significa que noss estimativa à posteriori está entre a nossa priori de $\frac{2}{3}$ e a estimativa de máxima verossimilhança. Podemos plotar o gráfico da distribuição à posteriori:*
+
+```{r}
+theta = seq(from=0, to=1, by=0.01)
+
+# Posteriori: beta com parâmetros alfa = 41 e beta = 11
+plot(theta, dbeta(theta, 41,11), type = 'l')
+
+# Priori: beta com parâmetros alfa = 8 e beta = 4 (pontilhada)
+lines(theta, dbeta(theta, 8, 4), lty = 2)
+
+# Verossimilhança multiplicada por um fator para deixar ela na mesma escala
+lines(theta, 44*dbinom(33, size=40, p=theta), lty=3)
+```
+
+*A posteriori está entre a verossimilhança e a priori, porém está mais próxima da verossimilhança pois o peso dela é de $n=40$ enquanto que o peso da priori é de $\alpha + \beta = 12$.*
+
+*Podemos calcular as probabilidades a posteriori:* 
+
+* $\mathbb{P}(\theta_1 > 0.25)$
+```{r}
+# Acumulada da beta
+1-pbeta(.25, 41,11)
+```
+  * $\mathbb{P}(\theta_1 > 0.5)$
+```{r}
+# Acumulada da beta
+1-pbeta(.5, 41, 11)
+```
+
+  * $\mathbb{P}(\theta_1 > 0.8)$
+```{r}
+# Acumulada da beta
+1-pbeta(.8, 41,11)
+```
+
+*Observe que agora a probabilidade de $\theta_1 > 0.8$ passou a ser maior que $0.44$.*
+
+*Um intervalo de 95% credibilidade para $\theta_1$ é (`r round(qbeta(0.025,41,11),4)`,`r round(qbeta(0.975,41,11),4)`), que é consistente com o observado no gráfico da posteriori*.
+
+6. Suponha que o segundo estudante acertou 24 (`r round(24/40,2)`) questões. Qual é a distribuição à posteriori para $\theta_1$? Calcule $\mathbb{P}(\theta_2 > 0.25)$, $\mathbb{P}(\theta_2 > 0.5)$ e $\mathbb{P}(\theta_2 > 0.8)$. Dê um intervalo de 95% de credibilidade a posteriori para $\theta_2$.
+
+*A posteriori do segundo aluno será $\theta_2 \sim Beta(8+24,4+40-24)$, isto é, $\theta_2 \sim Beta(32,20)$. A média a posteriori será $\frac{32}{32+20} = \frac{32}{52}=$`r round(32/52,4)` enquanto que a estimativa de máxima verossimilhança será $\frac{24}{40}=$`r round(24/40,4)`. O triplot está abaixo.*
+
+```{r}
+theta = seq(from=0, to=1, by=0.01)
+
+# Posteriori: beta com parâmetros alfa = 32 e beta = 20
+plot(theta, dbeta(theta, 32,20), type = 'l')
+
+# Priori: beta com parâmetros alfa = 8 e beta = 4 (pontilhada)
+lines(theta, dbeta(theta, 8, 4), lty = 2)
+
+# Verossimilhança multiplicada por um fator para deixar ela na mesma escala
+lines(theta, 44*dbinom(24, size=40, p=theta), lty=3)
+```
+
+
+*Podemos calcular as probabilidades a posteriori:* 
+
+* $\mathbb{P}(\theta_1 > 0.25)$
+```{r}
+# Acumulada da beta
+1-pbeta(.25, 32,20)
+```
+  * $\mathbb{P}(\theta_1 > 0.5)$
+```{r}
+# Acumulada da beta
+1-pbeta(.5, 32, 20)
+```
+
+  * $\mathbb{P}(\theta_1 > 0.8)$
+```{r}
+# Acumulada da beta
+1-pbeta(.8, 32,20)
+```
+
+*Um intervalo de 95% credibilidade para $\theta_2$ é (`r round(qbeta(0.025,32,20),4)`,`r round(qbeta(0.975,32,20),4)`), que é consistente com o observado no gráfico da posteriori*.
+
+7. Qual é a probabilidade a posteriori que $\theta_1 > \theta_2$, isto é, o primeiro estudante tem maior chance de acertar uma questão que o segundo aluno?
+
+*Vamos fazer 1000 amostras de cada posteriori para responder a questão via simulação.*
+
+```{r}
+theta1=rbeta(1000,41,11)
+theta2=rbeta(1000,32,20)
+mean(theta1>theta2)
+```
