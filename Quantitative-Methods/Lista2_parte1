@@ -1,0 +1,82 @@
+% Adapted from: http://stackoverflow.com/questions/36292327/contour-plot-of-a-function-of-3-variables
+% Question 5
+
+% Item (a)
+a = 100;
+
+x = linspace(-a,a);
+y = linspace(-a,a);
+z = linspace(-a,a);
+
+[x,y,z]=meshgrid(x,y,z);
+
+f=x.^2 + y.^2 + z.^2;
+
+for k = 0:100
+    % Draw the contour that matches k.
+    p = patch(isosurface(x,y,z,f,k));
+    isonormals(x,y,z,f,p)
+    p.FaceColor = 'red';
+    p.EdgeColor = 'none';
+
+    % Adjust figure properties.
+    title(sprintf('Contours of f(x,y,z) = x^2 + y^2 + z^2\nwith f(x,y,z) = k = %d',k));
+    xlabel('x-axis');
+    ylabel('y-axis');
+    zlabel('z-axis');
+    axis equal;
+    grid on;
+    box on;
+    axis([-10 10 -10 10 -10 10]);
+    camlight left;
+    lighting phong;
+
+    % Update figure.
+    drawnow;
+
+    % Clear axes.
+    cla;
+end
+
+% Item (b)
+
+[x,y]= meshgrid(-10:10, -10:10);
+contour(x,y, (x.^2)+(y.^2));
+
+% item (c)
+
+a = 100;
+
+x = linspace(-a,a);
+y = linspace(-a,a);
+z = linspace(-a,a);
+
+[x,y,z]=meshgrid(x,y,z);
+
+f=x.^2 - y + z;
+
+for k = 0:100
+    % Draw the contour that matches k.
+    p = patch(isosurface(x,y,z,f,k));
+    isonormals(x,y,z,f,p)
+    p.FaceColor = 'red';
+    p.EdgeColor = 'none';
+
+    % Adjust figure properties.
+    title(sprintf('Contours of f(x,y,z) = x^2 -y  + z\nwith f(x,y,z) = k = %d',k));
+    xlabel('x-axis');
+    ylabel('y-axis');
+    zlabel('z-axis');
+    axis equal;
+    grid on;
+    box on;
+    axis([-100 100 -100 100 -100 100]);
+    camlight left;
+    lighting phong;
+
+    % Update figure.
+    drawnow;
+
+    % Clear axes.
+    cla;
+end
