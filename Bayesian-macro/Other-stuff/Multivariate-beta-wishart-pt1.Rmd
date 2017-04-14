@@ -95,20 +95,17 @@ B<-matrix(B, nrow=nrow(sigma_2))
 
 # Sums A and B
 C<-A+B
-C
 
 # The chol() function gives T, an upper-triangular mxm matrix with positive diagonal elements
 T<-chol(C)
-T
 
 # We now calculate U = T'^{-1}AT^{-1}
-
 U <- solve(t(T))%*%A%*%solve(T)
 U
 
 ```
 
-### General case (Still in progress)
+### General case
 
 ```{r}
 # rWishart(n, df, Sigma) generates n random matrices, distributed according
@@ -126,10 +123,7 @@ df1<-10
 sigma_1 <- diag(4)
 
 # Creates the Wishart first matrix
-A<-rWishart(1, df1, sigma_1)
-
-## This could be discarted?
-A<-matrix(A, nrow=nrow(sigma_1))
+A<-rWishart(n, df1, sigma_1)
 
 # For the second matrix
 # Set the degrees of freedom
@@ -140,27 +134,35 @@ df2<-5
 sigma_2 <- diag(4)
 
 # Creates the Wishart first matrix
-B<-rWishart(1, df2, sigma_2)
-B<-matrix(B, nrow=nrow(sigma_2))
+B<-rWishart(n, df2, sigma_2)
 
 # Sums A and B
 C<-A+B
-C
 
 # The chol() function gives T, an upper-triangular mxm matrix with positive diagonal elements
-# There will be an error problem right here because C is not a matrix. Maybe iterate only here?
-T<-chol(C)
-T
+# Creates the T array with the same dimension of C
+T<-C
+
+# Populates T
+for (i in 1:n) {
+  T[,,i]<-chol(C[,,i])
+}
 
 # We now calculate U = T'^{-1}AT^{-1}
-# Need to think more carefully about U, A and B because of the dimensions
-U <- solve(t(T))%*%A%*%solve(T)
+#Creates U
+U<-T
+
+for (i in 1:n) {
+  U[,,i] <- solve(t(T[,,i]))%*%A[,,i]%*%solve(T[,,i])
+}
+
 U
 
 ```
 
-## Algorithm 2 - Sampling from the Multivariate Normal to construct the Wisharts
+## Algorithm 2 - Sampling from the Multivariate Normal to construct the Wisharts 
 
+*(to be done by Future Aisha)*
 See [this function](https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/mvrnorm.html).
 
 # References
