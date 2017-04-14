@@ -1,0 +1,166 @@
+---
+title: "Multivariate Beta Distribution"
+author: "Aishameriane Schmidt"
+date: "14 de abril de 2017"
+output: pdf_document
+bibliography: references2.bib
+---
+
+# Motivation
+
+@uhlig_1997 propose a Bayesian method to a VAR model with stochastic volatility. For such, he uses results from the singular multivariate Beta distribution and Wishart distribution, proposed in @uhlig_1994. Before looking into them, we go a step back to understand their non-singular versions, described in @muirhead.
+
+# Basic definitions
+
+The folowing definitions and theorems can be found in @muirhead, chapter 3.
+
+*Definition 1* (Wishart Distribution)
+If $A=Z'Z$, where the $n \times m$ matrix $Z$ is $N(0, I_n\otimes\Sigma)$, 
+then $A$ is said to have the *Wishart Distribution* 
+with $n$ degrees of freedom and covariance matrix $\Sigma$. 
+The notation is $A \sim \mathcal{W}_m(n,\Sigma)$, where $m$ 
+denotes the size of the matrix $A$.
+
+The folowing definition applies when $A$ from Definition 1 is not singular, i.e., $n \geq m$.
+
+*Theorem 1* (Wishart p.d.f.)
+
+If $A$ is $A \sim \mathcal{W}_m(n,\Sigma)$ with $n \geq m$ then the density of $A$ is:
+
+\begin{equation}
+\frac{1}{2^{\frac{mn}{2}} \Gamma_m(\frac{1}{2}n)\left(det \Sigma \right)^{\frac{n}{2}}} \exp tr\left(-\frac{1}{2}\Sigma^{-1}A \right)\left(det A \right)^{\frac{n-m-1}{2}}, \quad A>0 
+\end{equation}
+
+Where $\Gamma_m(\cdot)$ denotes the multivariate gamma function given by:
+
+\begin{equation}
+\Gamma_m(a) = \pi^{\frac{m(m-1)}{4}} \prod\limits_{i=1}^m \Gamma \left[a-\frac{1}{2}(i-1) \right], \quad \left[Re(a) > \frac{1}{2}(m-1) \right]
+\end{equation}
+
+And $Re(a)$ denotes the real part of $a$.
+
+*Theorem 2* (Multivariate Beta Distribution)
+
+Let $A$ and $B$ be independent, $A \sim \mathcal{W}_m(n_1,\Sigma)$ and $B \sim \mathcal{W}_m(n_2,\Sigma)$m with $n_1 > m-1$ and $n_2 > m-1$. Put $A+B = T'T$, where $T$ is an upper triangular $m \times n$ matrix with positive diagonal elements. Let $U$ be the $m \times m$ symmetric matrix defined by $A = T'UT$. Then $A+B$ and $U$ are independent; $A+B \sim \mathcal{W}_m(n_1 + n_2,\Sigma)$ and the density function of $U$ is:
+
+\begin{equation}
+\frac{\Gamma_m \left[\frac{1}{2}(n_1 + n_2) \right]}{\Gamma_m \left(\frac{1}{2}n_1\right)\Gamma_m \left(\frac{1}{2}n_2\right)} (det U)^{\frac{n_1 - m -1}{2}}det(I_m- U)^{\frac{n_2 - m -1}{2}} \quad (0 < U < I_m)
+\end{equation}
+
+Where $(0 < U < I_m)$ means that $U$ and $I_m - U$ are both positive definite.
+
+*Definition 2* (Multivariate Beta Distribution)
+
+A matrix $U$ like the one in Theorem 2 is said to have the *multivariate beta distribution* with parameters $\frac{1}{2}n_1$ and $\frac{1}{2}n_2$. We denote $U \sim \mathcal{B}_m(\frac{1}{2}n_1,\frac{1}{2}n_2)$.
+
+# Process
+
+We want to generate random numbers from a Multivariate Beta distribution, denoted by $\mathcal{B}_m(\frac{1}{2}n_1,\frac{1}{2}n_2)$.
+
+The first algorithm uses the Wishart p.d.f. already implemented in R. The second constructs the normal distributions needed for the Wishart.
+
+## Algorithm 1 - Sampling from the Wishart
+
+Using theorem 2, we will generate $A$ and $B$ independently. We will use the [`rWishart()` function](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/rWishart.html).
+
+### A single matrix (observation)
+
+```{r}
+# rWishart(n, df, Sigma) generates n random matrices, distributed according
+# to te Wishart distribution with parameters Sigma and df.
+
+# For the first matrix
+# Set the degrees of freedom
+df1<-10
+
+# Set the covariance matrix
+# The diag(n) creates the nxn identity matrix
+sigma_1 <- diag(4)
+
+# Creates the Wishart first matrix
+A<-rWishart(1, df1, sigma_1)
+A<-matrix(A, nrow=nrow(sigma_1))
+
+# For the second matrix
+# Set the degrees of freedom
+df2<-5
+
+# Set the covariance matrix
+# The diag(n) creates the nxn identity matrix
+sigma_2 <- diag(4)
+
+# Creates the Wishart first matrix
+B<-rWishart(1, df2, sigma_2)
+B<-matrix(B, nrow=nrow(sigma_2))
+
+# Sums A and B
+C<-A+B
+C
+
+# The chol() function gives T, an upper-triangular mxm matrix with positive diagonal elements
+T<-chol(C)
+T
+
+# We now calculate U = T'^{-1}AT^{-1}
+
+U <- solve(t(T))%*%A%*%solve(T)
+U
+
+```
+
+### General case (Still in progress)
+
+```{r}
+# rWishart(n, df, Sigma) generates n random matrices, distributed according
+# to te Wishart distribution with parameters Sigma and df.
+
+# Set the number of matrices (samples)
+n<-2
+
+# For the first matrix
+# Set the degrees of freedom
+df1<-10
+
+# Set the covariance matrix
+# The diag(n) creates the nxn identity matrix
+sigma_1 <- diag(4)
+
+# Creates the Wishart first matrix
+A<-rWishart(1, df1, sigma_1)
+
+## This could be discarted?
+A<-matrix(A, nrow=nrow(sigma_1))
+
+# For the second matrix
+# Set the degrees of freedom
+df2<-5
+
+# Set the covariance matrix
+# The diag(n) creates the nxn identity matrix
+sigma_2 <- diag(4)
+
+# Creates the Wishart first matrix
+B<-rWishart(1, df2, sigma_2)
+B<-matrix(B, nrow=nrow(sigma_2))
+
+# Sums A and B
+C<-A+B
+C
+
+# The chol() function gives T, an upper-triangular mxm matrix with positive diagonal elements
+# There will be an error problem right here because C is not a matrix. Maybe iterate only here?
+T<-chol(C)
+T
+
+# We now calculate U = T'^{-1}AT^{-1}
+# Need to think more carefully about U, A and B because of the dimensions
+U <- solve(t(T))%*%A%*%solve(T)
+U
+
+```
+
+## Algorithm 2 - Sampling from the Multivariate Normal to construct the Wisharts
+
+See [this function](https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/mvrnorm.html).
+
+# References
