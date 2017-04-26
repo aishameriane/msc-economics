@@ -1,135 +1,494 @@
 ---
-title: "Exemplos_MC"
+title: "Importance Sampling"
 author: "Aishameriane Schmidt"
-date: "10 de abril de 2017"
-output: pdf_document
+date: "23 de abril de 2017"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+output: html_document
+bibliography: references.bib
 ---
+\begin{align*}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\end{align*}
 
-# Exemplos da aula do dia 10/04/17 - Integra��o por Monte Carlo
 
-## Exemplo 1: Integrando uma fun��o determin�stica
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { 
+      equationNumbers: {
+ 
+            autoNumber: "all",
+            formatNumber: function (n) {return '9.'+n}
+      } 
+  }
+});
+</script>
 
-Suponha que o objetivo � integrar $I = \int_1^2 \exp(\theta)d\theta$ sem usar integra��o anal�tica.
+- Capítulo 7 de [@murteira]
+- Seção 6.2.2 de [@bchoice]
+- Seção 4.3.1 de [@rubinstein]
+- Seção 2.2.2 de [@moura_2010]
+- Seção 3.3 de [@casella_MC]
+- Seção xx de [@hidden_MC]
 
-Reinterprete $I$ com,o uma esperan�a em rela��o a $\theta \sim U(1,2)$ (escolhida de maneira conveniente dentro dos intervalos de integra��o). Sabemos que a densidade de uma $Uniforme[a,b]$ � $\frac{1}{b-a}$, de forma que $p_U(\theta) = 1/(2-1)$. Obtemos ent�o:
+# Métodos de Monte Carlo
 
-$$I = \int\limits_1^2 \exp\{\theta \} d\theta = (2-1)\int\limits_1^2 \exp\{\theta \}\frac{1}{2-1}d \theta = (2-1) \mathbb{E}_{\mathcal{U}}[\exp\{\theta\}]$$
+## Ideias básicas
 
-Para aproximar a integral, simule $S$ observa��es de $\theta \sim U(1,2)$ e aproxime $\mathbb{E}[\exp(\theta)]$ atrav�s da m�dia amostral:
+* Métodos de Monte Carlo são uma alternativa para resolução de integrais (especialmente em casos multivariados onde a dimensão do problema torna os algoritmos não estocásticos muito lentos);
+* Uma vez que a abordagem bayesiana requer o cálculo de distribuições a posteriori que muitas vezes envolve a resolução de integrais, os algorítmos de MC acabam sendo muito úteis neste contexto;
+* MC é baseado na ideia de reamostrar valores de uma distribuição de probabilidade (simulação estocástica). Utilizando um gerador de números pseudo-aleatórios podemos obter valores de qualquer distribuição (através da $F^{-1}(\cdot)$)
 
-$$\hat{I}_n = \frac{1}{S}\sum\limits_{i=1}^S \exp(\theta_i)$$
+## Método
 
-Usando $S=10.000$, obtemos $4.7080$ (o valor est� diferente das notas de aula possivelmente pela diferen�a na semente aleat�ria e no programa), que � uma aproxima��o razo�vel para o valor exato `r exp(2)-exp(1)`.
+Considere a seguinte integral:
 
-```{r}
-# Fixa uma semente aleat�ria 
-#(para poder reproduzir o exemplo depois obtendo os mesmos valores)
-set.seed(1234)
+\begin{equation}\tag{01}
+\int g(\theta)h(\theta|x)d\theta = \mathbb{E}[g(\theta)|x]
+\end{equation}
 
-# Faz 1000 retiradas de uma Uniforme(1,2) e armazena em um vetor
-theta <- runif(1000,min = 1, max = 2)
-head(theta)
+Podemos ainda nos utilizar da probabilidade condicional $f(x|\theta) = \frac{f_{X,\theta}(x,\theta)}{\pi(\theta)} \Rightarrow f_{X,\theta}(x,\theta) = f(x|\theta)\pi(theta)$ para reescrever $h(\theta|x) = \frac{f(x|\theta)\pi(theta)}{f_{X}(x)}$. Como o denominador é uma constante, podemos simplesmente definir o problema da integral acima da seguinte maneira:
 
-# Calcula a exponencial do vetor theta
-exp_theta <- exp(theta)
-head(exp_theta)
+\begin{equation}\tag{02}
+\int_{\Theta} g(\theta)f(x|\theta)\pi(\theta)d\theta 
+\end{equation}
 
-# Faz a soma dos valores e divide por S
-I_n <- (sum(exp_theta))/length(theta)
-I_n
+A primeira forma é como está definido o problema em [@murteira] (página 286) e a segunda é como está em [@bchoice] (página 294). 
+
+(Murteira) Se pudermos simular uma amostra $\theta_1, \ldots, \theta_n$ da densidade *a posteriori* $h(\theta|x)$, o método de MC irá aproximar \ref{integral-murteira} por uma média amostral:
+
+\begin{equation}\tag{03}
+\hat{\mathbb{E}}[g(\theta)|x] = \frac{1}{n}\sum_{i=1}^n g(\theta_i)
+\end{equation}
+
+Utilizando a lei dos grandes números, pode-se demonstrar que (03) converge quase certamente para a média $\mathbb{E}[g(\theta)|x]$ dada em (01). O método nos diz que se conseguirmos amostras da distribuição *a posteriori* $h(\theta|x)$, podemos resolver as integrais da forma descrita em (01).
+
+(Robert) Se for possível obter valores $\theta_1, \ldots, \theta_n$ da distribuição $\pi(\theta)$, então a média amostral
+
+\begin{equation}\tag{04}
+\frac{1}{n}\sum_{i=1}^m g(\theta_i)f(x|\theta_i)
+\end{equation}
+
+converge quase certamente para a média dada em (02) quando $m \to \infty$, pela lei dos grandes números. De maneira similar, se uma amostra aleatória de $\theta_i$'s da distribuição $\pi(\theta|x)$ pode ser obtida, então
+
+\begin{equation}\tag{05}
+\frac{1}{n}\sum_{i=1}^m g(\theta_i)
+\end{equation}
+
+converge para
+
+\begin{equation}\tag{06}
+\frac{\int_{\Theta g(\theta)f(x|\theta)\pi(\theta)d\theta}}{\int_{\Theta} f(x|\theta)\pi(\theta)d\theta}
+\end{equation}
+
+# Amostragem por importância
+
+Muitas vezes não é possível obter uma amostra aleatória de $h(\theta|x)$. O método de MC é flexível o suficiente para ser aplicado de formas alternativas, como por exemplo, simular de uma distribuição similar à posteriori.
+
+**[@murteira]** 
+
+Considere $p(x)$ uma função de densidade que seja fácil de simular valores e que aproxima $h(\theta|x) = c f(x|\theta) h(\theta)$. Então:
+
+\begin{align*}
+\int g(\theta)h(\theta|x)d\theta &= \frac{\int g(\theta) f(x|\theta) h(\theta) d\theta}{\int f(x|\theta)h(\theta)d \theta}\\
+&= \frac{\int g(\theta) \frac{f(x|\theta) h(\theta)}{p(\theta)} p(\theta) d\theta}{\int \frac{f(x|\theta)h(\theta)}{p(\theta)} p(\theta)d \theta}\\
+&= \frac{\int g(\theta) \omega(\theta) p(\theta) d\theta}{\int  \omega(\theta) p(\theta)d \theta}
+\end{align*}
+
+Caso tenhamos uma a.a. $\theta_1, \ldots, \theta_n$ de $p(\theta)$, podemos usar MC como em (03), de forma a obter uma aproximação para (01):
+
+\begin{equation}\tag{07}
+\hat{\mathbb{E}}[g(\theta)|x] = \frac{1}{\sum_{i=1}^{n} \omega_i} \sum_{i=1}^{n}\omega_i g(\theta_i)
+\end{equation}
+
+onde $\omega_i = \frac{f(x|\theta_i)h(\theta_i)}{p(\theta_i)}$ e é chamado de *importance weights*.
+
+Observe que o método atribui maior "peso" a regiões onde $p(\theta) < h(\theta|x)$ e menos peso onde $p(\theta) > h(\theta|x)$. É possível mostrar que (07) converge quase certamente para (01).
+
+**[@bchoice]** 
+
+Os métodos de MC tem aplicação muito mais geral que a descrita inicialmente, de forma que não é necessário amostrar da distribuição $\pi(\theta|x)$ ou de $\pi(\theta)$ para ter uma boa aproximação de (02). Se $m$ é uma densidade de probabilidade com suporte $supp(m)$ que tem áreas em comum com o suporte de $g(\theta)f(x|\theta)\pi(\theta)$, então a integral em (02) pode ser escrita como uma esperança em termos de $m$:
+
+\begin{equation}\tag{08}
+\int \frac{g(\theta)f(x|\theta)\pi(\theta)}{m(\theta)}m(\theta)d\theta
+\end{equation}
+
+Que nos leva à representação do método de Monte Carlo *com amostragem por importância*: geramos uma a.a. $\theta_1, \ldots, \theta_n$ de valores de $m$ e aproximamos (02) por:
+
+\begin{equation}\tag{09}
+\frac{1}{n} \sum_{i=1}^n g(\theta_i)\omega(\theta_i)
+\end{equation}
+
+onde $\omega(\theta_i) = \frac{f(x|\theta_i)\pi(\theta_i)}{m(\theta_i)}$. Pela L.G.N. essa quantidade converge quase certamente para (02). Uma aproximação para $\mathbb{E}^\pi[g(\theta)|x]$ é dada por:
+
+\begin{equation}\tag{10}
+\frac{\sum_{i=1}^n g(\theta_i) \omega(\theta_i)}{\sum_{i=1}^n \omega(\theta_i)}
+\end{equation}
+
+Uma vez que o numerador de (10) converge para $\int_{\Theta} g(\theta)f(x|\theta)\pi(\theta)$ e o denominador para $\int_{\Theta} f(x|\theta)\pi(\theta)d\theta$, se $supp(m)$ tem interseção com $supp(f(x|\cdot)\pi)$. Note que (10) não depende de constantes normalizadoras em nenhum dos termos, o que indica que podemos utilizar o método mesmo quando temos apenas o núcleo das distribuições.
+
+Embora (10) deva convergir para $\mathbb{E}^\pi[g(\theta)|x]$ para todas as funções que satisfazem a condição do suporte comum, a escolha a função de importância é crucial pelas seguintes razões:
+
+* Primeiro, é necessário que a simulação dos valores de $m$ seja de fácil implementação;
+* $m(\theta)$ precisa ser próximo o suficiente de $g(\theta)\pi(\theta|x)$ de maneira a reduzir a variabilidade de (10) tanto quanto possível. Se isso não ocorre, os pesos $\omega(\theta_i)$ serão demasiadamente pequenos e poucas observações serão de fato relevantes. Além disso, corremos o risco de $\mathbb{E}^m[g^2(\theta)\omega^2(\theta)]$ não ser finito e a variância do estimador em (10) não estaria definida.
+
+**[@moura_2010]** 
+
+Amostragem por importância é um método de monte carlo que visa reduzir a variância (das estimativas) ao amostrar de uma densidade mais apropriada do que a f.d.p. original.
+
+Suponha que você deseje calcular a esperança de uma $g(\theta)$ cuja densidade é dada por $p(\theta|y)$, porém esta expressão é desconhecida ou é difícil obter amostras de seus valores. Podemos então utilizar um truque matemático combinado com a ideia de MC para obter uma aproximação para esta esperança:
+
+\begin{equation}\tag{11}
+I = \int\limits_\Theta g(\theta)p(\theta|y)d\theta = \int\limits_\Theta \frac{g(\theta)p(\theta|y)}{m(\theta)}m(\theta)d\theta = \mathbb{E}_m \left[\frac{g(\theta)p(\theta|y)}{m(\theta)} \right]
+\end{equation}
+
+E então aproximamos a expressão em (11) por:
+
+\begin{equation}\tag{12}
+I \approx \hat{I_s}(\theta) = \frac{1}{S} \sum_{i=1}^S \frac{g(\theta^i)f(\theta^i)}{m(\theta^i)}
+\end{equation}
+
+A variância do estimador em (12) será dada por:
+
+\begin{equation}\tag{13}
+Var[\hat{I_s}(\theta)] = \mathbb{E}_m[\hat{I_s}^2] - \mathbb{E}_m[\hat{I_s}]^2 = \int g^2(\theta)\frac{f^2(\theta)}{m(\theta)}d\theta - I^2
+\end{equation}
+
+Então, para que a variância de $\hat{I}_S$ seja finita, precisamos que $\int g^2(\theta)\frac{f^2(\theta)}{m(\theta)}d\theta < \infty$, isto é, a densidade $m(\cdot)$ deve ter caudas mais pesadas que $f(\cdot)$. Um estimador por importância considerado bom será aquele que minimiza a quantidade em (12). Isto ocorre quando $m(\cdot)$ se assemelha ao comportamento do produto $g(\cdot)f(\cdot)$.
+
+**[@rubinstein]** 
+
+Como existem diversos estimadores de Monte Carlo, se torna um problema saber decidir qual das estimativas é a melhor. O critério para esta decisão será com base na variância do estimador.
+
+De acordo com [@rubinstein], a redução da variância pode ser vista como uma forma de utilizar conhecimento prévio sobre o problema. Em um extremo, quando não se sabe nada a respeito das densidades envolvidas, não é possível reduzir a variabilidade. Por outro lado, se temos total conhecimento do problema, a variância é zero e métodos de MC não seriam necessários. Em suas palavras: *"Variance reduction cannot be obtained from nothing; it is merely a way of not wasting information"*. 
+
+O livro define o problema de maneira um pouco diferente, omitindo a $f(x)$ na fórmula usual e dizendo que o problema a ser resolvido é obter uma estimativa para a seguinte integral:
+
+\begin{equation}\tag{14}
+I=\int g(x)dx\text{,}\quad \quad x in D \subset \mathbb{R}^n
+\end{equation}
+
+Supondo que $g \in L^2(D)$ ($g$ é uma função quadrado-integrável), isto é, $\int g^2(x)dx$ está bem definida. A ideia da amostragem por importância será concentrar a amostragem dos pontos, utilizando integração de Monte Carlo, nas regiões de $D$ que tem mais "importância", ao invés de amostrar igualmente de toda a região.
+
+Por exemplo (baseado no que está [daqui](http://ib.berkeley.edu/labs/slatkin/eriq/classes/guest_lect/mc_lecture_notes.pdf)), considere a figura abaixo ([código aqui](http://t-redactyl.io/blog/2016/03/creating-plots-in-r-using-ggplot2-part-9-function-plots.html)), onde comparamos uma distribuição $Beta(2,2)$ (vermelho) com as uniformes $\mathcal{U}(0,1)$ (azul) e $\mathcal{U}(0,5)$ (verde). 
+
+```{r, echo=FALSE}
+library(ggplot2)
+windowsFonts(xkcd=windowsFont("xkcd"))
+
+p9 <- ggplot(data.frame(x = c(0, 1)), aes(x = x)) +
+        stat_function(fun = dbeta, args = list(2, 2),
+                      aes(colour = "Beta 2,2 "), size = 1.5) +
+        stat_function(fun = dunif, args = list(0, 1),
+                      aes(colour = "U 0,1"), size = 1.5) +
+         stat_function(fun = dunif, args = list(0, 5),
+                      aes(colour = "U 0,5"), size = 1.5) +
+        scale_x_continuous(name = "X",
+                              breaks = seq(0, 5, 0.5),
+                              limits=c(0, 5)) +
+        scale_y_continuous(name = "Density") +
+        ggtitle("Beta2,2 x U0,1 x U0,5") +
+        scale_colour_brewer(palette="Set1") +
+        labs(colour = "Distribution") +
+        theme(axis.line = element_line(size=1, colour = "black"),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank(),
+              plot.title=element_text(size = 20, family="xkcd"),
+              text=element_text(size = 16, family="xkcd"),
+              axis.text.x=element_text(colour="black", size = 12),
+              axis.text.y=element_text(colour="black", size = 12))
+p9
 ```
 
-## Exemplo 2: FDA da Normal
+É claro que ambas uniformes podem ser utilizadas em um algorítmo para amostrar valores da $Beta$, porém a distribuição uniforme que varia entre $0$ e $1$ tem seus pontos mais concentrados onde a densidade da $Beta$ assume seus valores. Para o caso de $X \sim \mathcal{U}(0,1)$, aproximamos a integral $\int_0^1g(x)dx = \mathbb{E}(g(X))$ por MC, usando $\frac{1}{n}\sum_1^n g(x_i)$. Como a densidade da beta é $0$ para valores abaixo de $0$ e acima de $1$, esta aproximação deve funcionar razoavelmente bem. Já se utilizarmos $X\sim \mathcal{U}(0,5)$, temos $\int_0^1g(x)dx = 5\mathbb{E}(g(X))$ e o estimador de MC será $\frac{5}{n}\sum_1^n g(x_i)$. Essa aproximação acaba não sendo interessante pois $80\%$ dos valores desta uniforme estão fora do suporte da função $g(\cdot)$ original.
 
-A F.D.A. Normal padr�o, dada por 
-$$\Phi(\theta)=\int_{-\infty}^{x}\!\frac{1}{\sqrt{2\pi}}e^{\theta^2/2}\,d\theta$$
-n�o possui f�rmula fechada, ent�o pode ser interessante considerar integra��o MC. Se amostrarmos $\theta^i\sim N(0,1)$, ent�o
-$$
-\Phi(t)=\int_{-\infty}^{t}\!\frac{1}{\sqrt{2\pi}}e^{\theta^2/2}\,d\theta\approx\widehat{\Phi}_S(t)=\frac{1}{S}\sum_{i=1}^{S}1{\hskip -2.5 pt}\hbox{I}(\theta^{i}\leq t)
-$$
+Voltando a [@rubinstein], podemos reescrever (14) como:
 
-Note que $\widehat{\Phi}_S(t)$ � uma vari�vel aleat�ria Bernoulli, logo sua vari�ncia � $\Phi(t)(1-\Phi(t))/S$.
-$t$ pr�ximo de 0 implica que a vari�ncia de $\widehat{\Phi}_S(t)$ � $1/4S$, logo precisamos de $200.000$ observa��es, em m�dia, para conseguirmos precis�o de 4 d�gitos.
+\begin{equation}\tag{15}
+I  = \int \frac{g(x)}{m_X(x)}m_X(x) dx = \mathbb{E}_m\left[\frac{g(x)}{m_X(x)} \right]
+\end{equation}
 
-```{r}
-# Seta a semente
-set.seed(1235)
+Onde $X$ é um vetor aleatório com densidade $m_X(\cdot)$ tal que $m_X(x) > 0 \ \forall \ x \in D$. A função $m_X(\cdot)$ é conhecida como *distribuição de importância* <span style="color:red">Aisha: Qual a melhor tradução para *importance sampling distribution*?</span>.
 
-# Cria um vetor de tamanho 200.000
-theta<-rep(0,1)
+Considere o estimador:
 
-# Fixa um t
-t <- 0
+\begin{equation}\tag{16}
+\hat{I}_S = \frac{g(X)}{m_X(X)}
+\end{equation}
 
-# Cria um vetor para as indicadoras
-indicadora <- rep(0,200000)
+Ele é não viesado para (15) e sua variância é dada por:
 
-# Gera um valor aleat�rio da normal padr�o e compara com o valor de t
-for (i in 1:length(indicadora)){
-  theta<-rnorm(1, mean = 0, sd = 1)
-  ifelse(theta <= t, indicadora[i] <- 1, indicadora[i]<-0)
-}
+\begin{equation}\tag{17}
+Var[\hat{I}_S] = \int \frac{g^2(X)}{m_X(X)}dx - I^2
+\end{equation}
 
-head(indicadora)
-sum(indicadora)/length(indicadora)
-pnorm(t,mean=0,sd=1)
-```
+Podemos então aproximar a integral dada em (15) pegando uma amostra aleatória $X_1, \ldots, X_n$ da densidade $m_X(x)$ e substituir seu valor na equação de média amostral:
 
-Comparando o valor tabelado de `r pnorm(t,mean=0,sd=1)` com o valor aproximado de `r sum(indicadora)/length(indicadora)` obtemos um erro de `r pnorm(t,mean=0,sd=1) - sum(indicadora)/length(indicadora)`.
+\begin{equation}\tag{18}
+\theta = \frac{1}{n} \sum\limits_{i=1}^n \frac{g(X_i)}{m_X(X_i)}
+\end{equation}
 
-Para $t$ menor que $-4.5$ precisaremos de muito mais observa��es ainda para conseguir uma estimativa acurada para esta probabilidade.
+Mas voltamos ao problema do exemplo que compara a Beta com as Uniformes. Como escolher a densidade para $X$ de forma a minimizar a variância de $\hat{I}_S$?
 
-```{r}
-# Seta a semente
-set.seed(1234)
+**Teorema 4.3.1** 
+A variância mínima para $\hat{I}_S$ é dada por:
 
-# Cria um vetor de tamanho 200.000
-theta<-rep(0,1)
+\begin{equation}\tag{19}
+Var[\hat{I}_S] = \left(\int |g^2(X)|dx\right)^2 - I^2
+\end{equation}
 
-# Fixa um t
-t <- -4.5
+E ocorre quando a variável aleatória $X$ tem densidade:
 
-# Cria um vetor para as indicadoras
-indicadora <- rep(0,10000)
+\begin{equation}\tag{20}
+m_X(x) = \frac{|g(x)|}{\int |g(x)|dx}
+\end{equation}
 
-# Gera um valor aleat�rio da normal padr�o e compara com o valor de t
-for (i in 1:length(indicadora)){
-  theta<-rnorm(1, mean = 0, sd = 1)
-  ifelse(theta <= t, indicadora[i] <- 1, indicadora[i]<-0)
-}
+**Demonstração (Teorema 4.3.1)**
+A equação (19) aparece quando substituímos (20) em (17). 
 
-# Compara o valor aproximado com o valor real
-sum(indicadora)/length(indicadora)-pnorm(t,mean=0,sd=1)
-```
+\begin{equation}\tag{21}
+Var[\theta] = \underbrace{\int \frac{g^2(X)}{m_X(X)}dx - I^2}_{\text{(17)}} = \int \frac{g^2(X)}{\underbrace{\frac{|g(x)|}{\int |g(x)|dx}}_{\text{(20)}}}dx - I^2 = \int \frac{g^2(X)\int |g(x)|dx}{|g(x)|}dx - I^2 = \left(\int |g(x)|dx\right)^2 - I^2
+\end{equation}
+
+<span style="color:green">Para verificar que podemos simplificar o quadrado com o módulo, observe que $a^2/|a| = |a|^2/|a| = |a|$ </span>.
+
+Para demonstrar que $Var[\theta] \leq Var[\hat{I}_S]$ é suficiente mostrar que $\left(\int |g(x)|dx\right)^2 \leq \int \frac{g^2(X)}{m_X(X)}dx$. Este resultado é obtido utilizando a desigualdade de [Cauchy-Schwarz](https://www.ime.usp.br/~oliveira/ELE-CauchySchwarz.pdf):
+
+\begin{align*}
+\left(\int |g(x)|dx\right)^2 &= \left(\int \frac{|g(x)|}{\left[m_X(x) \right]^{\frac{1}{2}}} \left[m_X(x) \right]^{\frac{1}{2}}dx\right)^2 \\
+& \leq \int \frac{g^2(x)}{m_X(x)} dx \underbrace{\int m_X(x)dx}_{=1} = \int \frac{g^2(x)}{m_X(x)} dx
+\end{align*}
+
+<span style="color:green">Aisha: Pq pode separar as integrais em duas?</span> R: Pode-se fazer um produto interno em funções quadrado integráveis, que é definido como $<f(x),g(x)> = \int f(x)g(x)dx$. Então, usando a desigualdade de Cauchy-Shwarz, temos:
+\begin{align*}
+<h(x),l(x)> &\leq \norm{h(x)}\norm{l(x)} \\
+(<h(x),l(x)>)^2 &\leq (\norm{h(x)})^2(\norm{l(x)})^2 \\
+(<h(x),l(x)>)^2 &\leq \ <h(x),h(x)><l(x),l(x)> \\
+\left(\int h(x)l(x)\right)^2 &\leq \int h^2(x) dx \int l^2(x) dx \\
+\end{align*}
+
+Se tomarmos $h(x) = \frac{|g(x)|}{m_X(x)^{1/2}}$ e $l(x) = m_X(x)^{1/2}$ e substituirmos acima, veremos que o resultado vale e portanto (21) está ok.
 
 
-Mas ent�o como calcular probabilidades de eventos raros utilizando m�todos de Monte Carlo? Utilizando amostragem por efici�ncia.
+**Corolário** 
 
-Calcular probabilidade de eventos raros como $\Phi(-4.5)$ usando este m�todo MC simples � dif�cil, pois muito raramente iremos amostrar $\theta^i$ tal que $1{\hskip -2.5 pt}\hbox{I}(\theta^{i}\leq -4.5)=1$, logo $\widehat{\Phi}_S(-4.5)=0$ mesmo para um valor alto de $S$. Mas usando a regra de mudan�a de vari�veis, podemos usar $v=\frac{1}{x}$:
-$$
-\int_{-\infty}^{-4.5}\!\frac{1}{\sqrt{2\pi}}e^{\theta^2/2}\,d\theta=\int^{0}_{\frac{-1}{4.5}}\!\frac{\phi(1/v)}{v^2}dv=\frac{1}{4.5}\int^{0}_{\frac{-1}{4.5}}\!\frac{\phi(1/v)}{v^2}p_U(v)dv
-$$
+Se $g(x) > 0$, então a densidade ótima $m_X(x)$ será dada por:
 
-Podemos amostrar $v_i\sim U(-1/4.5,0)$, ent�o:
-$$
-\int_{-\infty}^{-4.5}\!\frac{1}{\sqrt{2\pi}}e^{\theta^2/2}\,d\theta\approx\widehat{\Phi}^U_S(-4.5)=\frac{1}{S}\sum_{i=1}^S\frac{\phi(1/v^i)}{4.5v^{i^2}}
-$$
+\begin{equation}\tag{22}
+m_X(x) = \frac{g(x)}{I}
+\end{equation}
 
-Note que a F.D.P. de $v$ $p_U(v)=4.5$ � usada no denominador para compensar o fato de que n�o amostramos da distribui��o original, mas sim de uma distribui��o alternativa.
+E teremos que $Var[\theta]=0$.
 
-```{r}
-# Seta a semente
-set.seed(1234)
+Observe que este método não é prático, pois a densidade ótima requer o conhecimento de $\int |g(x)|dx$, que acaba sendo praticamente a mesma coisa que conhecer $I$ (de fato serão iguais quando $g(x)$ não muda de sinal). Mas aí usar MC para uma coisa que já se conhece acaba sendo desnecessário.
 
-# Define um tamanho de S e faz S retiradas de uma uniforme(-1/4.5, 0)
-S<-10000
-vetor_v <- runif(S, min =(-1/4.5) , max = 0)
+Embora a técnica não seja de valor prático, a ideia de minimizar a variância do estimador de Monte Carlo é bastante útil, conforme veremos nos próximos exemplos.
 
-# Calcula a aproxima��o
-numerador<- pnorm(1/vetor_v, mean=0, sd=1)
-denominador<- 4.5*vetor_v^2
-aproximacao<- (1/length(vetor_v))*sum(numerador/denominador)
+**[@casella_MC]** 
 
-# Diferen�a da aproxima��o com o verdadeiro valor
-aproximacao-pnorm(-4.5, mean=0, sd=1)
-```
+Exemplo motivador:
+
+Queremos estimar a probabilidade de que uma variável aleatória X, com distribuição de Cauchy de parâmetros (0,1), seja maior do que 2. Isto é, para $X \sim \mathcal{C}(0,1)$, queremos calcular $\mathbb{P}(X \geq 2)$:
+
+\begin{equation}\tag{23}
+p = \mathbb{P}(X \geq 2) = \int\limits_2^\infty \frac{1}{\pi(1+x^2)}dx
+\end{equation}
+
+Imagine que os valores em (23) não sejam de fácil obtenção. Podemos utilizar as ideias de cadeias de markov e, para uma amostra aleatória $X_1, \cdots, X_m$ da distribuição de $X$, aproximar $p$ de diferentes maneiras.
+
+### Método 1
+
+\begin{equation}\tag{24}
+p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2}
+\end{equation}
+
+A variância do estimador $\hat{p}_1$ pode ser obtida da seguinte maneira <span style="color:red">Aisha: Ver se é isso mesmo: pode considerar as indicadoras independentes e a variância ser a mesma da Binomial?</span>:
+
+\begin{equation}\tag{25}
+Var[\hat{p}_1] = Var\left[\frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2} \right] = \frac{1}{m^2} \sum\limits_{j=1}^m \left( Var[\mathbb{I}_{X_j > 2]} \right) = \frac{1}{m^2}mp(1-p) = \frac{p(1-p)}{m}
+\end{equation}
+
+E uma vez que $\mathbb{P}(X \geq 2)=$ `r round(1-pcauchy(2,0,1),2)`, a variância do estimador em (24) será dada por $Var[\hat{p}_1] =$ `r round((round(1-pcauchy(2,0,1),2)*round(pcauchy(2,0,1),2)),3)` $/m$.
+
+### Método 2
+
+Visando reduzir a variância de (24), podemos propôr outro estimador. Considerando que a distribuição de Cauchy(0,1) é simétrica em torno do zero, uma estimativa para $p$ seria:
+
+\begin{equation}\tag{26}
+p \approx \hat{p}_2 = \frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| > 2}
+\end{equation}
+
+style="color:red">Aisha: Não entendi bem se é assim</span>
+
+\begin{equation}\tag{27}
+Var[\hat{p}_2] = Var\left[\frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| > 2} \right] = \frac{1}{4m^2} \sum\limits_{j=1}^m \left( Var[\mathbb{I}_{|X_j| > 2]} \right) = \frac{1}{4m^2}\cdot 2mp(1-2p) = \frac{p(1-2p)}{2m}
+\end{equation}
+
+E, novamente usando o fato que $\mathbb{P}(X \geq 2)=$ `r round(1-pcauchy(2,0,1),2)`, a variância do estimador em (25) será dada por $Var[\hat{p}_2] =$ `r round(round(1-pcauchy(2,0,1),2)*(1-2*round(1-pcauchy(2,0,1),2))/2,3)` $/m$.
+
+### Método 3
+
+Os dois métodos apresentados anteriormente tem uma ineficiência relativa (<span style="color:red">Aisha: Aqui o livro quer dizer ineficiência do primeiro em relação ao segundo método?</span>) que é devida à geração de valores fora do domínio de interesse, que neste caso é $[2, + \infty)$. Estes termos "extras" são irrelevantes para a aproximação de $p$.
+
+Sabendo que $\mathbb{P}(X > 2) = 1-\mathbb{P}(X < 2)$ e que $\mathbb{P}(X > 2|X>0) = \frac{1}{2}-\mathbb{P}(0< X < 2)$, podemos pensar em escrever $p$ como:
+
+\begin{equation}\tag{28}
+p = \frac{1}{2} - \int\limits_0^2 \frac{1}{\pi(1+x^2)}dx
+\end{equation}
+
+Considere agora uma v.a. $X \sim \mathcal{U}(0,2)$. Sabemos que $f_X(x)=\frac{1}{2-0}=\frac{1}{2}$. Então, multiplicando a integral em (28) por $\frac{2}{2}$, teremos:
+
+\begin{equation}\tag{29}
+p = \frac{1}{2} - \int\limits_0^2 \overbrace{\frac{2}{\pi(1+x^2)}}^{h(x)}\underbrace{\frac{1}{2}}_{\text{fdp de }X}dx = \frac{1}{2} - \int\limits_0^2 h(x) f_X(x) dx = \frac{1}{2} - \mathbb{E}[h(X)]
+\end{equation}
+
+A integral em (29) pode ser vista como uma esperança de função de $X$, isto é, utilizando o lema do estatístico inconsciente podemos enxergar $p$ como uma esperança populacional. Isso significa que ele vai poder ser aproximado por uma média amostral:
+
+\begin{equation*}
+\hat{p}_3 = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m h(U_j) = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m \frac{2}{\pi}(1+U_j^2)
+\end{equation*}
+
+Onde $U_j \sim \mathcal{U}(0,2)$. Para calcular a variância de $\hat{p}_3$, utilizamos:
+
+\begin{align*}
+Var(\hat{p}_3) &= 0 - Var\left(\frac{1}{m} \sum\limits_{j=1}^m h(U_j) \right)\\
+&= \frac{1}{m^2} \sum\limits_{j=1}^m Var(h(U_j)) \\
+&= \frac{1}{m^2} \cdot m Var(h(U_j)) \\
+&= \frac{1}{m} Var(h(U_j))
+\end{align*}
+
+Então, podemos utilizar a forma $\mathbb{E}(X) = \mathbb{E}(X^2)- \mathbb{E}(X)^2$ na expressão acima para obter:
+
+\begin{equation}\tag{30}
+Var(\hat{p}_3) = \frac{1}{m} \mathbb{E}(h^2(U))- \mathbb{E}(h(U))
+\end{equation}
+
+Como $U \sim \mathcal{U}(0,2)$, estas esperanças são calculadas utilizando integrais. As integrais são obtidas usando integrais de funções trigonométricas. Lembrando que $\int 1/(a^2+x^2) = (1/a) tan^{-1}(x/a) + c$, temos que a segunda integral será dada por:
+
+\begin{align*}
+\mathbb{E}[h(U)] &= \int\limits_0^2 \underbrace{\frac{2}{\pi(1^2 + u^2)}}_{h(U)}\underbrace{\frac{1}{2}}_{\text{fdp de }U} du\\
+&= \frac{1}{\pi}\int\limits_0^2 \frac{1}{\pi(1^2 + u^2)} du \\
+&= \frac{1}{\pi}(tg^-1(u))\Big|_0^2\\
+&= \frac{1}{\pi}tg^{-1}(2)
+\end{align*}
+
+Logo, temos que $\mathbb{E}[h(U)] =$ `r round((1/pi)*atan(2),4)` e portanto  $\left(\mathbb{E}[h(U)]\right)^2=$ `r round(((1/pi)*atan(2))^2,4)`.
+
+De maneira similar, 
+
+\begin{align*}
+\mathbb{E}[h^2(U)] &= \int\limits_0^2 \underbrace{\left(\frac{2}{\pi(1^2 + u^2)}\right)^2}_{h^2(U)}\underbrace{\frac{1}{2}}_{\text{fdp de }U} du = \frac{2+5tg^{-1}(2)}{5\pi^2}
+\end{align*}
+
+Logo, $\mathbb{E}[h^2(U)] =$ `r round((2+5*atan(2))/(5*pi^2),4)` e temos $Var(\hat{p}_3) = \frac{1}{m} \mathbb{E}(h^2(U))- \mathbb{E}(h(U)) =$ `r  round(round((2+5*atan(2))/(5*pi^2),4)-round(((1/pi)*atan(2))^2,4),4)`.
+
+### Método 4
+
+Considere agora uma v.a. $Y \sim \mathcal{U}(0,1/2)$. Sabemos que $f_Y(y)=\frac{1}{1/2-0}=\frac{1}{1/2}=2$. Podemos fazer uma transformação de variáveis na expressão (23) utilizando $Y=\frac{1}{X}$, de forma que:
+
+\begin{align*}
+x &= \frac{1}{y}\\
+dx &= -\frac{1}{y^{2}}=-y^{-2}\\
+x=1/2 & \Rightarrow y=2\\
+x\to \infty &\Rightarrow y=0
+\end{align*}
+
+Como os limites de integração precisarão trocar de lugar, a integral ganha um sinal de menos que irá cancelar com o sinal negativo do $dx$, de forma que (23) será:
+
+\begin{align*}
+p = \mathbb{P}(X \geq 2) = \mathbb{P}(0 < Y < 1/2) = \int\limits_0^{\frac{1}{2}} \frac{y^{-2}}{\pi(1+y^{-2})}dy
+\end{align*}
+
+Observe ainda que $\frac{y^{-2}}{(1+y^{-2})} = \frac{1}{y^{2}(1+y^{-2})} = \frac{1}{y^{2}+y^{0}} = \frac{1}{1+ y^{2}}$ e portanto a expressão acima pode ser escrita como:
+
+\begin{align*}
+p = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy
+\end{align*}
+
+Tome $h(Y) = \frac{2}{\pi(1+y^2)}$. Então, $\frac{1}{4}h(Y) = \frac{2}{4\pi(1+y^2)} = \frac{1}{2}\frac{1}{\pi(1+y^2)}$, que é a expressão de $p$. Portanto:
+
+\begin{equation}\tag{31}
+p = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}\frac{2}{\underbrace{2}_{\text{fdp de }Y}}dy = 2\cdot\mathbb{E}\left(\frac{1}{4}h(Y)\right) =\frac{1}{2}\mathbb{E}(h(Y))
+\end{equation}
+
+A esperança em (31) pode ser aproximada por uma média amostral:
+
+\begin{equation}\tag{32}
+\hat{p}_4 = \frac{1}{4m}\sum\limits_{j=1}^m h(Y_j)
+\end{equation}
+
+Usando o mesmo método, calculamos a variância de $\hat{p}_4$:
+
+\begin{equation*}
+Var[\hat{p}_4] = \frac{1}{16m^2} \sum\limits_{j=1}^m Var[h(Y_j)] = \frac{m}{16m^2} Var[h(Y_j)] = \frac{Var[h(Y_j)]}{16m}
+\end{equation*}
+
+Uma vez que $Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2$, teremos que calcular cada um dos termos, também utilizando integração por partes.
+
+\begin{align*}
+\mathbb{E}[h(Y_j)] = \frac{4}{\pi}tg^{-1}(1/2)\\
+\mathbb{E}[h^2(Y_j)] = \frac{4(2+5 tg^{-1}(1/2))}{5\pi^2}
+\end{align*}
+
+Então, $Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2=$ `r (round((4*(2+5*atan(1/2)))/(5*pi^2),4) - round(((4/pi)*atan(1/2))^2,4))/16` $/m$.
+
+**[@hidden_MC]**
+
+<span style="color:red">Aisha: Em construção</span>
+
+# Exemplos
+
+<span style="color:red">Aisha: Em construção</span>
+
+## Exemplo 3.10 - [@casella_MC]
+
+<span style="color:red">Aisha: Verificar com o Guilherme como que faz o scaled squared error loss</span>
+
+## Exemplo 3.11 - [@casella_MC]
+
+<span style="color:red">Aisha: Em construção</span>
+
+## Exemplo adaptado de 5.2 e 7.1 de [@murteira]
+
+<span style="color:red">Aisha: Em construção</span>
+
+Segundo um modelo genético, pokémons de uma determinada região estão distribuídos em 4 categorias, de acordo com as seguintes probabilidades:
+
+\begin{align}
+p_1 = \frac{2+\theta}{4} \quad p_2 = \frac{1-\theta}{4} \quad p_3 = \frac{1-\theta}{4} \quad p_4 = \frac{\theta}{4}
+\end{align}
+
+onde $0 \leq \theta \leq 1$ é um parâmetro desconhecido que desejamos fazer inferências a respeito. Suponha que sua priori é $\theta \sim Beta(a,b)$ e que para uma amostra de tamanho $N$ se observaram $y_i$ pokémons do i-ésimo tipo ($i \in \{1,2,3,4\}$ e $\sum_i y_i = N$). Nessas condições, a distribuição a posteriori de $\theta$ é:
+
+\begin{equation}\tag{12}
+h(\theta|y) \propto (2+\theta)^{y_1}(1-\theta)^{y_2+y_3+b-1}\theta^{y_4+1-1}, \quad 0 \leq \theta \leq 1
+\end{equation}
+
+E
+
+\begin{align*}
+L(\theta|y) = log h(\theta|y) &\propto (y_1)log(2+\theta) + (y_2+y_3+b-1)log(1-\theta) + (y_4+1-1)log(\theta)\\
+L'(\theta) &= \frac{y_1}{2+\theta} - \frac{y_2+y_3+b-1}{1-\theta} + \frac{y_4+1-1}{\theta}\\
+-L''(\theta) &= \frac{y_1}{(2+\theta)^2} + \frac{y_2+y_3+b-1}{(1-\theta)^2} + \frac{y_4+1-1}{(\theta)^2}
+\end{align*}
+
+Uma função de importância bastante utilizada é a densidade da Normal, já que o que se pretende simular deve ser similar à distribuição a posteriori, porém como nem sempre isso é adequado, vamos tentar achar uma função de importância. A representação gráfica da verossimilhança pode ajudar na seleção da função, neste caso, uma vez que $\theta \in [0,1]$, podemos buscar uma função $Beta$ como candidata à função de importância. 
+
+Vamos comparar a função de importância com distribuição normal e com distribuição beta para duas amostras de tamanho $N$. Usaremos $p_N(\theta)$ para a função de importância normal e $p_B(\theta)$ para a função de importância beta.
+
+Seja $\hat{\theta}$ o valor de $\theta$ para o qual $L'(\theta) = 0$ e $\hat{\sigma}^2 = \{-L''(\hat{\theta}) \}^{-1}$. Vamos considerar esses valores como aproximações para a média e variância *a posteriori*, eles serão necessários para obter os parâmetros das distribuições a serem simuladas. O algorítmo então terá os seguintes passos:
+
+1. Simulamos $\theta_1, \ldots, \theta_m \overbrace{\sim}^{iid} p(\theta)$;
+2. Calculamos $\omega_i = \frac{h(\theta_i|y)}{p(\theta_i)}$
+3. Calculamos $\frac{1}{\sum_{i=1}^m \omega_i} \sum_{i=1}^m \omega_i g(\theta_i)$ com
+  * $g(\theta) = \theta$ para o cálculo aproximado a média a posteriori
+  * $g(\theta) = \theta^2$ para a aproximação da variância a posteriori
+
+Com o procedimento acima, basta conhecer o núcleo da distribuição a posteriori, isto é, basta conhecer $h(\theta|Y)$ a menos da constante de proporcionalidade. Também podemos obter uma aproximação boa para a densidade a posteriori atribuindo pesos $\omega_i / \sum_{j=1}^m \omega_j$ aos valores simulados $\theta_i$.
+
+# Referências
