@@ -333,6 +333,8 @@ E, novamente usando o fato que $\mathbb{P}(X \geq 2)=$ `r round(1-pcauchy(2,0,1)
 
 ### Método 3
 
+<span style="color:red">Aisha: Em construção</span>
+
 Os dois métodos apresentados anteriormente tem uma ineficiência relativa (<span style="color:red">Aisha: Aqui o livro quer dizer ineficiência do primeiro em relação ao segundo método?</span>) que é devida à geração de valores fora do domínio de interesse, que neste caso é $[2, + \infty)$. Estes termos "extras" são irrelevantes para a aproximação de $p$.
 
 Sabendo que $\mathbb{P}(X > 2) = 1-\mathbb{P}(X < 2)$ e que $\mathbb{P}(X > 2|X>0) = \frac{1}{2}-\mathbb{P}(0< X < 2)$, podemos pensar em escrever $p$ como:
@@ -355,10 +357,41 @@ A integral em (29) pode ser vista como uma esperança de função de $X$, isto �
 
 Onde $U_j \sim \mathcal{U}(0,2)$. Para calcular a variância de $\hat{p}_3$, utilizamos:
 
-\begin{equation}\tag{30}
-Var(\hat{p}_3) = 0 - Var\left(\frac{1}{m} \sum\limits_{j=1}^m h(U_j) = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m \frac{2}{\pi}(1+U_j^2)\right) = \frac{1}{m^2} \sum\limits_{j=1}^m Var(h(U_j)) = \frac{1}{m^2} \cdot m Var(h(U_j)) = \frac{1}{m} Var(h(U_j))
+\begin{align*}
+Var(\hat{p}_3) &= 0 - Var\left(\frac{1}{m} \sum\limits_{j=1}^m h(U_j) \right)\\
+&= \frac{1}{m^2} \sum\limits_{j=1}^m Var(h(U_j)) \\
+&= \frac{1}{m^2} \cdot m Var(h(U_j)) \\
+&= \frac{1}{m} Var(h(U_j))
+\end{align*}
+
+Então, podemos utilizar a forma $\mathbb{E}(X) = \mathbb{E}(X^2)- \mathbb{E}(X)^2$ na expressão acima para obter:
+
+\begin{equation}\tag{3}0githu
+Var(\hat{p}_3) = \frac{1}{m} \mathbb{E}(h^2(U))- \mathbb{E}(h(U))
 \end{equation}
 
+A segunda integral pode ser obtida utilizando a f.d.p. da distribuição uniforme e a lei do estatístico inconsciente, e será igual a zero:
+
+\begin{align*}
+\mathbb{E}(h(U)) &= \int_0^2 h(u) f_U(u) du \\
+&= \int_0^2 \frac{2}{\pi}(1+u^2)\frac{1}{2} du \\
+&= \int_0^2 \frac{(1+u^2)}{\pi} du \\
+&= \int_0^2 \frac{1}{\pi}+\frac{u^2}{\pi} du \\
+&= \left[\frac{u}{\pi}+\frac{u^3}{3\pi}\right]\Big|_{0}^{2} du \\
+&= \frac{2}{\pi}+\frac{2^3}{3\pi} = \frac{6+8}{3\pi} = \frac{14}{3\pi}
+\end{align*}
+
+A primeira integral é obtida de maneira similar:
+
+\begin{align*}
+\mathbb{E}(h^2(U)) &= \int_0^2 h^2(u) f_U(u) du\\
+&= \int_0^2 \left(\frac{2}{\pi}(1+u^2)\right)^2\frac{1}{2} du\\
+&= \int_0^2 2\frac{(1+u^2)^2}{\pi^2} du\\
+&= \int_0^2 \frac{2(u^4+2u^2+1)}{\pi^2} du\\
+&= \frac{2}{\pi^2}\left[\int_0^2 u^4du + \int_0^2 2u^2du + \int_0^2 du\right]\\
+&= \frac{2}{\pi^2}\left[
+&= 0
+\end{align*}
 
 ### Método 4
 
