@@ -10,6 +10,10 @@ header-includes:
 output: html_document
 bibliography: references.bib
 ---
+\begin{align*}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\end{align*}
+
 
 <script type="text/x-mathjax-config">
 MathJax.Hub.Config({
@@ -186,7 +190,7 @@ p9 <- ggplot(data.frame(x = c(0, 1)), aes(x = x)) +
                               breaks = seq(0, 5, 0.5),
                               limits=c(0, 5)) +
         scale_y_continuous(name = "Density") +
-        ggtitle("Beta2,5 x U0,1 x U0,5") +
+        ggtitle("Beta2,2 x U0,1 x U0,5") +
         scale_colour_brewer(palette="Set1") +
         labs(colour = "Distribution") +
         theme(axis.line = element_line(size=1, colour = "black"),
@@ -245,18 +249,31 @@ m_X(x) = \frac{|g(x)|}{\int |g(x)|dx}
 \end{equation}
 
 **Demonstração (Teorema 4.3.1)**
-A equação (19) aparece quando substituímos (20) em (17). <span style="color:red">Aisha: Pq pode simplificar esses módulos? </span>.
+A equação (19) aparece quando substituímos (20) em (17). 
 
 \begin{equation}\tag{21}
 Var[\theta] = \underbrace{\int \frac{g^2(X)}{m_X(X)}dx - I^2}_{\text{(17)}} = \int \frac{g^2(X)}{\underbrace{\frac{|g(x)|}{\int |g(x)|dx}}_{\text{(20)}}}dx - I^2 = \int \frac{g^2(X)\int |g(x)|dx}{|g(x)|}dx - I^2 = \left(\int |g(x)|dx\right)^2 - I^2
 \end{equation}
 
-Para demonstrar que $Var[\theta] \leq Var[\hat{I}_S]$ é suficiente mostrar que $\left(\int |g(x)|dx\right)^2 \leq \int \frac{g^2(X)}{m_X(X)}dx$. Este resultado é obtido utilizando a desigualdade de [Cauchy-Schwarz](https://www.ime.usp.br/~oliveira/ELE-CauchySchwarz.pdf):<span style="color:red">Aisha: Pq pode separar as integrais em duas? </span>
+<span style="color:green">Para verificar que podemos simplificar o quadrado com o módulo, observe que $a^2/|a| = |a|^2/|a| = |a|$ </span>.
+
+Para demonstrar que $Var[\theta] \leq Var[\hat{I}_S]$ é suficiente mostrar que $\left(\int |g(x)|dx\right)^2 \leq \int \frac{g^2(X)}{m_X(X)}dx$. Este resultado é obtido utilizando a desigualdade de [Cauchy-Schwarz](https://www.ime.usp.br/~oliveira/ELE-CauchySchwarz.pdf):
 
 \begin{align*}
 \left(\int |g(x)|dx\right)^2 &= \left(\int \frac{|g(x)|}{\left[m_X(x) \right]^{\frac{1}{2}}} \left[m_X(x) \right]^{\frac{1}{2}}dx\right)^2 \\
 & \leq \int \frac{g^2(x)}{m_X(x)} dx \underbrace{\int m_X(x)dx}_{=1} = \int \frac{g^2(x)}{m_X(x)} dx
 \end{align*}
+
+<span style="color:green">Aisha: Pq pode separar as integrais em duas?</span> R: Pode-se fazer um produto interno em funções quadrado integráveis, que é definido como $<f(x),g(x)> = \int f(x)g(x)dx$. Então, usando a desigualdade de Cauchy-Shwarz, temos:
+\begin{align*}
+<h(x),l(x)> &\leq \norm{h(x)}\norm{l(x)} \\
+(<h(x),l(x)>)^2 &\leq (\norm{h(x)})^2(\norm{l(x)})^2 \\
+(<h(x),l(x)>)^2 &\leq \ <h(x),h(x)><l(x),l(x)> \\
+\left(\int h(x)l(x)\right)^2 &\leq \int h^2(x) dx \int l^2(x) dx \\
+\end{align*}
+
+Se tomarmos $h(x) = \frac{|g(x)|}{m_X(x)^{1/2}}$ e $l(x) = m_X(x)^{1/2}$ e substituirmos acima, veremos que o resultado vale e portanto (21) está ok.
+
 
 **Corolário** 
 
@@ -302,16 +319,45 @@ E uma vez que $\mathbb{P}(X \geq 2)=$ `r round(1-pcauchy(2,0,1),2)`, a variânci
 
 Visando reduzir a variância de (24), podemos propôr outro estimador. Considerando que a distribuição de Cauchy(0,1) é simétrica em torno do zero, uma estimativa para $p$ seria:
 
-\begin{equation}\tag{25}
+\begin{equation}\tag{26}
 p \approx \hat{p}_2 = \frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| > 2}
 \end{equation}
 
-E, novamente usando o fato que $\mathbb{P}(|X| \geq 2)=$ `r round(1-pcauchy(2,0,1),2)`, a variância do estimador em (25) será dada por $Var[\hat{p}_2] =$ `r round((round(1-pcauchy(2,0,1),2)*2*round(pcauchy(2,0,1),2)),3)` $/m$<span style="color:red">Aisha: Arrumar esse valor que ficou errado e verificar a equação da variância.</span>.
+style="color:red">Aisha: Não entendi bem se é assim</span>
+
+\begin{equation}\tag{27}
+Var[\hat{p}_2] = Var\left[\frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| > 2} \right] = \frac{1}{4m^2} \sum\limits_{j=1}^m \left( Var[\mathbb{I}_{|X_j| > 2]} \right) = \frac{1}{4m^2}\cdot 2mp(1-2p) = \frac{p(1-2p)}{2m}
+\end{equation}
+
+E, novamente usando o fato que $\mathbb{P}(X \geq 2)=$ `r round(1-pcauchy(2,0,1),2)`, a variância do estimador em (25) será dada por $Var[\hat{p}_2] =$ `r round(round(1-pcauchy(2,0,1),2)*(1-2*round(1-pcauchy(2,0,1),2))/2,3)` $/m$.
 
 ### Método 3
 
-<span style="color:red">Aisha: Em construção</span>
-Sabendo que $\mathbb{P}(X > 2) = 1-\mathbb{P}(X < 2)$ e que $\mathbb{P}(X > 2|X>0) = \frac{1}{2}-\mathbb{P}(0< X < 2)$
+Os dois métodos apresentados anteriormente tem uma ineficiência relativa (<span style="color:red">Aisha: Aqui o livro quer dizer ineficiência do primeiro em relação ao segundo método?</span>) que é devida à geração de valores fora do domínio de interesse, que neste caso é $[2, + \infty)$. Estes termos "extras" são irrelevantes para a aproximação de $p$.
+
+Sabendo que $\mathbb{P}(X > 2) = 1-\mathbb{P}(X < 2)$ e que $\mathbb{P}(X > 2|X>0) = \frac{1}{2}-\mathbb{P}(0< X < 2)$, podemos pensar em escrever $p$ como:
+
+\begin{equation}\tag{28}
+p = \frac{1}{2} - \int\limits_0^2 \frac{1}{\pi(1+x^2)}dx
+\end{equation}
+
+Considere agora uma v.a. $X \sim \mathcal{U}(0,2)$. Sabemos que $f_X(x)=\frac{1}{2-0}=\frac{1}{2}$. Então, multiplicando a integral em (28) por $\frac{2}{2}$, teremos:
+
+\begin{equation}\tag{29}
+p = \frac{1}{2} - \int\limits_0^2 \overbrace{\frac{2}{\pi(1+x^2)}}^{h(x)}\underbrace{\frac{1}{2}}_{\text{fdp de }X}dx = \frac{1}{2} - \int\limits_0^2 h(x) f_X(x) dx = \frac{1}{2} - \mathbb{E}[h(X)]
+\end{equation}
+
+A integral em (29) pode ser vista como uma esperança de função de $X$, isto é, utilizando o lema do estatístico inconsciente podemos enxergar $p$ como uma esperança populacional. Isso significa que ele vai poder ser aproximado por uma média amostral:
+
+\begin{equation}\tag{29}
+\hat{p}_3 = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m h(U_j) = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m \frac{2}{\pi}(1+U_j^2)
+\end{equation}
+
+Onde $U_j \sim \mathcal{U}(0,2)$. Para calcular a variância de $\hat{p}_3$, utilizamos:
+
+\begin{equation}\tag{30}
+Var(\hat{p}_3) = 0 - Var\left(\frac{1}{m} \sum\limits_{j=1}^m h(U_j) = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m \frac{2}{\pi}(1+U_j^2)\right) = \frac{1}{m^2} \sum\limits_{j=1}^m Var(h(U_j)) = \frac{1}{m^2} \cdot m Var(h(U_j)) = \frac{1}{m} Var(h(U_j))
+\end{equation}
 
 
 ### Método 4
@@ -365,3 +411,5 @@ Seja $\hat{\theta}$ o valor de $\theta$ para o qual $L'(\theta) = 0$ e $\hat{\si
 Com o procedimento acima, basta conhecer o núcleo da distribuição a posteriori, isto é, basta conhecer $h(\theta|Y)$ a menos da constante de proporcionalidade. Também podemos obter uma aproximação boa para a densidade a posteriori atribuindo pesos $\omega_i / \sum_{j=1}^m \omega_j$ aos valores simulados $\theta_i$.
 
 # Referências
+
+
