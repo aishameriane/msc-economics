@@ -123,9 +123,9 @@ $(document).ready(function () {
 </div>
 
 
-<span class="math display">\[\begin{align*}
+\begin{align*}
 \newcommand{\norm}[1]{\left\lVert#1\right\rVert}
-\end{align*}\]</span>
+\end{align*}
 <script type="text/x-mathjax-config">
 MathJax.Hub.Config({
   TeX: { 
@@ -158,31 +158,31 @@ MathJax.Hub.Config({
 <div id="metodo" class="section level2">
 <h2>Método</h2>
 <p>Considere a seguinte integral:</p>
-<span class="math display">\[\begin{equation}\tag{01}
+\begin{equation}\tag{01}
 \int g(\theta)h(\theta|x)d\theta = \mathbb{E}[g(\theta)|x]
-\end{equation}\]</span>
+\end{equation}
 <p>Podemos ainda nos utilizar da probabilidade condicional <span class="math inline">\(f(x|\theta) = \frac{f_{X,\theta}(x,\theta)}{\pi(\theta)} \Rightarrow f_{X,\theta}(x,\theta) = f(x|\theta)\pi(theta)\)</span> para reescrever <span class="math inline">\(h(\theta|x) = \frac{f(x|\theta)\pi(theta)}{f_{X}(x)}\)</span>. Como o denominador é uma constante, podemos simplesmente definir o problema da integral acima da seguinte maneira:</p>
-<span class="math display">\[\begin{equation}\tag{02}
+\begin{equation}\tag{02}
 \int_{\Theta} g(\theta)f(x|\theta)\pi(\theta)d\theta 
-\end{equation}\]</span>
+\end{equation}
 <p>A primeira forma é como está definido o problema em <span class="citation">(Paulino, Amaral., and Murteira 2003)</span> (página 286) e a segunda é como está em <span class="citation">(Robert 2007)</span> (página 294).</p>
 <p>(Murteira) Se pudermos simular uma amostra <span class="math inline">\(\theta_1, \ldots, \theta_n\)</span> da densidade <em>a posteriori</em> <span class="math inline">\(h(\theta|x)\)</span>, o método de MC irá aproximar  por uma média amostral:</p>
-<span class="math display">\[\begin{equation}\tag{03}
+\begin{equation}\tag{03}
 \hat{\mathbb{E}}[g(\theta)|x] = \frac{1}{n}\sum_{i=1}^n g(\theta_i)
-\end{equation}\]</span>
+\end{equation}
 <p>Utilizando a lei dos grandes números, pode-se demonstrar que (03) converge quase certamente para a média <span class="math inline">\(\mathbb{E}[g(\theta)|x]\)</span> dada em (01). O método nos diz que se conseguirmos amostras da distribuição <em>a posteriori</em> <span class="math inline">\(h(\theta|x)\)</span>, podemos resolver as integrais da forma descrita em (01).</p>
 <p>(Robert) Se for possível obter valores <span class="math inline">\(\theta_1, \ldots, \theta_n\)</span> da distribuição <span class="math inline">\(\pi(\theta)\)</span>, então a média amostral</p>
-<span class="math display">\[\begin{equation}\tag{04}
+\begin{equation}\tag{04}
 \frac{1}{n}\sum_{i=1}^m g(\theta_i)f(x|\theta_i)
-\end{equation}\]</span>
+\end{equation}
 <p>converge quase certamente para a média dada em (02) quando <span class="math inline">\(m \to \infty\)</span>, pela lei dos grandes números. De maneira similar, se uma amostra aleatória de <span class="math inline">\(\theta_i\)</span>’s da distribuição <span class="math inline">\(\pi(\theta|x)\)</span> pode ser obtida, então</p>
-<span class="math display">\[\begin{equation}\tag{05}
+\begin{equation}\tag{05}
 \frac{1}{n}\sum_{i=1}^m g(\theta_i)
-\end{equation}\]</span>
+\end{equation}
 <p>converge para</p>
-<span class="math display">\[\begin{equation}\tag{06}
+\begin{equation}\tag{06}
 \frac{\int_{\Theta g(\theta)f(x|\theta)\pi(\theta)d\theta}}{\int_{\Theta} f(x|\theta)\pi(\theta)d\theta}
-\end{equation}\]</span>
+\end{equation}
 </div>
 </div>
 <div id="amostragem-por-importancia" class="section level1">
@@ -190,30 +190,30 @@ MathJax.Hub.Config({
 <p>Muitas vezes não é possível obter uma amostra aleatória de <span class="math inline">\(h(\theta|x)\)</span>. O método de MC é flexível o suficiente para ser aplicado de formas alternativas, como por exemplo, simular de uma distribuição similar à posteriori.</p>
 <p><strong><span class="citation">(Paulino, Amaral., and Murteira 2003)</span></strong></p>
 <p>Considere <span class="math inline">\(p(x)\)</span> uma função de densidade que seja fácil de simular valores e que aproxima <span class="math inline">\(h(\theta|x) = c f(x|\theta) h(\theta)\)</span>. Então:</p>
-<span class="math display">\[\begin{align*}
+\begin{align*}
 \int g(\theta)h(\theta|x)d\theta &amp;= \frac{\int g(\theta) f(x|\theta) h(\theta) d\theta}{\int f(x|\theta)h(\theta)d \theta}\\
 &amp;= \frac{\int g(\theta) \frac{f(x|\theta) h(\theta)}{p(\theta)} p(\theta) d\theta}{\int \frac{f(x|\theta)h(\theta)}{p(\theta)} p(\theta)d \theta}\\
 &amp;= \frac{\int g(\theta) \omega(\theta) p(\theta) d\theta}{\int  \omega(\theta) p(\theta)d \theta}
-\end{align*}\]</span>
+\end{align*}
 <p>Caso tenhamos uma a.a. <span class="math inline">\(\theta_1, \ldots, \theta_n\)</span> de <span class="math inline">\(p(\theta)\)</span>, podemos usar MC como em (03), de forma a obter uma aproximação para (01):</p>
-<span class="math display">\[\begin{equation}\tag{07}
+\begin{equation}\tag{07}
 \hat{\mathbb{E}}[g(\theta)|x] = \frac{1}{\sum_{i=1}^{n} \omega_i} \sum_{i=1}^{n}\omega_i g(\theta_i)
-\end{equation}\]</span>
+\end{equation}
 <p>onde <span class="math inline">\(\omega_i = \frac{f(x|\theta_i)h(\theta_i)}{p(\theta_i)}\)</span> e é chamado de <em>importance weights</em>.</p>
 <p>Observe que o método atribui maior “peso” a regiões onde <span class="math inline">\(p(\theta) &lt; h(\theta|x)\)</span> e menos peso onde <span class="math inline">\(p(\theta) &gt; h(\theta|x)\)</span>. É possível mostrar que (07) converge quase certamente para (01).</p>
 <p><strong><span class="citation">(Robert 2007)</span></strong></p>
 <p>Os métodos de MC tem aplicação muito mais geral que a descrita inicialmente, de forma que não é necessário amostrar da distribuição <span class="math inline">\(\pi(\theta|x)\)</span> ou de <span class="math inline">\(\pi(\theta)\)</span> para ter uma boa aproximação de (02). Se <span class="math inline">\(m\)</span> é uma densidade de probabilidade com suporte <span class="math inline">\(supp(m)\)</span> que tem áreas em comum com o suporte de <span class="math inline">\(g(\theta)f(x|\theta)\pi(\theta)\)</span>, então a integral em (02) pode ser escrita como uma esperança em termos de <span class="math inline">\(m\)</span>:</p>
-<span class="math display">\[\begin{equation}\tag{08}
+\begin{equation}\tag{08}
 \int \frac{g(\theta)f(x|\theta)\pi(\theta)}{m(\theta)}m(\theta)d\theta
-\end{equation}\]</span>
+\end{equation}
 <p>Que nos leva à representação do método de Monte Carlo <em>com amostragem por importância</em>: geramos uma a.a. <span class="math inline">\(\theta_1, \ldots, \theta_n\)</span> de valores de <span class="math inline">\(m\)</span> e aproximamos (02) por:</p>
-<span class="math display">\[\begin{equation}\tag{09}
+\begin{equation}\tag{09}
 \frac{1}{n} \sum_{i=1}^n g(\theta_i)\omega(\theta_i)
-\end{equation}\]</span>
+\end{equation}
 <p>onde <span class="math inline">\(\omega(\theta_i) = \frac{f(x|\theta_i)\pi(\theta_i)}{m(\theta_i)}\)</span>. Pela L.G.N. essa quantidade converge quase certamente para (02). Uma aproximação para <span class="math inline">\(\mathbb{E}^\pi[g(\theta)|x]\)</span> é dada por:</p>
-<span class="math display">\[\begin{equation}\tag{10}
+\begin{equation}\tag{10}
 \frac{\sum_{i=1}^n g(\theta_i) \omega(\theta_i)}{\sum_{i=1}^n \omega(\theta_i)}
-\end{equation}\]</span>
+\end{equation}
 <p>Uma vez que o numerador de (10) converge para <span class="math inline">\(\int_{\Theta} g(\theta)f(x|\theta)\pi(\theta)\)</span> e o denominador para <span class="math inline">\(\int_{\Theta} f(x|\theta)\pi(\theta)d\theta\)</span>, se <span class="math inline">\(supp(m)\)</span> tem interseção com <span class="math inline">\(supp(f(x|\cdot)\pi)\)</span>. Note que (10) não depende de constantes normalizadoras em nenhum dos termos, o que indica que podemos utilizar o método mesmo quando temos apenas o núcleo das distribuições.</p>
 <p>Embora (10) deva convergir para <span class="math inline">\(\mathbb{E}^\pi[g(\theta)|x]\)</span> para todas as funções que satisfazem a condição do suporte comum, a escolha a função de importância é crucial pelas seguintes razões:</p>
 <ul>
@@ -223,183 +223,209 @@ MathJax.Hub.Config({
 <p><strong><span class="citation">(Moura 2010)</span></strong></p>
 <p>Amostragem por importância é um método de monte carlo que visa reduzir a variância (das estimativas) ao amostrar de uma densidade mais apropriada do que a f.d.p. original.</p>
 <p>Suponha que você deseje calcular a esperança de uma <span class="math inline">\(g(\theta)\)</span> cuja densidade é dada por <span class="math inline">\(p(\theta|y)\)</span>, porém esta expressão é desconhecida ou é difícil obter amostras de seus valores. Podemos então utilizar um truque matemático combinado com a ideia de MC para obter uma aproximação para esta esperança:</p>
-<span class="math display">\[\begin{equation}\tag{11}
+\begin{equation}\tag{11}
 I = \int\limits_\Theta g(\theta)p(\theta|y)d\theta = \int\limits_\Theta \frac{g(\theta)p(\theta|y)}{m(\theta)}m(\theta)d\theta = \mathbb{E}_m \left[\frac{g(\theta)p(\theta|y)}{m(\theta)} \right]
-\end{equation}\]</span>
+\end{equation}
 <p>E então aproximamos a expressão em (11) por:</p>
-<span class="math display">\[\begin{equation}\tag{12}
+\begin{equation}\tag{12}
 I \approx \hat{I_s}(\theta) = \frac{1}{S} \sum_{i=1}^S \frac{g(\theta^i)f(\theta^i)}{m(\theta^i)}
-\end{equation}\]</span>
+\end{equation}
 <p>A variância do estimador em (12) será dada por:</p>
-<span class="math display">\[\begin{equation}\tag{13}
+\begin{equation}\tag{13}
 Var[\hat{I_s}(\theta)] = \mathbb{E}_m[\hat{I_s}^2] - \mathbb{E}_m[\hat{I_s}]^2 = \int g^2(\theta)\frac{f^2(\theta)}{m(\theta)}d\theta - I^2
-\end{equation}\]</span>
+\end{equation}
 <p>Então, para que a variância de <span class="math inline">\(\hat{I}_S\)</span> seja finita, precisamos que <span class="math inline">\(\int g^2(\theta)\frac{f^2(\theta)}{m(\theta)}d\theta &lt; \infty\)</span>, isto é, a densidade <span class="math inline">\(m(\cdot)\)</span> deve ter caudas mais pesadas que <span class="math inline">\(f(\cdot)\)</span>. Um estimador por importância considerado bom será aquele que minimiza a quantidade em (12). Isto ocorre quando <span class="math inline">\(m(\cdot)\)</span> se assemelha ao comportamento do produto <span class="math inline">\(g(\cdot)f(\cdot)\)</span>.</p>
 <p><strong><span class="citation">(Rubinstein 1981)</span></strong></p>
 <p>Como existem diversos estimadores de Monte Carlo, se torna um problema saber decidir qual das estimativas é a melhor. O critério para esta decisão será com base na variância do estimador.</p>
 <p>De acordo com <span class="citation">(Rubinstein 1981)</span>, a redução da variância pode ser vista como uma forma de utilizar conhecimento prévio sobre o problema. Em um extremo, quando não se sabe nada a respeito das densidades envolvidas, não é possível reduzir a variabilidade. Por outro lado, se temos total conhecimento do problema, a variância é zero e métodos de MC não seriam necessários. Em suas palavras: <em>“Variance reduction cannot be obtained from nothing; it is merely a way of not wasting information”</em>.</p>
 <p>O livro define o problema de maneira um pouco diferente, omitindo a <span class="math inline">\(f(x)\)</span> na fórmula usual e dizendo que o problema a ser resolvido é obter uma estimativa para a seguinte integral:</p>
-<span class="math display">\[\begin{equation}\tag{14}
+\begin{equation}\tag{14}
 I=\int g(x)dx\text{,}\quad \quad x in D \subset \mathbb{R}^n
-\end{equation}\]</span>
+\end{equation}
 <p>Supondo que <span class="math inline">\(g \in L^2(D)\)</span> (<span class="math inline">\(g\)</span> é uma função quadrado-integrável), isto é, <span class="math inline">\(\int g^2(x)dx\)</span> está bem definida. A ideia da amostragem por importância será concentrar a amostragem dos pontos, utilizando integração de Monte Carlo, nas regiões de <span class="math inline">\(D\)</span> que tem mais “importância”, ao invés de amostrar igualmente de toda a região.</p>
 <p>Por exemplo (baseado no que está <a href="http://ib.berkeley.edu/labs/slatkin/eriq/classes/guest_lect/mc_lecture_notes.pdf">daqui</a>), considere a figura abaixo (<a href="http://t-redactyl.io/blog/2016/03/creating-plots-in-r-using-ggplot2-part-9-function-plots.html">código aqui</a>), onde comparamos uma distribuição <span class="math inline">\(Beta(2,2)\)</span> (vermelho) com as uniformes <span class="math inline">\(\mathcal{U}(0,1)\)</span> (azul) e <span class="math inline">\(\mathcal{U}(0,5)\)</span> (verde).</p>
-<p><img src="data:image/png;base64,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" width="672" /></p>
+<p><img src="data:image/png;base64,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" width="672" /></p>
 <p>É claro que ambas uniformes podem ser utilizadas em um algorítmo para amostrar valores da <span class="math inline">\(Beta\)</span>, porém a distribuição uniforme que varia entre <span class="math inline">\(0\)</span> e <span class="math inline">\(1\)</span> tem seus pontos mais concentrados onde a densidade da <span class="math inline">\(Beta\)</span> assume seus valores. Para o caso de <span class="math inline">\(X \sim \mathcal{U}(0,1)\)</span>, aproximamos a integral <span class="math inline">\(\int_0^1g(x)dx = \mathbb{E}(g(X))\)</span> por MC, usando <span class="math inline">\(\frac{1}{n}\sum_1^n g(x_i)\)</span>. Como a densidade da beta é <span class="math inline">\(0\)</span> para valores abaixo de <span class="math inline">\(0\)</span> e acima de <span class="math inline">\(1\)</span>, esta aproximação deve funcionar razoavelmente bem. Já se utilizarmos <span class="math inline">\(X\sim \mathcal{U}(0,5)\)</span>, temos <span class="math inline">\(\int_0^1g(x)dx = 5\mathbb{E}(g(X))\)</span> e o estimador de MC será <span class="math inline">\(\frac{5}{n}\sum_1^n g(x_i)\)</span>. Essa aproximação acaba não sendo interessante pois <span class="math inline">\(80\%\)</span> dos valores desta uniforme estão fora do suporte da função <span class="math inline">\(g(\cdot)\)</span> original.</p>
 <p>Voltando a <span class="citation">(Rubinstein 1981)</span>, podemos reescrever (14) como:</p>
-<span class="math display">\[\begin{equation}\tag{15}
+\begin{equation}\tag{15}
 I  = \int \frac{g(x)}{m_X(x)}m_X(x) dx = \mathbb{E}_m\left[\frac{g(x)}{m_X(x)} \right]
-\end{equation}\]</span>
+\end{equation}
 <p>Onde <span class="math inline">\(X\)</span> é um vetor aleatório com densidade <span class="math inline">\(m_X(\cdot)\)</span> tal que <span class="math inline">\(m_X(x) &gt; 0 \ \forall \ x \in D\)</span>. A função <span class="math inline">\(m_X(\cdot)\)</span> é conhecida como <em>distribuição de importância</em> <span style="color:red">Aisha: Qual a melhor tradução para <em>importance sampling distribution</em>?</span>.</p>
 <p>Considere o estimador:</p>
-<span class="math display">\[\begin{equation}\tag{16}
+\begin{equation}\tag{16}
 \hat{I}_S = \frac{g(X)}{m_X(X)}
-\end{equation}\]</span>
+\end{equation}
 <p>Ele é não viesado para (15) e sua variância é dada por:</p>
-<span class="math display">\[\begin{equation}\tag{17}
+\begin{equation}\tag{17}
 Var[\hat{I}_S] = \int \frac{g^2(X)}{m_X(X)}dx - I^2
-\end{equation}\]</span>
+\end{equation}
 <p>Podemos então aproximar a integral dada em (15) pegando uma amostra aleatória <span class="math inline">\(X_1, \ldots, X_n\)</span> da densidade <span class="math inline">\(m_X(x)\)</span> e substituir seu valor na equação de média amostral:</p>
-<span class="math display">\[\begin{equation}\tag{18}
+\begin{equation}\tag{18}
 \theta = \frac{1}{n} \sum\limits_{i=1}^n \frac{g(X_i)}{m_X(X_i)}
-\end{equation}\]</span>
+\end{equation}
 <p>Mas voltamos ao problema do exemplo que compara a Beta com as Uniformes. Como escolher a densidade para <span class="math inline">\(X\)</span> de forma a minimizar a variância de <span class="math inline">\(\hat{I}_S\)</span>?</p>
 <p><strong>Teorema 4.3.1</strong> A variância mínima para <span class="math inline">\(\hat{I}_S\)</span> é dada por:</p>
-<span class="math display">\[\begin{equation}\tag{19}
+\begin{equation}\tag{19}
 Var[\hat{I}_S] = \left(\int |g^2(X)|dx\right)^2 - I^2
-\end{equation}\]</span>
+\end{equation}
 <p>E ocorre quando a variável aleatória <span class="math inline">\(X\)</span> tem densidade:</p>
-<span class="math display">\[\begin{equation}\tag{20}
+\begin{equation}\tag{20}
 m_X(x) = \frac{|g(x)|}{\int |g(x)|dx}
-\end{equation}\]</span>
+\end{equation}
 <p><strong>Demonstração (Teorema 4.3.1)</strong> A equação (19) aparece quando substituímos (20) em (17).</p>
-<span class="math display">\[\begin{equation}\tag{21}
+\begin{equation}\tag{21}
 Var[\theta] = \underbrace{\int \frac{g^2(X)}{m_X(X)}dx - I^2}_{\text{(17)}} = \int \frac{g^2(X)}{\underbrace{\frac{|g(x)|}{\int |g(x)|dx}}_{\text{(20)}}}dx - I^2 = \int \frac{g^2(X)\int |g(x)|dx}{|g(x)|}dx - I^2 = \left(\int |g(x)|dx\right)^2 - I^2
-\end{equation}\]</span>
+\end{equation}
 <p><span style="color:green">Para verificar que podemos simplificar o quadrado com o módulo, observe que <span class="math inline">\(a^2/|a| = |a|^2/|a| = |a|\)</span> </span>.</p>
 <p>Para demonstrar que <span class="math inline">\(Var[\theta] \leq Var[\hat{I}_S]\)</span> é suficiente mostrar que <span class="math inline">\(\left(\int |g(x)|dx\right)^2 \leq \int \frac{g^2(X)}{m_X(X)}dx\)</span>. Este resultado é obtido utilizando a desigualdade de <a href="https://www.ime.usp.br/~oliveira/ELE-CauchySchwarz.pdf">Cauchy-Schwarz</a>:</p>
-<span class="math display">\[\begin{align*}
+\begin{align*}
 \left(\int |g(x)|dx\right)^2 &amp;= \left(\int \frac{|g(x)|}{\left[m_X(x) \right]^{\frac{1}{2}}} \left[m_X(x) \right]^{\frac{1}{2}}dx\right)^2 \\
 &amp; \leq \int \frac{g^2(x)}{m_X(x)} dx \underbrace{\int m_X(x)dx}_{=1} = \int \frac{g^2(x)}{m_X(x)} dx
-\end{align*}\]</span>
+\end{align*}
 <span style="color:green">Aisha: Pq pode separar as integrais em duas?</span> R: Pode-se fazer um produto interno em funções quadrado integráveis, que é definido como <span class="math inline">\(&lt;f(x),g(x)&gt; = \int f(x)g(x)dx\)</span>. Então, usando a desigualdade de Cauchy-Shwarz, temos:
-<span class="math display">\[\begin{align*}
+\begin{align*}
 &lt;h(x),l(x)&gt; &amp;\leq \norm{h(x)}\norm{l(x)} \\
 (&lt;h(x),l(x)&gt;)^2 &amp;\leq (\norm{h(x)})^2(\norm{l(x)})^2 \\
 (&lt;h(x),l(x)&gt;)^2 &amp;\leq \ &lt;h(x),h(x)&gt;&lt;l(x),l(x)&gt; \\
 \left(\int h(x)l(x)\right)^2 &amp;\leq \int h^2(x) dx \int l^2(x) dx \\
-\end{align*}\]</span>
+\end{align*}
 <p>Se tomarmos <span class="math inline">\(h(x) = \frac{|g(x)|}{m_X(x)^{1/2}}\)</span> e <span class="math inline">\(l(x) = m_X(x)^{1/2}\)</span> e substituirmos acima, veremos que o resultado vale e portanto (21) está ok.</p>
 <p><strong>Corolário</strong></p>
 <p>Se <span class="math inline">\(g(x) &gt; 0\)</span>, então a densidade ótima <span class="math inline">\(m_X(x)\)</span> será dada por:</p>
-<span class="math display">\[\begin{equation}\tag{22}
+\begin{equation}\tag{22}
 m_X(x) = \frac{g(x)}{I}
-\end{equation}\]</span>
+\end{equation}
 <p>E teremos que <span class="math inline">\(Var[\theta]=0\)</span>.</p>
 <p>Observe que este método não é prático, pois a densidade ótima requer o conhecimento de <span class="math inline">\(\int |g(x)|dx\)</span>, que acaba sendo praticamente a mesma coisa que conhecer <span class="math inline">\(I\)</span> (de fato serão iguais quando <span class="math inline">\(g(x)\)</span> não muda de sinal). Mas aí usar MC para uma coisa que já se conhece acaba sendo desnecessário.</p>
 <p>Embora a técnica não seja de valor prático, a ideia de minimizar a variância do estimador de Monte Carlo é bastante útil, conforme veremos nos próximos exemplos.</p>
 <p><strong><span class="citation">(Robert and Casella 2010)</span></strong></p>
 <p>Exemplo motivador:</p>
 <p>Queremos estimar a probabilidade de que uma variável aleatória X, com distribuição de Cauchy de parâmetros (0,1), seja maior do que 2. Isto é, para <span class="math inline">\(X \sim \mathcal{C}(0,1)\)</span>, queremos calcular <span class="math inline">\(\mathbb{P}(X \geq 2)\)</span>:</p>
-<span class="math display">\[\begin{equation}\tag{23}
+\begin{equation}\tag{23}
 p = \mathbb{P}(X \geq 2) = \int\limits_2^\infty \frac{1}{\pi(1+x^2)}dx
-\end{equation}\]</span>
+\end{equation}
 <p>Imagine que os valores em (23) não sejam de fácil obtenção. Podemos utilizar as ideias de cadeias de markov e, para uma amostra aleatória <span class="math inline">\(X_1, \cdots, X_m\)</span> da distribuição de <span class="math inline">\(X\)</span>, aproximar <span class="math inline">\(p\)</span> de diferentes maneiras.</p>
 <div id="metodo-1" class="section level3">
 <h3>Método 1</h3>
-<span class="math display">\[\begin{equation}\tag{24}
+\begin{equation}\tag{24}
 p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j &gt; 2}
-\end{equation}\]</span>
+\end{equation}
 <p>A variância do estimador <span class="math inline">\(\hat{p}_1\)</span> pode ser obtida da seguinte maneira <span style="color:red">Aisha: Ver se é isso mesmo: pode considerar as indicadoras independentes e a variância ser a mesma da Binomial?</span>:</p>
-<span class="math display">\[\begin{equation}\tag{25}
+\begin{equation}\tag{25}
 Var[\hat{p}_1] = Var\left[\frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j &gt; 2} \right] = \frac{1}{m^2} \sum\limits_{j=1}^m \left( Var[\mathbb{I}_{X_j &gt; 2]} \right) = \frac{1}{m^2}mp(1-p) = \frac{p(1-p)}{m}
-\end{equation}\]</span>
+\end{equation}
 <p>E uma vez que <span class="math inline">\(\mathbb{P}(X \geq 2)=\)</span> 0.15, a variância do estimador em (24) será dada por <span class="math inline">\(Var[\hat{p}_1] =\)</span> 0.128 <span class="math inline">\(/m\)</span>.</p>
 </div>
 <div id="metodo-2" class="section level3">
 <h3>Método 2</h3>
 <p>Visando reduzir a variância de (24), podemos propôr outro estimador. Considerando que a distribuição de Cauchy(0,1) é simétrica em torno do zero, uma estimativa para <span class="math inline">\(p\)</span> seria:</p>
-<span class="math display">\[\begin{equation}\tag{26}
+\begin{equation}\tag{26}
 p \approx \hat{p}_2 = \frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| &gt; 2}
-\end{equation}\]</span>
+\end{equation}
 <p>style=“color:red”&gt;Aisha: Não entendi bem se é assim</span></p>
-<span class="math display">\[\begin{equation}\tag{27}
+\begin{equation}\tag{27}
 Var[\hat{p}_2] = Var\left[\frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| &gt; 2} \right] = \frac{1}{4m^2} \sum\limits_{j=1}^m \left( Var[\mathbb{I}_{|X_j| &gt; 2]} \right) = \frac{1}{4m^2}\cdot 2mp(1-2p) = \frac{p(1-2p)}{2m}
-\end{equation}\]</span>
+\end{equation}
 <p>E, novamente usando o fato que <span class="math inline">\(\mathbb{P}(X \geq 2)=\)</span> 0.15, a variância do estimador em (25) será dada por <span class="math inline">\(Var[\hat{p}_2] =\)</span> 0.052 <span class="math inline">\(/m\)</span>.</p>
 </div>
 <div id="metodo-3" class="section level3">
 <h3>Método 3</h3>
-<p><span style="color:red">Aisha: Em construção</span></p>
 <p>Os dois métodos apresentados anteriormente tem uma ineficiência relativa (<span style="color:red">Aisha: Aqui o livro quer dizer ineficiência do primeiro em relação ao segundo método?</span>) que é devida à geração de valores fora do domínio de interesse, que neste caso é <span class="math inline">\([2, + \infty)\)</span>. Estes termos “extras” são irrelevantes para a aproximação de <span class="math inline">\(p\)</span>.</p>
 <p>Sabendo que <span class="math inline">\(\mathbb{P}(X &gt; 2) = 1-\mathbb{P}(X &lt; 2)\)</span> e que <span class="math inline">\(\mathbb{P}(X &gt; 2|X&gt;0) = \frac{1}{2}-\mathbb{P}(0&lt; X &lt; 2)\)</span>, podemos pensar em escrever <span class="math inline">\(p\)</span> como:</p>
-<span class="math display">\[\begin{equation}\tag{28}
+\begin{equation}\tag{28}
 p = \frac{1}{2} - \int\limits_0^2 \frac{1}{\pi(1+x^2)}dx
-\end{equation}\]</span>
+\end{equation}
 <p>Considere agora uma v.a. <span class="math inline">\(X \sim \mathcal{U}(0,2)\)</span>. Sabemos que <span class="math inline">\(f_X(x)=\frac{1}{2-0}=\frac{1}{2}\)</span>. Então, multiplicando a integral em (28) por <span class="math inline">\(\frac{2}{2}\)</span>, teremos:</p>
-<span class="math display">\[\begin{equation}\tag{29}
+\begin{equation}\tag{29}
 p = \frac{1}{2} - \int\limits_0^2 \overbrace{\frac{2}{\pi(1+x^2)}}^{h(x)}\underbrace{\frac{1}{2}}_{\text{fdp de }X}dx = \frac{1}{2} - \int\limits_0^2 h(x) f_X(x) dx = \frac{1}{2} - \mathbb{E}[h(X)]
-\end{equation}\]</span>
+\end{equation}
 <p>A integral em (29) pode ser vista como uma esperança de função de <span class="math inline">\(X\)</span>, isto é, utilizando o lema do estatístico inconsciente podemos enxergar <span class="math inline">\(p\)</span> como uma esperança populacional. Isso significa que ele vai poder ser aproximado por uma média amostral:</p>
-<span class="math display">\[\begin{equation}\tag{29}
+\begin{equation*}
 \hat{p}_3 = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m h(U_j) = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m \frac{2}{\pi}(1+U_j^2)
-\end{equation}\]</span>
+\end{equation*}
 <p>Onde <span class="math inline">\(U_j \sim \mathcal{U}(0,2)\)</span>. Para calcular a variância de <span class="math inline">\(\hat{p}_3\)</span>, utilizamos:</p>
-<span class="math display">\[\begin{align*}
+\begin{align*}
 Var(\hat{p}_3) &amp;= 0 - Var\left(\frac{1}{m} \sum\limits_{j=1}^m h(U_j) \right)\\
 &amp;= \frac{1}{m^2} \sum\limits_{j=1}^m Var(h(U_j)) \\
 &amp;= \frac{1}{m^2} \cdot m Var(h(U_j)) \\
 &amp;= \frac{1}{m} Var(h(U_j))
-\end{align*}\]</span>
+\end{align*}
 <p>Então, podemos utilizar a forma <span class="math inline">\(\mathbb{E}(X) = \mathbb{E}(X^2)- \mathbb{E}(X)^2\)</span> na expressão acima para obter:</p>
-<span class="math display">\[\begin{equation}\tag{3}0githu
+\begin{equation}\tag{30}
 Var(\hat{p}_3) = \frac{1}{m} \mathbb{E}(h^2(U))- \mathbb{E}(h(U))
-\end{equation}\]</span>
-<p>A segunda integral pode ser obtida utilizando a f.d.p. da distribuição uniforme e a lei do estatístico inconsciente, e será igual a zero:</p>
-<span class="math display">\[\begin{align*}
-\mathbb{E}(h(U)) &amp;= \int_0^2 h(u) f_U(u) du \\
-&amp;= \int_0^2 \frac{2}{\pi}(1+u^2)\frac{1}{2} du \\
-&amp;= \int_0^2 \frac{(1+u^2)}{\pi} du \\
-&amp;= \int_0^2 \frac{1}{\pi}+\frac{u^2}{\pi} du \\
-&amp;= \left[\frac{u}{\pi}+\frac{u^3}{3\pi}\right]\Big|_{0}^{2} du \\
-&amp;= \frac{2}{\pi}+\frac{2^3}{3\pi} = \frac{6+8}{3\pi} = \frac{14}{3\pi}
-\end{align*}\]</span>
-<p>A primeira integral é obtida de maneira similar:</p>
-<span class="math display">\[\begin{align*}
-\mathbb{E}(h^2(U)) &amp;= \int_0^2 h^2(u) f_U(u) du\\
-&amp;= \int_0^2 \left(\frac{2}{\pi}(1+u^2)\right)^2\frac{1}{2} du\\
-&amp;= \int_0^2 2\frac{(1+u^2)^2}{\pi^2} du\\
-&amp;= \int_0^2 \frac{2(u^4+2u^2+1)}{\pi^2} du\\
-&amp;= \frac{2}{\pi^2}\left[\int_0^2 u^4du + \int_0^2 2u^2du + \int_0^2 du\right]\\
-&amp;= \frac{2}{\pi^2}\left[
-&amp;= 0
-\end{align*}\]</span>
+\end{equation}
+<p>Como <span class="math inline">\(U \sim \mathcal{U}(0,2)\)</span>, estas esperanças são calculadas utilizando integrais. As integrais são obtidas usando integrais de funções trigonométricas. Lembrando que <span class="math inline">\(\int 1/(a^2+x^2) = (1/a) tan^{-1}(x/a) + c\)</span>, temos que a segunda integral será dada por:</p>
+\begin{align*}
+\mathbb{E}[h(U)] &amp;= \int\limits_0^2 \underbrace{\frac{2}{\pi(1^2 + u^2)}}_{h(U)}\underbrace{\frac{1}{2}}_{\text{fdp de }U} du\\
+&amp;= \frac{1}{\pi}\int\limits_0^2 \frac{1}{\pi(1^2 + u^2)} du \\
+&amp;= \frac{1}{\pi}(tg^-1(u))\Big|_0^2\\
+&amp;= \frac{1}{\pi}tg^{-1}(2)
+\end{align*}
+<p>Logo, temos que <span class="math inline">\(\mathbb{E}[h(U)] =\)</span> 0.3524 e portanto <span class="math inline">\(\left(\mathbb{E}[h(U)]\right)^2=\)</span> 0.1242.</p>
+<p>De maneira similar,</p>
+\begin{align*}
+\mathbb{E}[h^2(U)] &amp;= \int\limits_0^2 \underbrace{\left(\frac{2}{\pi(1^2 + u^2)}\right)^2}_{h^2(U)}\underbrace{\frac{1}{2}}_{\text{fdp de }U} du = \frac{2+5tg^{-1}(2)}{5\pi^2}
+\end{align*}
+<p>Logo, <span class="math inline">\(\mathbb{E}[h^2(U)] =\)</span> 0.1527 e temos <span class="math inline">\(Var(\hat{p}_3) = \frac{1}{m} \mathbb{E}(h^2(U))- \mathbb{E}(h(U)) =\)</span> 0.0285.</p>
 </div>
 <div id="metodo-4" class="section level3">
 <h3>Método 4</h3>
-<p><span style="color:red">Aisha: Em construção</span></p>
+<p>Considere agora uma v.a. <span class="math inline">\(Y \sim \mathcal{U}(0,1/2)\)</span>. Sabemos que <span class="math inline">\(f_Y(y)=\frac{1}{1/2-0}=\frac{1}{1/2}=2\)</span>. Podemos fazer uma transformação de variáveis na expressão (23) utilizando <span class="math inline">\(Y=\frac{1}{X}\)</span>, de forma que:</p>
+\begin{align*}
+x &amp;= \frac{1}{y}\\
+dx &amp;= -\frac{1}{y^{2}}=-y^{-2}\\
+x=1/2 &amp; \Rightarrow y=2\\
+x\to \infty &amp;\Rightarrow y=0
+\end{align*}
+<p>Como os limites de integração precisarão trocar de lugar, a integral ganha um sinal de menos que irá cancelar com o sinal negativo do <span class="math inline">\(dx\)</span>, de forma que (23) será:</p>
+\begin{align*}
+p = \mathbb{P}(X \geq 2) = \mathbb{P}(0 &lt; Y &lt; 1/2) = \int\limits_0^{\frac{1}{2}} \frac{y^{-2}}{\pi(1+y^{-2})}dy
+\end{align*}
+<p>Observe ainda que <span class="math inline">\(\frac{y^{-2}}{(1+y^{-2})} = \frac{1}{y^{2}(1+y^{-2})} = \frac{1}{y^{2}+y^{0}} = \frac{1}{1+ y^{2}}\)</span> e portanto a expressão acima pode ser escrita como:</p>
+\begin{align*}
+p = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy
+\end{align*}
+<p>Tome <span class="math inline">\(h(Y) = \frac{2}{\pi(1+y^2)}\)</span>. Então, <span class="math inline">\(\frac{1}{4}h(Y) = \frac{2}{4\pi(1+y^2)} = \frac{1}{2}\frac{1}{\pi(1+y^2)}\)</span>, que é a expressão de <span class="math inline">\(p\)</span>. Portanto:</p>
+\begin{equation}\tag{31}
+p = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}\frac{2}{\underbrace{2}_{\text{fdp de }Y}}dy = 2\cdot\mathbb{E}\left(\frac{1}{4}h(Y)\right) =\frac{1}{2}\mathbb{E}(h(Y))
+\end{equation}
+<p>A esperança em (31) pode ser aproximada por uma média amostral:</p>
+\begin{equation}\tag{32}
+\hat{p}_4 = \frac{1}{4m}\sum\limits_{j=1}^m h(Y_j)
+\end{equation}
+<p><span style="color:red">Aisha: Verificar esse finalzinho</span></p>
 <p><strong><span class="citation">(Cappé, Moulines, and Rydén 2010)</span></strong></p>
 <p><span style="color:red">Aisha: Em construção</span></p>
 </div>
 </div>
-<div id="exemplo" class="section level1">
-<h1>Exemplo</h1>
+<div id="exemplos" class="section level1">
+<h1>Exemplos</h1>
 <p><span style="color:red">Aisha: Em construção</span></p>
-<p>(Exemplo adaptado de 5.2 e 7.1 de <span class="citation">(Paulino, Amaral., and Murteira 2003)</span>)</p>
+<div id="exemplo-3.10---casella_mc" class="section level2">
+<h2>Exemplo 3.10 - <span class="citation">(Robert and Casella 2010)</span></h2>
+<p><span style="color:red">Aisha: Verificar com o Guilherme como que faz o scaled squared error loss</span></p>
+</div>
+<div id="exemplo-3.11---casella_mc" class="section level2">
+<h2>Exemplo 3.11 - <span class="citation">(Robert and Casella 2010)</span></h2>
+<p><span style="color:red">Aisha: Em construção</span></p>
+</div>
+<div id="exemplo-adaptado-de-5.2-e-7.1-de-murteira" class="section level2">
+<h2>Exemplo adaptado de 5.2 e 7.1 de <span class="citation">(Paulino, Amaral., and Murteira 2003)</span></h2>
+<p><span style="color:red">Aisha: Em construção</span></p>
 <p>Segundo um modelo genético, pokémons de uma determinada região estão distribuídos em 4 categorias, de acordo com as seguintes probabilidades:</p>
-<span class="math display">\[\begin{align}
+\begin{align}
 p_1 = \frac{2+\theta}{4} \quad p_2 = \frac{1-\theta}{4} \quad p_3 = \frac{1-\theta}{4} \quad p_4 = \frac{\theta}{4}
-\end{align}\]</span>
+\end{align}
 <p>onde <span class="math inline">\(0 \leq \theta \leq 1\)</span> é um parâmetro desconhecido que desejamos fazer inferências a respeito. Suponha que sua priori é <span class="math inline">\(\theta \sim Beta(a,b)\)</span> e que para uma amostra de tamanho <span class="math inline">\(N\)</span> se observaram <span class="math inline">\(y_i\)</span> pokémons do i-ésimo tipo (<span class="math inline">\(i \in \{1,2,3,4\}\)</span> e <span class="math inline">\(\sum_i y_i = N\)</span>). Nessas condições, a distribuição a posteriori de <span class="math inline">\(\theta\)</span> é:</p>
-<span class="math display">\[\begin{equation}\tag{12}
+\begin{equation}\tag{12}
 h(\theta|y) \propto (2+\theta)^{y_1}(1-\theta)^{y_2+y_3+b-1}\theta^{y_4+1-1}, \quad 0 \leq \theta \leq 1
-\end{equation}\]</span>
+\end{equation}
 <p>E</p>
-<span class="math display">\[\begin{align*}
+\begin{align*}
 L(\theta|y) = log h(\theta|y) &amp;\propto (y_1)log(2+\theta) + (y_2+y_3+b-1)log(1-\theta) + (y_4+1-1)log(\theta)\\
 L'(\theta) &amp;= \frac{y_1}{2+\theta} - \frac{y_2+y_3+b-1}{1-\theta} + \frac{y_4+1-1}{\theta}\\
 -L''(\theta) &amp;= \frac{y_1}{(2+\theta)^2} + \frac{y_2+y_3+b-1}{(1-\theta)^2} + \frac{y_4+1-1}{(\theta)^2}
-\end{align*}\]</span>
+\end{align*}
 <p>Uma função de importância bastante utilizada é a densidade da Normal, já que o que se pretende simular deve ser similar à distribuição a posteriori, porém como nem sempre isso é adequado, vamos tentar achar uma função de importância. A representação gráfica da verossimilhança pode ajudar na seleção da função, neste caso, uma vez que <span class="math inline">\(\theta \in [0,1]\)</span>, podemos buscar uma função <span class="math inline">\(Beta\)</span> como candidata à função de importância.</p>
 <p>Vamos comparar a função de importância com distribuição normal e com distribuição beta para duas amostras de tamanho <span class="math inline">\(N\)</span>. Usaremos <span class="math inline">\(p_N(\theta)\)</span> para a função de importância normal e <span class="math inline">\(p_B(\theta)\)</span> para a função de importância beta.</p>
 <p>Seja <span class="math inline">\(\hat{\theta}\)</span> o valor de <span class="math inline">\(\theta\)</span> para o qual <span class="math inline">\(L'(\theta) = 0\)</span> e <span class="math inline">\(\hat{\sigma}^2 = \{-L''(\hat{\theta}) \}^{-1}\)</span>. Vamos considerar esses valores como aproximações para a média e variância <em>a posteriori</em>, eles serão necessários para obter os parâmetros das distribuições a serem simuladas. O algorítmo então terá os seguintes passos:</p>
@@ -413,6 +439,7 @@ L'(\theta) &amp;= \frac{y_1}{2+\theta} - \frac{y_2+y_3+b-1}{1-\theta} + \frac{y_
 <li><span class="math inline">\(g(\theta) = \theta^2\)</span> para a aproximação da variância a posteriori</li>
 </ul>
 <p>Com o procedimento acima, basta conhecer o núcleo da distribuição a posteriori, isto é, basta conhecer <span class="math inline">\(h(\theta|Y)\)</span> a menos da constante de proporcionalidade. Também podemos obter uma aproximação boa para a densidade a posteriori atribuindo pesos <span class="math inline">\(\omega_i / \sum_{j=1}^m \omega_j\)</span> aos valores simulados <span class="math inline">\(\theta_i\)</span>.</p>
+</div>
 </div>
 <div id="referencias" class="section level1 unnumbered">
 <h1>Referências</h1>
