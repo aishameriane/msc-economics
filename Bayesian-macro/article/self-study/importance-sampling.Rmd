@@ -439,7 +439,13 @@ Então, $Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2=$ `r (round((4*
 
 **[@hidden_MC]**
 
-<span style="color:red">Aisha: Em construção</span>
+Fala da *amostragem por importância sequencial*.
+
+<span style="color:red">Aisha: Não entendi o que ele quis dizer com: "In the non-linear filtering context, importance sampling algorithms can be implemented sequentially in the sense that, by defining carefully a sequence of instrumental distributions, it is not needed to regenerate the population samples from scratch upon the arrival of each new observation". Onde que isso se encaixa nas coisas vistas acima? </span>
+
+Na amostragem por importância, conforme o número de iterações aumenta, os pesos de importância tendem a degenerar <span style="color:red"> (oi?) </span>. Este fenômeno é conhecido por *sample impoverishment* ou *weight degeneracy*. O que acontece é que no longo prazo a maior parte da amostra tem um peso de importância relativo (o livro usa a palavra normalizado) e acabam não contribuindo de maneira relevante para aproximar a distribuição de interesse.
+
+
 
 # Exemplos
 
