@@ -404,7 +404,9 @@ Var[\hat{p}_4] = \frac{1}{16m^2} \sum\limits_{j=1}^m Var[h(Y_j)] = \frac{m}{16m^
 \end{align*}
 <p>Então, <span class="math inline">\(Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2=\)</span> 9.37510^{-5} <span class="math inline">\(/m\)</span>.</p>
 <p><strong><span class="citation">(Cappé, Moulines, and Rydén 2010)</span></strong></p>
-<p><span style="color:red">Aisha: Em construção</span></p>
+<p>Fala da <em>amostragem por importância sequencial</em>.</p>
+<p><span style="color:red">Aisha: Não entendi o que ele quis dizer com: “In the non-linear filtering context, importance sampling algorithms can be implemented sequentially in the sense that, by defining carefully a sequence of instrumental distributions, it is not needed to regenerate the population samples from scratch upon the arrival of each new observation”. Onde que isso se encaixa nas coisas vistas acima? </span></p>
+<p>Na amostragem por importância, conforme o número de iterações aumenta, os pesos de importância tendem a degenerar <span style="color:red"> (oi?) </span>. Este fenômeno é conhecido por <em>sample impoverishment</em> ou <em>weight degeneracy</em>. O que acontece é que no longo prazo a maior parte da amostra tem um peso de importância relativo (o livro usa a palavra normalizado) e acabam não contribuindo de maneira relevante para aproximar a distribuição de interesse.</p>
 </div>
 </div>
 <div id="exemplos" class="section level1">
