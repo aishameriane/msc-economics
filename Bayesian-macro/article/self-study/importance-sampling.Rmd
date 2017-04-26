@@ -333,8 +333,6 @@ E, novamente usando o fato que $\mathbb{P}(X \geq 2)=$ `r round(1-pcauchy(2,0,1)
 
 ### Método 3
 
-<span style="color:red">Aisha: Verificar</span>
-
 Os dois métodos apresentados anteriormente tem uma ineficiência relativa (<span style="color:red">Aisha: Aqui o livro quer dizer ineficiência do primeiro em relação ao segundo método?</span>) que é devida à geração de valores fora do domínio de interesse, que neste caso é $[2, + \infty)$. Estes termos "extras" são irrelevantes para a aproximação de $p$.
 
 Sabendo que $\mathbb{P}(X > 2) = 1-\mathbb{P}(X < 2)$ e que $\mathbb{P}(X > 2|X>0) = \frac{1}{2}-\mathbb{P}(0< X < 2)$, podemos pensar em escrever $p$ como:
@@ -351,9 +349,9 @@ p = \frac{1}{2} - \int\limits_0^2 \overbrace{\frac{2}{\pi(1+x^2)}}^{h(x)}\underb
 
 A integral em (29) pode ser vista como uma esperança de função de $X$, isto é, utilizando o lema do estatístico inconsciente podemos enxergar $p$ como uma esperança populacional. Isso significa que ele vai poder ser aproximado por uma média amostral:
 
-\begin{equation}\tag{29}
+\begin{equation*}
 \hat{p}_3 = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m h(U_j) = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m \frac{2}{\pi}(1+U_j^2)
-\end{equation}
+\end{equation*}
 
 Onde $U_j \sim \mathcal{U}(0,2)$. Para calcular a variância de $\hat{p}_3$, utilizamos:
 
@@ -366,7 +364,7 @@ Var(\hat{p}_3) &= 0 - Var\left(\frac{1}{m} \sum\limits_{j=1}^m h(U_j) \right)\\
 
 Então, podemos utilizar a forma $\mathbb{E}(X) = \mathbb{E}(X^2)- \mathbb{E}(X)^2$ na expressão acima para obter:
 
-\begin{equation}\tag{3}
+\begin{equation}\tag{30}
 Var(\hat{p}_3) = \frac{1}{m} \mathbb{E}(h^2(U))- \mathbb{E}(h(U))
 \end{equation}
 
@@ -376,10 +374,10 @@ Como $U \sim \mathcal{U}(0,2)$, estas esperanças são calculadas utilizando int
 \mathbb{E}[h(U)] &= \int\limits_0^2 \underbrace{\frac{2}{\pi(1^2 + u^2)}}_{h(U)}\underbrace{\frac{1}{2}}_{\text{fdp de }U} du\\
 &= \frac{1}{\pi}\int\limits_0^2 \frac{1}{\pi(1^2 + u^2)} du \\
 &= \frac{1}{\pi}(tg^-1(u))\Big|_0^2\\
-&= \frac{1}{\pi}tg^-1(2)
+&= \frac{1}{\pi}tg^{-1}(2)
 \end{align*}
 
-Logo, temos que $\mathbb{E}[h(U)] = $`r round(1/pi*(tg(2))^(-1),4)` e portanto $\left(\mathbb{E}[h(U)]\right)^2= $`r round((1/pi*(tg(2))^(-1))^2,4)`.
+Logo, temos que $\mathbb{E}[h(U)] =$ `r round((1/pi)*atan(2),4)` e portanto  $\left(\mathbb{E}[h(U)]\right)^2=$ `r round(((1/pi)*atan(2))^2,4)`.
 
 De maneira similar, 
 
@@ -387,11 +385,44 @@ De maneira similar,
 \mathbb{E}[h^2(U)] &= \int\limits_0^2 \underbrace{\left(\frac{2}{\pi(1^2 + u^2)}\right)^2}_{h^2(U)}\underbrace{\frac{1}{2}}_{\text{fdp de }U} du = \frac{2+5tg^{-1}(2)}{5\pi^2}
 \end{align*}
 
-Logo, $\mathbb{E}[h^2(U)] =$ `r round((2+5*(tg(2))^(-1))/(5*pi^2),4)` e temos $Var(\hat{p}_3) = \frac{1}{m} \mathbb{E}(h^2(U))- \mathbb{E}(h(U)) =$ `r  round(round((2+5*(tg(2))^(-1))/(5*pi^2),4)-round((1/pi*(tg(2))^(-1))^2,4),4)`.
+Logo, $\mathbb{E}[h^2(U)] =$ `r round((2+5*atan(2))/(5*pi^2),4)` e temos $Var(\hat{p}_3) = \frac{1}{m} \mathbb{E}(h^2(U))- \mathbb{E}(h(U)) =$ `r  round(round((2+5*atan(2))/(5*pi^2),4)-round(((1/pi)*atan(2))^2,4),4)`.
 
 ### Método 4
 
-<span style="color:red">Aisha: Tem algumas coisas estranhas (ver no papel)</span>
+Considere agora uma v.a. $Y \sim \mathcal{U}(0,1/2)$. Sabemos que $f_Y(y)=\frac{1}{1/2-0}=\frac{1}{1/2}=2$. Podemos fazer uma transformação de variáveis na expressão (23) utilizando $Y=\frac{1}{X}$, de forma que:
+
+\begin{align*}
+x &= \frac{1}{y}\\
+dx &= -\frac{1}{y^{2}}=-y^{-2}\\
+x=1/2 & \Rightarrow y=2\\
+x\to \infty &\Rightarrow y=0
+\end{align*}
+
+Como os limites de integração precisarão trocar de lugar, a integral ganha um sinal de menos que irá cancelar com o sinal negativo do $dx$, de forma que (23) será:
+
+\begin{align*}
+p = \mathbb{P}(X \geq 2) = \mathbb{P}(0 < Y < 1/2) = \int\limits_0^{\frac{1}{2}} \frac{y^{-2}}{\pi(1+y^{-2})}dy
+\end{align*}
+
+Observe ainda que $\frac{y^{-2}}{(1+y^{-2})} = \frac{1}{y^{2}(1+y^{-2})} = \frac{1}{y^{2}+y^{0}} = \frac{1}{1+ y^{2}}$ e portanto a expressão acima pode ser escrita como:
+
+\begin{align*}
+p = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy
+\end{align*}
+
+Tome $h(Y) = \frac{2}{\pi(1+y^2)}$. Então, $\frac{1}{4}h(Y) = \frac{2}{4\pi(1+y^2)} = \frac{1}{2}\frac{1}{\pi(1+y^2)}$, que é a expressão de $p$. Portanto:
+
+\begin{equation}\tag{31}
+p = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}\frac{2}{\underbrace{2}_{\text{fdp de }Y}}dy = 2\cdot\mathbb{E}\left(\frac{1}{4}h(Y)\right) =\frac{1}{2}\mathbb{E}(h(Y))
+\end{equation}
+
+A esperança em (31) pode ser aproximada por uma média amostral:
+
+\begin{equation}\tag{32}
+\hat{p}_4 = \frac{1}{4m}\sum\limits_{j=1}^m h(Y_j)
+\end{equation}
+
+<span style="color:red">Aisha: Verificar esse finalzinho</span>
 
 **[@hidden_MC]**
 
