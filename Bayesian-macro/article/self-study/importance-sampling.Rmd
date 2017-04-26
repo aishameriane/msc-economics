@@ -333,7 +333,7 @@ E, novamente usando o fato que $\mathbb{P}(X \geq 2)=$ `r round(1-pcauchy(2,0,1)
 
 ### Método 3
 
-<span style="color:red">Aisha: Em construção</span>
+<span style="color:red">Aisha: Verificar</span>
 
 Os dois métodos apresentados anteriormente tem uma ineficiência relativa (<span style="color:red">Aisha: Aqui o livro quer dizer ineficiência do primeiro em relação ao segundo método?</span>) que é devida à geração de valores fora do domínio de interesse, que neste caso é $[2, + \infty)$. Estes termos "extras" são irrelevantes para a aproximação de $p$.
 
@@ -366,48 +366,52 @@ Var(\hat{p}_3) &= 0 - Var\left(\frac{1}{m} \sum\limits_{j=1}^m h(U_j) \right)\\
 
 Então, podemos utilizar a forma $\mathbb{E}(X) = \mathbb{E}(X^2)- \mathbb{E}(X)^2$ na expressão acima para obter:
 
-\begin{equation}\tag{3}0githu
+\begin{equation}\tag{3}
 Var(\hat{p}_3) = \frac{1}{m} \mathbb{E}(h^2(U))- \mathbb{E}(h(U))
 \end{equation}
 
-A segunda integral pode ser obtida utilizando a f.d.p. da distribuição uniforme e a lei do estatístico inconsciente, e será igual a zero:
+Como $U \sim \mathcal{U}(0,2)$, estas esperanças são calculadas utilizando integrais. As integrais são obtidas usando integrais de funções trigonométricas. Lembrando que $\int 1/(a^2+x^2) = (1/a) tan^{-1}(x/a) + c$, temos que a segunda integral será dada por:
 
 \begin{align*}
-\mathbb{E}(h(U)) &= \int_0^2 h(u) f_U(u) du \\
-&= \int_0^2 \frac{2}{\pi}(1+u^2)\frac{1}{2} du \\
-&= \int_0^2 \frac{(1+u^2)}{\pi} du \\
-&= \int_0^2 \frac{1}{\pi}+\frac{u^2}{\pi} du \\
-&= \left[\frac{u}{\pi}+\frac{u^3}{3\pi}\right]\Big|_{0}^{2} du \\
-&= \frac{2}{\pi}+\frac{2^3}{3\pi} = \frac{6+8}{3\pi} = \frac{14}{3\pi}
+\mathbb{E}[h(U)] &= \int\limits_0^2 \underbrace{\frac{2}{\pi(1^2 + u^2)}}_{h(U)}\underbrace{\frac{1}{2}}_{\text{fdp de }U} du\\
+&= \frac{1}{\pi}\int\limits_0^2 \frac{1}{\pi(1^2 + u^2)} du \\
+&= \frac{1}{\pi}(tg^-1(u))\Big|_0^2\\
+&= \frac{1}{\pi}tg^-1(2)
 \end{align*}
 
-A primeira integral é obtida de maneira similar:
+Logo, temos que $\mathbb{E}[h(U)] = $`r round(1/pi*(tg(2))^(-1),4)` e portanto $\left(\mathbb{E}[h(U)]\right)^2= $`r round((1/pi*(tg(2))^(-1))^2,4)`.
+
+De maneira similar, 
 
 \begin{align*}
-\mathbb{E}(h^2(U)) &= \int_0^2 h^2(u) f_U(u) du\\
-&= \int_0^2 \left(\frac{2}{\pi}(1+u^2)\right)^2\frac{1}{2} du\\
-&= \int_0^2 2\frac{(1+u^2)^2}{\pi^2} du\\
-&= \int_0^2 \frac{2(u^4+2u^2+1)}{\pi^2} du\\
-&= \frac{2}{\pi^2}\left[\int_0^2 u^4du + \int_0^2 2u^2du + \int_0^2 du\right]\\
-&= \frac{2}{\pi^2}\left[
-&= 0
+\mathbb{E}[h^2(U)] &= \int\limits_0^2 \underbrace{\left(\frac{2}{\pi(1^2 + u^2)}\right)^2}_{h^2(U)}\underbrace{\frac{1}{2}}_{\text{fdp de }U} du = \frac{2+5tg^{-1}(2)}{5\pi^2}
 \end{align*}
+
+Logo, $\mathbb{E}[h^2(U)] =$ `r round((2+5*(tg(2))^(-1))/(5*pi^2),4)` e temos $Var(\hat{p}_3) = \frac{1}{m} \mathbb{E}(h^2(U))- \mathbb{E}(h(U)) =$ `r  round(round((2+5*(tg(2))^(-1))/(5*pi^2),4)-round((1/pi*(tg(2))^(-1))^2,4),4)`.
 
 ### Método 4
 
-<span style="color:red">Aisha: Em construção</span>
-
+<span style="color:red">Aisha: Tem algumas coisas estranhas (ver no papel)</span>
 
 **[@hidden_MC]**
 
 <span style="color:red">Aisha: Em construção</span>
 
-# Exemplo
-
+# Exemplos
 
 <span style="color:red">Aisha: Em construção</span>
 
-(Exemplo adaptado de 5.2 e 7.1 de [@murteira])
+## Exemplo 3.10 - [@casella_MC]
+
+<span style="color:red">Aisha: Verificar com o Guilherme como que faz o scaled squared error loss</span>
+
+## Exemplo 3.11 - [@casella_MC]
+
+<span style="color:red">Aisha: Em construção</span>
+
+## Exemplo adaptado de 5.2 e 7.1 de [@murteira]
+
+<span style="color:red">Aisha: Em construção</span>
 
 Segundo um modelo genético, pokémons de uma determinada região estão distribuídos em 4 categorias, de acordo com as seguintes probabilidades:
 
