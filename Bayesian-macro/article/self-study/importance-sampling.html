@@ -330,6 +330,7 @@ Var[\hat{p}_2] = Var\left[\frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| &gt;
 </div>
 <div id="metodo-3" class="section level3">
 <h3>Método 3</h3>
+<p><span style="color:red">Aisha: Em construção</span></p>
 <p>Os dois métodos apresentados anteriormente tem uma ineficiência relativa (<span style="color:red">Aisha: Aqui o livro quer dizer ineficiência do primeiro em relação ao segundo método?</span>) que é devida à geração de valores fora do domínio de interesse, que neste caso é <span class="math inline">\([2, + \infty)\)</span>. Estes termos “extras” são irrelevantes para a aproximação de <span class="math inline">\(p\)</span>.</p>
 <p>Sabendo que <span class="math inline">\(\mathbb{P}(X &gt; 2) = 1-\mathbb{P}(X &lt; 2)\)</span> e que <span class="math inline">\(\mathbb{P}(X &gt; 2|X&gt;0) = \frac{1}{2}-\mathbb{P}(0&lt; X &lt; 2)\)</span>, podemos pensar em escrever <span class="math inline">\(p\)</span> como:</p>
 <span class="math display">\[\begin{equation}\tag{28}
@@ -344,9 +345,35 @@ p = \frac{1}{2} - \int\limits_0^2 \overbrace{\frac{2}{\pi(1+x^2)}}^{h(x)}\underb
 \hat{p}_3 = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m h(U_j) = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m \frac{2}{\pi}(1+U_j^2)
 \end{equation}\]</span>
 <p>Onde <span class="math inline">\(U_j \sim \mathcal{U}(0,2)\)</span>. Para calcular a variância de <span class="math inline">\(\hat{p}_3\)</span>, utilizamos:</p>
-<span class="math display">\[\begin{equation}\tag{30}
-Var(\hat{p}_3) = 0 - Var\left(\frac{1}{m} \sum\limits_{j=1}^m h(U_j) = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m \frac{2}{\pi}(1+U_j^2)\right) = \frac{1}{m^2} \sum\limits_{j=1}^m Var(h(U_j)) = \frac{1}{m^2} \cdot m Var(h(U_j)) = \frac{1}{m} Var(h(U_j))
+<span class="math display">\[\begin{align*}
+Var(\hat{p}_3) &amp;= 0 - Var\left(\frac{1}{m} \sum\limits_{j=1}^m h(U_j) \right)\\
+&amp;= \frac{1}{m^2} \sum\limits_{j=1}^m Var(h(U_j)) \\
+&amp;= \frac{1}{m^2} \cdot m Var(h(U_j)) \\
+&amp;= \frac{1}{m} Var(h(U_j))
+\end{align*}\]</span>
+<p>Então, podemos utilizar a forma <span class="math inline">\(\mathbb{E}(X) = \mathbb{E}(X^2)- \mathbb{E}(X)^2\)</span> na expressão acima para obter:</p>
+<span class="math display">\[\begin{equation}\tag{3}0githu
+Var(\hat{p}_3) = \frac{1}{m} \mathbb{E}(h^2(U))- \mathbb{E}(h(U))
 \end{equation}\]</span>
+<p>A segunda integral pode ser obtida utilizando a f.d.p. da distribuição uniforme e a lei do estatístico inconsciente, e será igual a zero:</p>
+<span class="math display">\[\begin{align*}
+\mathbb{E}(h(U)) &amp;= \int_0^2 h(u) f_U(u) du \\
+&amp;= \int_0^2 \frac{2}{\pi}(1+u^2)\frac{1}{2} du \\
+&amp;= \int_0^2 \frac{(1+u^2)}{\pi} du \\
+&amp;= \int_0^2 \frac{1}{\pi}+\frac{u^2}{\pi} du \\
+&amp;= \left[\frac{u}{\pi}+\frac{u^3}{3\pi}\right]\Big|_{0}^{2} du \\
+&amp;= \frac{2}{\pi}+\frac{2^3}{3\pi} = \frac{6+8}{3\pi} = \frac{14}{3\pi}
+\end{align*}\]</span>
+<p>A primeira integral é obtida de maneira similar:</p>
+<span class="math display">\[\begin{align*}
+\mathbb{E}(h^2(U)) &amp;= \int_0^2 h^2(u) f_U(u) du\\
+&amp;= \int_0^2 \left(\frac{2}{\pi}(1+u^2)\right)^2\frac{1}{2} du\\
+&amp;= \int_0^2 2\frac{(1+u^2)^2}{\pi^2} du\\
+&amp;= \int_0^2 \frac{2(u^4+2u^2+1)}{\pi^2} du\\
+&amp;= \frac{2}{\pi^2}\left[\int_0^2 u^4du + \int_0^2 2u^2du + \int_0^2 du\right]\\
+&amp;= \frac{2}{\pi^2}\left[
+&amp;= 0
+\end{align*}\]</span>
 </div>
 <div id="metodo-4" class="section level3">
 <h3>Método 4</h3>
