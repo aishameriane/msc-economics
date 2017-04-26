@@ -422,7 +422,20 @@ A esperança em (31) pode ser aproximada por uma média amostral:
 \hat{p}_4 = \frac{1}{4m}\sum\limits_{j=1}^m h(Y_j)
 \end{equation}
 
-<span style="color:red">Aisha: Verificar esse finalzinho</span>
+Usando o mesmo método, calculamos a variância de $\hat{p}_4$:
+
+\begin{equation*}
+Var[\hat{p}_4] = \frac{1}{16m^2} \sum\limits_{j=1}^m Var[h(Y_j)] = \frac{m}{16m^2} Var[h(Y_j)] = \frac{Var[h(Y_j)]}{16m}
+\end{equation*}
+
+Uma vez que $Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2$, teremos que calcular cada um dos termos, também utilizando integração por partes.
+
+\begin{align*}
+\mathbb{E}[h(Y_j)] = \frac{4}{\pi}tg^{-1}(1/2)\\
+\mathbb{E}[h^2(Y_j)] = \frac{4(2+5 tg^{-1}(1/2))}{5\pi^2}
+\end{align*}
+
+Então, $Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2=$ `r (round((4*(2+5*atan(1/2)))/(5*pi^2),4) - round(((4/pi)*atan(1/2))^2,4))/16` $/m$.
 
 **[@hidden_MC]**
 
@@ -479,5 +492,3 @@ Seja $\hat{\theta}$ o valor de $\theta$ para o qual $L'(\theta) = 0$ e $\hat{\si
 Com o procedimento acima, basta conhecer o núcleo da distribuição a posteriori, isto é, basta conhecer $h(\theta|Y)$ a menos da constante de proporcionalidade. Também podemos obter uma aproximação boa para a densidade a posteriori atribuindo pesos $\omega_i / \sum_{j=1}^m \omega_j$ aos valores simulados $\theta_i$.
 
 # Referências
-
-
