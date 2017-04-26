@@ -393,7 +393,16 @@ p = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy = \int\limits_0^{\frac{
 \begin{equation}\tag{32}
 \hat{p}_4 = \frac{1}{4m}\sum\limits_{j=1}^m h(Y_j)
 \end{equation}
-<p><span style="color:red">Aisha: Verificar esse finalzinho</span></p>
+<p>Usando o mesmo método, calculamos a variância de <span class="math inline">\(\hat{p}_4\)</span>:</p>
+\begin{equation*}
+Var[\hat{p}_4] = \frac{1}{16m^2} \sum\limits_{j=1}^m Var[h(Y_j)] = \frac{m}{16m^2} Var[h(Y_j)] = \frac{Var[h(Y_j)]}{16m}
+\end{equation*}
+<p>Uma vez que <span class="math inline">\(Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2\)</span>, teremos que calcular cada um dos termos, também utilizando integração por partes.</p>
+\begin{align*}
+\mathbb{E}[h(Y_j)] = \frac{4}{\pi}tg^{-1}(1/2)\\
+\mathbb{E}[h^2(Y_j)] = \frac{4(2+5 tg^{-1}(1/2))}{5\pi^2}
+\end{align*}
+<p>Então, <span class="math inline">\(Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2=\)</span> 9.37510^{-5} <span class="math inline">\(/m\)</span>.</p>
 <p><strong><span class="citation">(Cappé, Moulines, and Rydén 2010)</span></strong></p>
 <p><span style="color:red">Aisha: Em construção</span></p>
 </div>
