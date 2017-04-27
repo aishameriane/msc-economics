@@ -32,7 +32,7 @@ MathJax.Hub.Config({
 - Seção 4.3.1 de [@rubinstein]
 - Seção 2.2.2 de [@moura_2010]
 - Seção 3.3 de [@casella_MC]
-- Seção xx de [@hidden_MC]
+- Seção 7.1 de [@hidden_MC]
 
 # Métodos de Monte Carlo
 
@@ -213,7 +213,7 @@ Voltando a [@rubinstein], podemos reescrever (14) como:
 I  = \int \frac{g(x)}{m_X(x)}m_X(x) dx = \mathbb{E}_m\left[\frac{g(x)}{m_X(x)} \right]
 \end{equation}
 
-Onde $X$ é um vetor aleatório com densidade $m_X(\cdot)$ tal que $m_X(x) > 0 \ \forall \ x \in D$. A função $m_X(\cdot)$ é conhecida como *distribuição de importância* <span style="color:red">Aisha: Qual a melhor tradução para *importance sampling distribution*?</span>.
+Onde $X$ é um vetor aleatório com densidade $m_X(\cdot)$ tal que $m_X(x) > 0 \ \forall \ x \in D$. A função $m_X(\cdot)$ é conhecida como **amostrador de importância** (*importance sampler*). **Obs:** <span style="color:green">Aisha: Qual a melhor tradução para *importance sampling distribution*? R: amostrador por importância, pois *importance sampling distribution* é sinônimo de *importance sampler*</span>.
 
 Considere o estimador:
 
@@ -255,7 +255,7 @@ A equação (19) aparece quando substituímos (20) em (17).
 Var[\theta] = \underbrace{\int \frac{g^2(X)}{m_X(X)}dx - I^2}_{\text{(17)}} = \int \frac{g^2(X)}{\underbrace{\frac{|g(x)|}{\int |g(x)|dx}}_{\text{(20)}}}dx - I^2 = \int \frac{g^2(X)\int |g(x)|dx}{|g(x)|}dx - I^2 = \left(\int |g(x)|dx\right)^2 - I^2
 \end{equation}
 
-<span style="color:green">Para verificar que podemos simplificar o quadrado com o módulo, observe que $a^2/|a| = |a|^2/|a| = |a|$ </span>.
+<span style="color:green">Para verificar que podemos simplificar o quadrado com o módulo, observe que $a^2/|a| = |a|^2/|a| = |a|$. Na dúvida, só fazer para um número real qualquer.</span>.
 
 Para demonstrar que $Var[\theta] \leq Var[\hat{I}_S]$ é suficiente mostrar que $\left(\int |g(x)|dx\right)^2 \leq \int \frac{g^2(X)}{m_X(X)}dx$. Este resultado é obtido utilizando a desigualdade de [Cauchy-Schwarz](https://www.ime.usp.br/~oliveira/ELE-CauchySchwarz.pdf):
 
@@ -264,7 +264,7 @@ Para demonstrar que $Var[\theta] \leq Var[\hat{I}_S]$ é suficiente mostrar que 
 & \leq \int \frac{g^2(x)}{m_X(x)} dx \underbrace{\int m_X(x)dx}_{=1} = \int \frac{g^2(x)}{m_X(x)} dx
 \end{align*}
 
-<span style="color:green">Aisha: Pq pode separar as integrais em duas?</span> R: Pode-se fazer um produto interno em funções quadrado integráveis, que é definido como $<f(x),g(x)> = \int f(x)g(x)dx$. Então, usando a desigualdade de Cauchy-Shwarz, temos:
+<span style="color:green">P: Por que pode separar as integrais em duas?</span> R: Pode-se fazer um produto interno em funções quadrado integráveis (que é o caso aqui pois $g(x) \in L^2$, equivalentemente, todo mundo tem variância finita -- <span style="color:red"> talvez para adaptar a fórmula para o formato dos outros livros onde tem a $g(x)\cdot f(x)$ tenha que mostrar que esse produto é quadrado integrável também</span>), que é definido como $<f(x),g(x)> = \int f(x)g(x)dx$. Então, usando a desigualdade de Cauchy-Shwarz, temos:
 \begin{align*}
 <h(x),l(x)> &\leq \norm{h(x)}\norm{l(x)} \\
 (<h(x),l(x)>)^2 &\leq (\norm{h(x)})^2(\norm{l(x)})^2 \\
@@ -307,7 +307,7 @@ Imagine que os valores em (23) não sejam de fácil obtenção. Podemos utilizar
 p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2}
 \end{equation}
 
-A variância do estimador $\hat{p}_1$ pode ser obtida da seguinte maneira <span style="color:red">Aisha: Ver se é isso mesmo: pode considerar as indicadoras independentes e a variância ser a mesma da Binomial?</span>:
+A variância do estimador $\hat{p}_1$ pode ser obtida da seguinte maneira:
 
 \begin{equation}\tag{25}
 Var[\hat{p}_1] = Var\left[\frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2} \right] = \frac{1}{m^2} \sum\limits_{j=1}^m \left( Var[\mathbb{I}_{X_j > 2]} \right) = \frac{1}{m^2}mp(1-p) = \frac{p(1-p)}{m}
@@ -323,8 +323,6 @@ Visando reduzir a variância de (24), podemos propôr outro estimador. Considera
 p \approx \hat{p}_2 = \frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| > 2}
 \end{equation}
 
-style="color:red">Aisha: Não entendi bem se é assim</span>
-
 \begin{equation}\tag{27}
 Var[\hat{p}_2] = Var\left[\frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| > 2} \right] = \frac{1}{4m^2} \sum\limits_{j=1}^m \left( Var[\mathbb{I}_{|X_j| > 2]} \right) = \frac{1}{4m^2}\cdot 2mp(1-2p) = \frac{p(1-2p)}{2m}
 \end{equation}
@@ -333,7 +331,7 @@ E, novamente usando o fato que $\mathbb{P}(X \geq 2)=$ `r round(1-pcauchy(2,0,1)
 
 ### Método 3
 
-Os dois métodos apresentados anteriormente tem uma ineficiência relativa (<span style="color:red">Aisha: Aqui o livro quer dizer ineficiência do primeiro em relação ao segundo método?</span>) que é devida à geração de valores fora do domínio de interesse, que neste caso é $[2, + \infty)$. Estes termos "extras" são irrelevantes para a aproximação de $p$.
+Os dois métodos apresentados anteriormente tem uma ineficiência relativa aos que serão apresentados nos exemplos 3 e 4, que é devida à geração de valores fora do domínio de interesse, que neste caso é $[2, + \infty)$. Estes termos "extras" são irrelevantes para a aproximação de $p$.
 
 Sabendo que $\mathbb{P}(X > 2) = 1-\mathbb{P}(X < 2)$ e que $\mathbb{P}(X > 2|X>0) = \frac{1}{2}-\mathbb{P}(0< X < 2)$, podemos pensar em escrever $p$ como:
 
@@ -441,11 +439,9 @@ Então, $Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2=$ `r (round((4*
 
 Fala da *amostragem por importância sequencial*.
 
-<span style="color:red">Aisha: Não entendi o que ele quis dizer com: "In the non-linear filtering context, importance sampling algorithms can be implemented sequentially in the sense that, by defining carefully a sequence of instrumental distributions, it is not needed to regenerate the population samples from scratch upon the arrival of each new observation". Onde que isso se encaixa nas coisas vistas acima? </span>
+*"In the non-linear filtering context, importance sampling algorithms can be implemented sequentially in the sense that, by defining carefully a sequence of instrumental distributions, it is not needed to regenerate the population samples from scratch upon the arrival of each new observation"*. Essas ideias acabam sendo utilizadas na construção de filtros, em particular do filtro de partículas, mas no momento não será foco de estudo.
 
-Na amostragem por importância, conforme o número de iterações aumenta, os pesos de importância tendem a degenerar <span style="color:red"> (oi?) </span>. Este fenômeno é conhecido por *sample impoverishment* ou *weight degeneracy*. O que acontece é que no longo prazo a maior parte da amostra tem um peso de importância relativo (o livro usa a palavra normalizado) e acabam não contribuindo de maneira relevante para aproximar a distribuição de interesse.
-
-
+Na amostragem por importância, conforme o número de iterações aumenta, os pesos de importância tendem a degenerar. Este fenômeno é conhecido por *sample impoverishment* ou *weight degeneracy*. O que acontece é que no longo prazo a maior parte da amostra tem um peso de importância relativo (o livro usa a palavra normalizado) e acabam não contribuindo de maneira relevante para aproximar a distribuição de interesse.
 
 # Exemplos
 
@@ -453,11 +449,29 @@ Na amostragem por importância, conforme o número de iterações aumenta, os pe
 
 ## Exemplo 3.10 - [@casella_MC]
 
-<span style="color:red">Aisha: Verificar com o Guilherme como que faz o scaled squared error loss</span>
+<span style="color:red">Aisha: Ver com o Guilherme como que faz o scaled squared error loss</span>
 
 ## Exemplo 3.11 - [@casella_MC]
 
 <span style="color:red">Aisha: Em construção</span>
+
+Suponha que você tem interesse em estimar $p=\mathbb{P}(Z > 4.5)$, quando $Z \sim \mathcal{N}(0,1)$.
+
+Poderíamos simular $p$ utilizando um método similar aos exemplos anteriores:
+
+\begin{equation*}
+p = \mathbb{P}(Z > 4.5) \approx \frac{1}{m} \sum\limits_{i=1}^m \mathbb{I}_{Z^{(i)}>4.5}
+\end{equation*}
+
+```{r}
+m<-10000
+indicadora<-rep(0,m)
+
+for (i in 1:m){
+  
+  
+}
+```
 
 ## Exemplo adaptado de 5.2 e 7.1 de [@murteira]
 
