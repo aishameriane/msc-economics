@@ -1,28 +1,28 @@
 ---
-title: "Exemplos_MC"
+title: "Exemplos Monte Carlo"
 author: "Aishameriane Schmidt"
-date: "√öltima atualiza√ß√£o: 05 de maio de 2017"
+date: "⁄ltima atualizaÁ„o: 05 de maio de 2017"
 output: html_document
 ---
 
-# Exemplos da aula do dia 10/04/17 - Integra√ß√£o por Monte Carlo
+# Exemplos da aula do dia 10/04/17 - IntegraÁ„o por Monte Carlo
 
-## Exemplo 1: Integrando uma fun√ß√£o determin√≠stica
+## Exemplo 1: Integrando uma funÁ„o determinÌstica
 
-Suponha que o objetivo √© integrar $I = \int_1^2 \exp(\theta)d\theta$ sem usar integra√ß√£o anal√≠tica.
+Suponha que o objetivo È integrar $I = \int_1^2 \exp(\theta)d\theta$ sem usar integraÁ„o analÌtica.
 
-Reinterprete $I$ com,o uma esperan√ßa em rela√ß√£o a $\theta \sim U(1,2)$ (escolhida de maneira conveniente dentro dos intervalos de integra√ß√£o). Sabemos que a densidade de uma $Uniforme[a,b]$ √© $\frac{1}{b-a}$, de forma que $p_U(\theta) = 1/(2-1)$. Obtemos ent√£o:
+Reinterprete $I$ com,o uma esperanÁa em relaÁ„o a $\theta \sim U(1,2)$ (escolhida de maneira conveniente dentro dos intervalos de integraÁ„o). Sabemos que a densidade de uma $Uniforme[a,b]$ È $\frac{1}{b-a}$, de forma que $p_U(\theta) = 1/(2-1)$. Obtemos ent„o:
 
 $$I = \int\limits_1^2 \exp\{\theta \} d\theta = (2-1)\int\limits_1^2 \exp\{\theta \}\frac{1}{2-1}d \theta = (2-1) \mathbb{E}_{\mathcal{U}}[\exp\{\theta\}]$$
 
-Para aproximar a integral, simule $S$ observa√ß√µes de $\theta \sim U(1,2)$ e aproxime $\mathbb{E}[\exp(\theta)]$ atrav√©s da m√©dia amostral:
+Para aproximar a integral, simule $S$ observaÁıes de $\theta \sim U(1,2)$ e aproxime $\mathbb{E}[\exp(\theta)]$ atravÈs da mÈdia amostral:
 
 $$\hat{I}_n = \frac{1}{S}\sum\limits_{i=1}^S \exp(\theta_i)$$
 
-Usando $S=10.000$, obtemos $4.7080$ (o valor est√° diferente das notas de aula possivelmente pela diferen√ßa na semente aleat√≥ria e no programa), que √© uma aproxima√ß√£o razo√°vel para o valor exato `r exp(2)-exp(1)`.
+Usando $S=10.000$, obtemos $4.7080$ (o valor est· diferente das notas de aula possivelmente pela diferenÁa na semente aleatÛria e no programa), que È uma aproximaÁ„o razo·vel para o valor exato `r exp(2)-exp(1)`.
 
 ```{r}
-# Fixa uma semente aleat√≥ria 
+# Fixa uma semente aleatÛria 
 #(para poder reproduzir o exemplo depois obtendo os mesmos valores)
 set.seed(1234)
 
@@ -41,15 +41,15 @@ I_n
 
 ## Exemplo 2: FDA da Normal
 
-A F.D.A. Normal padr√£o, dada por 
+A F.D.A. Normal padr„o, dada por 
 $$\Phi(\theta)=\int_{-\infty}^{x}\!\frac{1}{\sqrt{2\pi}}e^{\theta^2/2}\,d\theta$$
-n√£o possui f√≥rmula fechada, ent√£o pode ser interessante considerar integra√ß√£o MC. Se amostrarmos $\theta^i\sim N(0,1)$, ent√£o
+n„o possui fÛrmula fechada, ent„o pode ser interessante considerar integraÁ„o MC. Se amostrarmos $\theta^i\sim N(0,1)$, ent„o
 $$
 \Phi(t)=\int_{-\infty}^{t}\!\frac{1}{\sqrt{2\pi}}e^{\theta^2/2}\,d\theta\approx\widehat{\Phi}_S(t)=\frac{1}{S}\sum_{i=1}^{S}1{\hskip -2.5 pt}\hbox{I}(\theta^{i}\leq t)
 $$
 
-Note que $\widehat{\Phi}_S(t)$ √© uma vari√°vel aleat√≥ria Bernoulli, logo sua vari√¢ncia √© $\Phi(t)(1-\Phi(t))/S$.
-$t$ pr√≥ximo de 0 implica que a vari√¢ncia de $\widehat{\Phi}_S(t)$ √© $1/4S$, logo precisamos de $200.000$ observa√ß√µes, em m√©dia, para conseguirmos precis√£o de 4 d√≠gitos.
+Note que $\widehat{\Phi}_S(t)$ È uma vari·vel aleatÛria Bernoulli, logo sua vari‚ncia È $\Phi(t)(1-\Phi(t))/S$.
+$t$ prÛximo de 0 implica que a vari‚ncia de $\widehat{\Phi}_S(t)$ È $1/4S$, logo precisamos de $200.000$ observaÁıes, em mÈdia, para conseguirmos precis„o de 4 dÌgitos.
 
 ```{r}
 # Fixa a semente
@@ -67,7 +67,7 @@ indicadora <- rep(0,200000)
 # Gera um vetor para guardar os thetas
 thetas<-rep(0,length(indicadora))
 
-# Gera um valor aleat√≥rio da normal padr√£o e compara com o valor de t
+# Gera um valor aleatÛrio da normal padr„o e compara com o valor de t
 for (i in 1:length(indicadora)){
   theta<-rnorm(1, mean = 0, sd = 1)
   ifelse(theta <= t, indicadora[i] <- 1, indicadora[i]<-0)
@@ -79,11 +79,11 @@ sigma_chapeu<-(1/length(indicadora))*sum((thetas-g_chapeu)^2)
 desv_pad_num<-sqrt(sigma_chapeu)/(sqrt(length(indicadora)))
 ```
 
-Comparando o valor tabelado de `r pnorm(t,mean=0,sd=1)` com o valor aproximado de `r sum(indicadora)/length(indicadora)` obtemos uma diferen√ßa de `r pnorm(t,mean=0,sd=1) - sum(indicadora)/length(indicadora)` entre eles. O valor de $\hat{\sigma}_g^2$ √© de `r round(sigma_chapeu,4)` e portanto o nosso desvio padr√£o num√©rico, dado por $\frac{\hat{\sigma}_g}{\sqrt{S}}$, √© de `r round(sqrt(sigma_chapeu)/(sqrt(length(indicadora))),4)`. 
+Comparando o valor tabelado de `r pnorm(t,mean=0,sd=1)` com o valor aproximado de `r sum(indicadora)/length(indicadora)` obtemos uma diferenÁa de `r pnorm(t,mean=0,sd=1) - sum(indicadora)/length(indicadora)` entre eles. O valor de $\hat{\sigma}_g^2$ È de `r round(sigma_chapeu,4)` e portanto o nosso desvio padr„o numÈrico, dado por $\frac{\hat{\sigma}_g}{\sqrt{S}}$, È de `r round(sqrt(sigma_chapeu)/(sqrt(length(indicadora))),4)`. 
 
-<span style="color:red">Aisha: Aqui agora eu fiquei com d√∫vida: o desvio padr√£o num√©rico serve quando eu tenho apenas uma estimativa para $\hat{sigma}^2_g$ vinda de uma √∫nica $\hat{g}_S(\theta)$? Pq eu tenho um S de 200.000, se eu repetir esse processo v√°rias vezes a√≠ o que calcula n√£o vai ser um desvio padr√£o como nos slides, ou vai? Daria para montar a curvinha normal, mas n√£o √© bem esse objetivo, certo?</span>
+<span style="color:red">Aisha: Aqui agora eu fiquei com d˙vida: o desvio padr„o numÈrico serve quando eu tenho apenas uma estimativa para $\hat{sigma}^2_g$ vinda de uma ˙nica $\hat{g}_S(\theta)$? Pq eu tenho um S de 200.000, se eu repetir esse processo v·rias vezes aÌ o que calcula n„o vai ser um desvio padr„o como nos slides, ou vai? Daria para montar a curvinha normal, mas n„o È bem esse objetivo, certo?</span>
 
-Mas para efetivamente saber qu√£o bom √© este procedimento (afinal pode ser que tivemos "sorte"), precisamos amostrar v√°rias vezes este valor.
+Mas para efetivamente saber qu„o bom È este procedimento (afinal pode ser que tivemos "sorte"), precisamos amostrar v·rias vezes este valor.
 
 ```{r}
 # Cria um vetor para theta
@@ -98,8 +98,8 @@ indicadora <- rep(0,5000)
 # Cria um vetor para as estimativas
 agregado <- rep(0,1000)
 
-# Gera 1000 valores aleat√≥rios da normal padr√£o e compara com o valor de t
-# N√£o √© muito eficiente colocar for dentro de for, mas √© o que tem pra hoje.
+# Gera 1000 valores aleatÛrios da normal padr„o e compara com o valor de t
+# N„o È muito eficiente colocar for dentro de for, mas È o que tem pra hoje.
 for (j in 1:1000) {
   for (i in 1:length(indicadora)){
     theta<-rnorm(1, mean = 0, sd = 1)
@@ -109,9 +109,9 @@ agregado[j]<-sum(indicadora)/length(indicadora)
 }
 ```
 
-A m√©dia das nossas estimativas foi de `r round(mean(agregado),4)` e o desvio padr√£o foi de `r round(sd(agregado),4)`. <span style="color:red">Aisha: Faz sentido calcular desvio padr√£o num√©rico aqui?</span>
+A mÈdia das nossas estimativas foi de `r round(mean(agregado),4)` e o desvio padr„o foi de `r round(sd(agregado),4)`. <span style="color:red">Aisha: Faz sentido calcular desvio padr„o numÈrico aqui?</span>
 
-Podemos ver na figura abaixo como de fato as diversas realiza√ß√µes de $\hat{g}_S(\theta)$ nos levam a um comportamento similar ao de uma distribui√ß√£o normal centrada em $0.5$:
+Podemos ver na figura abaixo como de fato as diversas realizaÁıes de $\hat{g}_S(\theta)$ nos levam a um comportamento similar ao de uma distribuiÁ„o normal centrada em $0.5$:
 
 ```{r, echo=FALSE}
 library(latex2exp)
@@ -124,7 +124,7 @@ dados<-data.frame(x,y)
 p <- ggplot(dados, aes(x = y)) +
         geom_histogram(color = "black", fill="white", binwidth = .001)+
         ylab(TeX("$\\hat{g}_S(\\theta)$")) +
-        ggtitle(TeX("Distribui√ß√£o dos valores estimados para $g(\\theta)$")) +
+        ggtitle(TeX("DistribuiÁ„o dos valores estimados para $g(\\theta)$")) +
         scale_colour_brewer(palette="Set1") +
         theme(axis.line = element_line(size=1, colour = "black"),
               panel.grid.major = element_blank(),
@@ -139,13 +139,13 @@ p + geom_vline(aes(xintercept=pnorm(0,mean=0,sd=1)),
             color="blue", linetype="dashed", size=1)
 ```
 
-Para $t$ menor que $-4.5$ precisaremos de muito mais observa√ß√µes ainda para conseguir uma estimativa acurada para esta probabilidade.
+Para $t$ menor que $-4.5$ precisaremos de muito mais observaÁıes ainda para conseguir uma estimativa acurada para esta probabilidade.
 
 ```{r}
 # Seta a semente
 set.seed(1234)
 
-# Cria uma vari√°vel para theta
+# Cria uma vari·vel para theta
 theta<-rep(0,1)
 
 # Fixa um t
@@ -154,14 +154,14 @@ t <- -4.5
 # Cria um vetor para as indicadoras
 indicadora <- rep(0,10000)
 
-# Gera um valor aleat√≥rio da normal padr√£o e compara com o valor de t
+# Gera um valor aleatÛrio da normal padr„o e compara com o valor de t
 for (i in 1:length(indicadora)){
   theta<-rnorm(1, mean = 0, sd = 1)
   ifelse(theta <= t, indicadora[i] <- 1, indicadora[i]<-0)
 }
 ```
 
-Observe que em 10.000 realiza√ß√µes n√≥s n√£o encontramos nenhum valor que esteja abaixo de $-4.5$, pois a soma `sum(indicadora)` √© igual a `r sum(indicadora)`. Embora a probabilidade seja baixa, ela n√£o √© igual a zero: $\mathbb{P}(X \leq -4.5) =$ `r pnorm(t,mean=0,sd=1)` e por isso nosso resultado utilizando o MC tradicional n√£o √© confi√°vel.
+Observe que em 10.000 realizaÁıes nÛs n„o encontramos nenhum valor que esteja abaixo de $-4.5$, pois a soma `sum(indicadora)` È igual a `r sum(indicadora)`. Embora a probabilidade seja baixa, ela n„o È igual a zero: $\mathbb{P}(X \leq -4.5) =$ `r pnorm(t,mean=0,sd=1)` e por isso nosso resultado utilizando o MC tradicional n„o È confi·vel.
 
 Podemos fazer o mesmo procedimento que anteriormente para repetir este processo e verificar como ficam nossas estimativas:
 
@@ -169,7 +169,7 @@ Podemos fazer o mesmo procedimento que anteriormente para repetir este processo 
 # Seta a semente
 set.seed(1235)
 
-# Uma vari√°vel para theta
+# Uma vari·vel para theta
 theta<-rep(0,1)
 
 # Fixa um t
@@ -181,7 +181,7 @@ indicadora <- rep(0,10000)
 # Cria um vetor para ir salvando as estimativas
 agregado<-rep(0,1000)
 
-# Gera um valor aleat√≥rio da normal padr√£o e compara com o valor de t
+# Gera um valor aleatÛrio da normal padr„o e compara com o valor de t
 for (j in 1:length(agregado)){
   for (i in 1:length(indicadora)){
     theta<-rnorm(1, mean = 0, sd = 1)
@@ -190,9 +190,9 @@ for (j in 1:length(agregado)){
 agregado[j]<-sum(indicadora)/length(indicadora)
 }
 ```
-A m√©dia das nossas estimativas foi de `r round(mean(agregado),4)` e o desvio padr√£o foi de `r round(sd(agregado),4)`, enquanto que o valor esperado seria de  $\mathbb{P}(X \leq -4.5) =$ `r pnorm(t,mean=0,sd=1)`. <span style="color:red">Aisha: Faz sentido calcular desvio padr√£o num√©rico aqui?</span>
+A mÈdia das nossas estimativas foi de `r round(mean(agregado),4)` e o desvio padr„o foi de `r round(sd(agregado),4)`, enquanto que o valor esperado seria de  $\mathbb{P}(X \leq -4.5) =$ `r pnorm(t,mean=0,sd=1)`. <span style="color:red">Aisha: Faz sentido calcular desvio padr„o numÈrico aqui?</span>
 
-Podemos novamente plotar o gr√°fico:
+Podemos novamente plotar o gr·fico:
 
 ```{r, echo=FALSE}
 library(latex2exp)
@@ -205,7 +205,7 @@ dados<-data.frame(x,y)
 p <- ggplot(dados, aes(x = y)) +
         geom_histogram(color = "black", fill="white", binwidth = .000001)+
         ylab(TeX("$\\hat{g}_S(\\theta)$")) +
-        ggtitle(TeX("Distribui√ß√£o dos valores estimados para $g(\\theta)$")) +
+        ggtitle(TeX("DistribuiÁ„o dos valores estimados para $g(\\theta)$")) +
         scale_colour_brewer(palette="Set1") +
         theme(axis.line = element_line(size=1, colour = "black"),
               panel.grid.major = element_blank(),
@@ -222,45 +222,43 @@ p + geom_vline(aes(xintercept=pnorm(-4.5,mean=0,sd=1)),
 
 Pela figura observamos que de fato as estimativas ficaram muito concentradas em zero.
 
-Mas ent√£o como calcular probabilidades de eventos raros utilizando m√©todos de Monte Carlo? Utilizando amostragem por efici√™ncia.
+Mas ent„o como calcular probabilidades de eventos raros utilizando mÈtodos de Monte Carlo? Utilizando amostragem por eficiÍncia.
 
-Calcular probabilidade de eventos raros como $\Phi(-4.5)$ usando este m√©todo MC simples √© dif√≠cil, pois muito raramente iremos amostrar $\theta^i$ tal que $1{\hskip -2.5 pt}\hbox{I}(\theta^{i}\leq -4.5)=1$, logo $\widehat{\Phi}_S(-4.5)=0$ mesmo para um valor alto de $S$. Mas usando a regra de mudan√ßa de vari√°veis, podemos usar $v=\frac{1}{x}$:
+Calcular probabilidade de eventos raros como $\Phi(-4.5)$ usando este mÈtodo MC simples È difÌcil, pois muito raramente iremos amostrar $\theta^i$ tal que $1{\hskip -2.5 pt}\hbox{I}(\theta^{i}\leq -4.5)=1$, logo $\widehat{\Phi}_S(-4.5)=0$ mesmo para um valor alto de $S$. Mas usando a regra de mudanÁa de vari·veis, podemos usar $v=\frac{1}{x}$:
 $$
 \int_{-\infty}^{-4.5}\!\frac{1}{\sqrt{2\pi}}e^{\theta^2/2}\,d\theta=\int^{0}_{\frac{-1}{4.5}}\!\frac{\phi(1/v)}{v^2}dv=\frac{1}{4.5}\int^{0}_{\frac{-1}{4.5}}\!\frac{\phi(1/v)}{v^2}p_U(v)dv
 $$
 
-Podemos amostrar $v_i\sim U(-1/4.5,0)$, ent√£o:
+Podemos amostrar $v_i\sim U(-1/4.5,0)$, ent„o:
 $$
 \int_{-\infty}^{-4.5}\!\frac{1}{\sqrt{2\pi}}e^{\theta^2/2}\,d\theta\approx\widehat{\Phi}^U_S(-4.5)=\frac{1}{S}\sum_{i=1}^S\frac{\phi(1/v^i)}{4.5v^{i^2}}
 $$
 
-Note que a F.D.P. de $v$ $p_U(v)=4.5$ √© usada no denominador para compensar o fato de que n√£o amostramos da distribui√ß√£o original, mas sim de uma distribui√ß√£o alternativa.
+Note que a F.D.P. de $v$ $p_U(v)=4.5$ È usada no denominador para compensar o fato de que n„o amostramos da distribuiÁ„o original, mas sim de uma distribuiÁ„o alternativa.
 
 ```{r}
 # Define um tamanho de S e faz S retiradas de uma uniforme(-1/4.5, 0)
 S<-20
 vetor_v <- runif(S, min =(1/-4.5) , max = 0)
-vetor_v
 
-# Calcula a aproxima√ß√£o
+# Calcula a aproximaÁ„o
 numerador<- dnorm(1/vetor_v, mean=0, sd=1)
 denominador<- 4.5*vetor_v^2
 aproximacao<- (1/length(vetor_v))*sum(numerador/denominador)
-aproximacao
 
-# Calcula o desvio padr√£o
+# Calcula o desvio padr„o
 sigma_chapeu<-(1/length(vetor_v))*sum((vetor_v-aproximacao)^2)
 desv_pad_num<-sqrt(sigma_chapeu)/(sqrt(length(vetor_v)))
 ```
 
-Nosso valor estimado √© de `r round(aproximacao, 4)`, enquanto o valor esperado era de $\mathbb{P}(X \leq -4.5) =$ `r pnorm(t,mean=0,sd=1)`. Podemos calcular tamb√©m o desvio padr√£o num√©rico: $\frac{\hat{\sigma}_g}{\sqrt{S}}=$ `r round(desv_pad_num,4)`.
+Nosso valor estimado È de `r round(aproximacao, 4)`, enquanto o valor esperado era de $\mathbb{P}(X \leq -4.5) =$ `r pnorm(t,mean=0,sd=1)`. Podemos calcular tambÈm o desvio padr„o numÈrico: $\frac{\hat{\sigma}_g}{\sqrt{S}}=$ `r round(desv_pad_num,4)`.
 
-Novamente, vamos gerar v√°rias estimativas para poder comparar com o m√©todo anterior:
+Novamente, vamos gerar v·rias estimativas para poder comparar com o mÈtodo anterior:
 ```{r}
 # Define um tamanho de S e faz S retiradas de uma uniforme(-1/4.5, 0)
 S<-10000
 
-# Cria os vetores que v√£o ser usados no la√ßo for
+# Cria os vetores que v„o ser usados no laÁo for
 vetor_v<-seq(0,S)
 numerador<-seq(0,S)
 denominador<-seq(0,S)
@@ -273,9 +271,6 @@ for (j in 1:length(estimativas)){
     aproximacao<- (1/length(vetor_v))*sum(numerador/denominador)
   estimativas[j]<-aproximacao
 }
-
-mean(estimativas)
-pnorm(-4.5,mean=0,sd=1)
 ```
 
 
@@ -291,7 +286,7 @@ dados<-data.frame(x,y)
 p <- ggplot(dados, aes(x = y)) +
         geom_histogram(color = "black", fill="white", binwidth = .00000001)+
         ylab(TeX("$\\hat{g}_S(\\theta)$")) +
-        ggtitle(TeX("Distribui√ß√£o dos valores estimados para $g(\\theta)$ \n usando amostragem por import√¢ncia")) +
+        ggtitle(TeX("DistribuiÁ„o dos valores estimados para $g(\\theta)$ \n usando amostragem por import‚ncia")) +
         scale_colour_brewer(palette="Set1") +
         theme(axis.line = element_line(size=1, colour = "black"),
               panel.grid.major = element_blank(),
