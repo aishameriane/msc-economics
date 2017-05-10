@@ -6,6 +6,7 @@ header-includes:
    - \usepackage[brazil]{babel}
    - \usepackage{graphicx}
    - \usepackage{amsmath}
+   - \usepackage{calrsfs}
 output: html_document
 bibliography: references2.bib
 ---
@@ -35,7 +36,7 @@ O trabalho propõe uma metodologia bayesiana para vetores autoregressivos com vol
 Considere o seguinte modelo:
 
 \begin{equation}\tag{1}
-y_t = \beta y_{t-1} + h_t^{\frac{1}{2}}\varepsilon_t \quad \text{com } \epsilon_t \sim \mathcal{N}(0,1)
+y_t = \beta y_{t-1} + h_t^{-\frac{1}{2}}\varepsilon_t \quad \text{com } \epsilon_t \sim \mathcal{N}(0,1)
 \end{equation}
 
 \begin{equation}\tag{2}
@@ -102,7 +103,305 @@ Das equações acima, temos:
 * As observações são ponderadas de acordo com o valor de $s_t$ pela equação (7);
 * A equação (6) mostra como obter $s_t$ para $h_{t+1}$ (note que em (3) temo $h_1$ e $s_0$) basicamente usando um lag geométrico nos resíduos passados.
 
+O trabalho de Shephard introduz equações com a versão clássica de (1) e (2) sem o termo autoregressico $\beta y_{t-1}$ <span style="color:red">Aisha: Tá, mas aí o $y_t$ é tipo um passeio aleatório, que não depende do passado a não ser via $h$?</span>. Para incluir a parte autoregressiva, ele sugere utilizar uma forma aproximada para as fórmulas do filtro. O que o trabalho do Uhlig traz de novo são essas fórmulas em uma forma exata, embora ainda sejam calculadas aproximações para estimativa de $\beta$. No Shephard também não é abordado o caso multivariado.
 
+Observe que para $\lambda = \frac{\nu}{(\nu+1)}$, temos que o termo $\frac{\lambda}{\nu}$ em (6) pode ser reescrito como:
+
+\begin{align*}
+\frac{\lambda}{\nu} &= \\
+&= \frac{\frac{\nu}{(\nu+1)}}{\nu} \\
+&= \frac{\nu}{(\nu+1)}\frac{1}{\nu} \\
+&= \frac{1}{(\nu+1)}\\
+&= \frac{1+\nu-\nu}{(\nu+1)}\\
+&= \frac{\nu + 1}{\nu + 1} - \frac{\nu}{(\nu+1)}\\
+&= 1 - \frac{\nu}{(\nu+1)}\\
+&= 1-\lambda
+\end{align*}
+
+<span style="color:red">Aisha: Mas e o que isso significa?</span>
+
+Para $\lambda = \frac{\nu+1}{\nu+2}$ temos que a equação (6) pode ser reescrita como:
+
+\begin{align*}
+s_t = \frac{\nu+1}{\nu+2} s_{t-1} + \frac{\frac{\nu+1}{\nu+2}}{\nu} e_t^2\left(\frac{1-y_{t-1}^2}{n_t}\right)
+\end{align*}
+
+Substituindo na densidade de $h_t$, que é uma Gama com parâmetros $s_t$ e $\nu$, teremos:
+
+\begin{align*}
+p(h|st,\nu) &= \frac{h^{\nu-1}}{\Gamma(\nu)s_t^\nu}\exp\left\{-\frac{h}{s_t} \right\}\\
+&= \frac{h^{\nu-1}}{\Gamma(\nu)\left(\frac{\nu+1}{\nu+2} s_{t-1} + \frac{\frac{\nu+1}{\nu+2}}{\nu} e_t^2\left(\frac{1-y_{t-1}^2}{n_t}\right) \right)^\nu} \exp\left\{-\frac{h}{\frac{\nu+1}{\nu+2} s_{t-1} + \frac{\frac{\nu+1}{\nu+2}}{\nu} e_t^2\left(\frac{1-y_{t-1}^2}{n_t}\right)}\right\}
+\end{align*}
+
+E teremos que $\mathbb{E}[h_{t+1}|h_t] = h_t$, isto é, $h_t$ é um martingale (pois sua expectância será exatamente igual ao valor da variável no tempo anterior). <span style="color:red">Aisha: Não consegui ver como que da expressão acima vamos ter que a média condicional vai dar isso... Teria que usar que $\mathbb{E}[h_{t+1}|h_t] = \int h f_{h_t|h_{t+1}}(h_t, h_{t+1})dh_t$ ?</span>
+
+<span style="color:red">Aisha: No início da página 62 ele começa a falar que quando $\nu \to \infty$, vamos ter $h_1 = s_0^{-1}$. Eu tentei fazer o limite da equação (6) e aí temos que $s_1 = \lambda s_0$. Só que aí não consegui relacionar com $h_1$. Tentei usar que $h_1 = h_0 \frac{\vartheta_0}{\lambda}$ e substituir o $\vartheta$ pela densidade da $Beta((\nu+1)/2, 1/2)$, mas ficou uma coisa estranha. É isso mesmo?</span>
+
+<span style="color:red">Aisha: Coisas que eu tentei fazer para ajustar o gráfico: </span>
+
+* <span style="color:red"> Mudar de pbeta para dbeta </span>
+* <span style="color:red"> Multiplicar ao invés de dividir lambda </span>
+* <span style="color:red"> Mudar os parâmetros da beta de lugar </span>
+* <span style="color:red"> Mudar o $\vartheta$ começando em 0 ou em 0.001 </span>
+* <span style="color:red"> Mudar valores de $\nu$</span>
+* <span style="color:red"> Calcular a densidade da beta avaliada em $\lambda / \vartheta$, mas aí tem valores maiores que 1 e o trem se perde</span>
+* <span style="color:red"> Colocar a densidade da beta "na mão" </span>
+* <span style="color:red"> Usar a densidade da beta não padrão (Zellner, pág 373) para usar $\lambda / \vartheta$ como v.a. (o que não parece fazer sentido olhando a equação (2)) </span>
+* <span style="color:red"> Apagar tudo e começar de novo? </span>
+
+<span style="color:blue">Aisha: Coisas que eu ainda não tentei: </span>
+
+* <span style="color:blue"> ~~Colocar fogo~~ </span>
+* <span style="color:blue"> Rubber duck debugging </span>
+
+### Rascunho
+
+Da equação (2), temos:
+
+\begin{align*}
+h_{t+1} = h_t \frac{\vartheta_t}{\lambda} \qquad \text{com } \vartheta_t \sim \mathcal{B}\left(\frac{\nu+1}{2}, \frac{1}{2} \right)
+\end{align*}
+
+Calculando essa equação para $h_t$, teremos:
+
+\begin{align*}
+h_{t} &= h_{t-1} \frac{\vartheta_t}{\lambda}
+\end{align*}
+
+Agora, substituindo o termo em (1) que é $h_t^{-\frac{1}{2}}$, vamos ter:
+
+\begin{align*}
+h_{t}^{-\frac{1}{2}} &= \left(h_{t-1} \frac{\vartheta_t}{\lambda}\right)^{-\frac{1}{2}}\\
+&= \left(h_{t-1} \right)^{-\frac{1}{2}} \left(\frac{\vartheta_t}{\lambda}\right)^{-\frac{1}{2}}\\
+&= \left(h_{t-1} \right)^{-\frac{1}{2}} \left(\frac{\lambda}{\vartheta_t}\right)^{\frac{1}{2}}\\
+& = \left(h_{t-1} \right)^{-\frac{1}{2}} \left(\frac{\frac{\nu}{\nu+1}}{\vartheta_t}\right)^{\frac{1}{2}}\\
+& = \left(h_{t-1} \right)^{-\frac{1}{2}} \left(\frac{\nu}{\nu+1}\frac{1}{\vartheta_t}\right)^{\frac{1}{2}}
+\end{align*}
+
+```{r}
+
+nu = c(1,2,5,7,10)
+eixo<-seq(0.5, 2,length.out = 100)
+vartheta<-seq(0.01,1,length.out = 100)
+
+lambda = nu[5]/(nu[5]+1)
+densidade<- lambda/dbeta(vartheta, shape1 = (nu[5]+1)/2, shape2=1/2)
+plot(eixo, densidade, type='l', ylim=c(0,7), xlim = c(0.5, 2))
+
+for (i in 1:length(nu)) {
+  lambda = nu[i]/(nu[i]+1)
+  densidade<- lambda/dbeta(vartheta, shape1 = (nu[i]+1)/2, shape2=1/2)
+  if (i == 1) {
+    plot(eixo, densidade, type='l', ylim=c(0,7), xlim = c(0.5, 2))
+  } else {
+    lines(eixo, densidade)
+  }
+}
+```
+
+## Caso geral
+
+O artigo considera um modelo $Var(k)$ com matriz de precisão dos erros variante no tempo:
+
+\begin{equation}\tag{08}
+Y_t = B_{(0)}C_t + B_{(1)}Y_{t-1}+ B_{(2)}Y_{t-2} + \ldots + B_{(k)}Y_{(t-k)} + \mathcal{U}(H_t^{-1})'\epsilon_t \qquad \text{com } \epsilon \sim \mathcal{N}(0, I_m)
+\end{equation}
+
+\begin{equation}\tag{09}
+H_{(t+1)} = \frac{\mathscr{U}(H_t)'\Theta_t\mathscr{U}(H_t)}{\lambda} \qquad \text{com} \Theta \sim \mathcal{B}(\frac{\nu+c+km}{2}, \frac{1}{2})
+\end{equation}
+
+Onde:
+
+* $t=1, \ldots, T$ denota o tempo;
+* $Y_t, \ t=1-k, \ldots, T$ é um vetor de tamanho $m \times 1$ que contém as variáveis observadas;
+* $C_t$ é um vetor de tamanho $c \times 1$ que contém os regressores determinísticos tais como a constante e a tendência ao longo do tempo;
+* A matriz de coeficientes $B_{(0)}$ tem tamanho $m \times c$;
+* As matrizes de coeficientes $B_{(i)}$, $i= 1, \ldots, k$ são de tamanho $m \times m$; 
+* $\nu > m-1$ e $\lambda > 0$ são parâmetros;
+* $\epsilon_t$, $t = 1, \ldots, T$ tem tamanho $m \times 1$;
+* $\Theta_t$, $t = 1, \ldots, T$ são independentes; <span style="color:red"> São identicamente distribuídas tb? </span>
+* $\mathscr{U}(H)$ é a decomposição de Cholesky (superior) da matriz $H$, que é positiva definida;
+* $\mathcal{B}(p,q)$ é a distribuição beta multivariada.
+
+A distribuição 
+
+### Conjugação da Beta e da Whishart
+
+#### Wishart 
+(retirado de [@muirhead])
+
+**Definição W1:** Seja $A=Z'Z$, onde $Z$ é uma matriz $n \times m$ com distribuição $\mathcal{N}(0, I_n \otimes Sigma)$, então dizemos que $A$ segue uma distribuição **Wishart** com $n$ graus de liberdade e matriz de covariância $\Sigma$ e denotamos $A \sim \mathcal{W}_m(n, \Sigma)$, onde o subscrito $m$ indica o tamanho da matriz $A$ <span style="color:red">(então as distribuições normais tem $n$ amostras aleatórias de tamanho $m$?)</span>
+
+#### Produto de Kronecker
+
+**Observação:** $\otimes$ é o _produto de Kronecker para matrizes_.
+
+**Definição K1:** Seja $A = (a_{i,j})$ uma matriz $p \times q$ e $B = (b_{m,n})$ uma matriz de tamanho $r \times s$. O produto de Kronecker de $A$ e $B$, denotado por $A \otimes B$, será a matriz de tamanho $pr \times qs$ dada por:
+
+\begin{align*}
+A \otimes B =
+\begin{bmatrix}
+a_{11}B & a_{12}B & \ldots & a_{1q}B\\
+a_{21}B & a_{22}B & \ldots & a_{2q}B\\
+\vdots & \vdots   & \ddots & \vdots \\
+a_{p1}B & a_{p2}B & \ldots & a_{pq}B
+\end{bmatrix}
+\end{align*}
+
+Este produto também é chamado de *produto direto*.
+
+O resultado que usamos na Wishart é o seguinte: Se $\Sigma$ é uma matriz $k \times k$ (não precisa ser quadrada, mas no nosso caso é), então a matriz bloco diagonal $nk \times nk$ com $\Sigma$ sendo repetida $n$ vezes na diagonal é $I_n \otimes \Sigma$, isto é:
+
+\begin{align*}
+I_n \otimes \Sigma =
+\begin{bmatrix}
+\Sigma & 0 & \ldots & 0\\
+0 & \Sigma & \ldots & 0\\
+\vdots & \vdots   & \ddots & \vdots \\
+0 & 0 & \ldots & \Sigma
+\end{bmatrix}
+\end{align*}
+
+#### Beta
+
+##### Caso univariado
+
+<span style="color:red">Dá para fazer uma correspondência entre o univariado e o multivariado ou nada a ver?</span>
+
+(retirado de [@zellner])
+
+Dizemos que uma variável aleatória $x$ segue uma distribuição beta se a sua densidade é dada por:
+
+\begin{equation}\tag{B1}
+p(x|a,b,c) = \frac{1}{c B(a,b)}\left(\frac{x}{c} \right)^{a-1}\left(1-\frac{x}{c} \right)^{b-1} \qquad 0 \leq x \leq c
+\end{equation}
+
+Onde:
+
+* $a, b, c > 0$ são parâmetros;
+* $B(a,b)$ é a função beta dada por: $B(a,b) = \frac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}$, com $0 < a, b < -\infty$
+
+Podemos fazer uma mudança de variável usando $y = \frac{x}{c}$ para obter a forma padrão da densidade beta, dada por:
+
+\begin{equation}\tag{B1}
+p(y|a,b,c) = \frac{1}{B(a,b)}\left(y \right)^{a-1}\left(1-y \right)^{b-1} \qquad 0 \leq x \leq 1
+\end{equation}
+
+##### Caso multivariado
+
+**Teorema B1** (teorema 3.3.1 de [@muirhead]) Sejam $A$ e $B$ independentes onde $A \sim \mathcal{W}_m(n_1, \Sigma)$ e $B \sim \mathcal{W}_m(n_2, \Sigma)$, com $n_1 > m-1, n_2 > m-1$. Considere $A+B = T'T$, onde $T$ é uma matriz diagonal superior de tamanho $m \times m$ com elementos positivos na sua diagonal. Seja $U$ a matriz simétrica de tamanho $m \times m$ definida por $A = T'UT$. Então, $A + B$ e $U$ são independentes; $A+B \sim \mathcal{W}_m(n_1 + n_2, \Sigma)$ e $U$ tem densidade dada por:
+
+\begin{equation}\tag{B2}
+\frac{\Gamma_m \left[\frac{1}{2}(n_1 + n_2) \right]}{\Gamma_m \left(\frac{1}{2}n_1\right)\Gamma_m \left(\frac{1}{2}n_2\right)} (det U)^{\frac{n_1 - m -1}{2}}det(I_m- U)^{\frac{n_2 - m -1}{2}} \quad (0 < U < I_m)
+\end{equation}
+
+Onde $(0 < U < I_m)$ significa que $U$ e $I_m - U$ são ambas positivas definidas.
+
+Uma matriz $U$ como no teorema acima é dita seguir uma *distribuição beta multivariada* com parâmetros $\frac{1}{2}n_1$ e $\frac{1}{2}n_2$. A notação será $U \sim \mathcal{B}_m(\frac{1}{2}n_1,\frac{1}{2}n_2)$.
+
+##### Gerando valores de uma Beta Multivariada
+
+Queremos gerar retiradas aleatórias de uma distribuição Beta Multivariada, denotada por $\mathcal{B}_m(\frac{1}{2}n_1,\frac{1}{2}n_2)$. Para isso, iremos utilizar a densidade da Wishart já implementada no R.
+
+Usando o teorema (B1), vamos gerar $A$ e $B$ independentes com a [função `rWishart()`](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/rWishart.html).
+
+###### Uma única matriz
+
+```{r}
+# rWishart(n, df, Sigma) generates n random matrices, distributed according
+# to te Wishart distribution with parameters Sigma and df.
+
+# For the first matrix
+# Set the degrees of freedom
+df1<-10
+
+# Set the covariance matrix
+# The diag(n) creates the nxn identity matrix
+sigma_1 <- diag(4)
+
+# Creates the Wishart first matrix
+A<-rWishart(1, df1, sigma_1)
+A<-matrix(A, nrow=nrow(sigma_1))
+
+# For the second matrix
+# Set the degrees of freedom
+df2<-5
+
+# Set the covariance matrix
+# The diag(n) creates the nxn identity matrix
+sigma_2 <- diag(4)
+
+# Creates the Wishart first matrix
+B<-rWishart(1, df2, sigma_2)
+B<-matrix(B, nrow=nrow(sigma_2))
+
+# Sums A and B
+C<-A+B
+
+# The chol() function gives T, an upper-triangular mxm matrix with positive diagonal elements
+T<-chol(C)
+
+# We now calculate U = T'^{-1}AT^{-1}
+U <- solve(t(T))%*%A%*%solve(T)
+U
+
+```
+
+###### Caso geral
+
+```{r}
+# rWishart(n, df, Sigma) generates n random matrices, distributed according
+# to te Wishart distribution with parameters Sigma and df.
+
+# Set the number of matrices (samples)
+n<-2
+
+# For the first matrix
+# Set the degrees of freedom
+df1<-10
+
+# Set the covariance matrix
+# The diag(n) creates the nxn identity matrix
+sigma_1 <- diag(4)
+
+# Creates the Wishart first matrix
+A<-rWishart(n, df1, sigma_1)
+
+# For the second matrix
+# Set the degrees of freedom
+df2<-5
+
+# Set the covariance matrix
+# The diag(n) creates the nxn identity matrix
+sigma_2 <- diag(4)
+
+# Creates the Wishart first matrix
+B<-rWishart(n, df2, sigma_2)
+
+# Sums A and B
+C<-A+B
+
+# The chol() function gives T, an upper-triangular mxm matrix with positive diagonal elements
+# Creates the T array with the same dimension of C
+T<-C
+
+# Populates T
+for (i in 1:n) {
+  T[,,i]<-chol(C[,,i])
+}
+
+# We now calculate U = T'^{-1}AT^{-1}
+#Creates U
+U<-T
+
+for (i in 1:n) {
+  U[,,i] <- solve(t(T[,,i]))%*%A[,,i]%*%solve(T[,,i])
+}
+
+U
+
+```
 
 
 

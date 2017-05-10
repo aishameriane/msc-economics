@@ -146,7 +146,7 @@ $(document).ready(function () {
 <h2>Caso simples</h2>
 <p>Considere o seguinte modelo:</p>
 <span class="math display">\[\begin{equation}\tag{1}
-y_t = \beta y_{t-1} + h_t^{\frac{1}{2}}\varepsilon_t \quad \text{com } \epsilon_t \sim \mathcal{N}(0,1)
+y_t = \beta y_{t-1} + h_t^{-\frac{1}{2}}\varepsilon_t \quad \text{com } \epsilon_t \sim \mathcal{N}(0,1)
 \end{equation}\]</span>
 <span class="math display">\[\begin{equation}\tag{2}
 h_{t+1} = h_t \frac{\vartheta_t}{\lambda} \quad \text{com } \vartheta_t \sim \mathcal{B}_1(\frac{\nu+1}{2},\frac{1}{2})
@@ -195,13 +195,300 @@ g_t(\beta) = g_{t-1}(\beta)\left((\beta - \bar{b}_t)^2 n_t + \frac{\nu}{\lambda}
 <li>As observações são ponderadas de acordo com o valor de <span class="math inline">\(s_t\)</span> pela equação (7);</li>
 <li>A equação (6) mostra como obter <span class="math inline">\(s_t\)</span> para <span class="math inline">\(h_{t+1}\)</span> (note que em (3) temo <span class="math inline">\(h_1\)</span> e <span class="math inline">\(s_0\)</span>) basicamente usando um lag geométrico nos resíduos passados.</li>
 </ul>
+<p>O trabalho de Shephard introduz equações com a versão clássica de (1) e (2) sem o termo autoregressico <span class="math inline">\(\beta y_{t-1}\)</span> <span style="color:red">Aisha: Tá, mas aí o <span class="math inline">\(y_t\)</span> é tipo um passeio aleatório, que não depende do passado a não ser via <span class="math inline">\(h\)</span>?</span>. Para incluir a parte autoregressiva, ele sugere utilizar uma forma aproximada para as fórmulas do filtro. O que o trabalho do Uhlig traz de novo são essas fórmulas em uma forma exata, embora ainda sejam calculadas aproximações para estimativa de <span class="math inline">\(\beta\)</span>. No Shephard também não é abordado o caso multivariado.</p>
+<p>Observe que para <span class="math inline">\(\lambda = \frac{\nu}{(\nu+1)}\)</span>, temos que o termo <span class="math inline">\(\frac{\lambda}{\nu}\)</span> em (6) pode ser reescrito como:</p>
+<span class="math display">\[\begin{align*}
+\frac{\lambda}{\nu} &amp;= \\
+&amp;= \frac{\frac{\nu}{(\nu+1)}}{\nu} \\
+&amp;= \frac{\nu}{(\nu+1)}\frac{1}{\nu} \\
+&amp;= \frac{1}{(\nu+1)}\\
+&amp;= \frac{1+\nu-\nu}{(\nu+1)}\\
+&amp;= \frac{\nu + 1}{\nu + 1} - \frac{\nu}{(\nu+1)}\\
+&amp;= 1 - \frac{\nu}{(\nu+1)}\\
+&amp;= 1-\lambda
+\end{align*}\]</span>
+<p><span style="color:red">Aisha: Mas e o que isso significa?</span></p>
+<p>Para <span class="math inline">\(\lambda = \frac{\nu+1}{\nu+2}\)</span> temos que a equação (6) pode ser reescrita como:</p>
+<span class="math display">\[\begin{align*}
+s_t = \frac{\nu+1}{\nu+2} s_{t-1} + \frac{\frac{\nu+1}{\nu+2}}{\nu} e_t^2\left(\frac{1-y_{t-1}^2}{n_t}\right)
+\end{align*}\]</span>
+<p>Substituindo na densidade de <span class="math inline">\(h_t\)</span>, que é uma Gama com parâmetros <span class="math inline">\(s_t\)</span> e <span class="math inline">\(\nu\)</span>, teremos:</p>
+<span class="math display">\[\begin{align*}
+p(h|st,\nu) &amp;= \frac{h^{\nu-1}}{\Gamma(\nu)s_t^\nu}\exp\left\{-\frac{h}{s_t} \right\}\\
+&amp;= \frac{h^{\nu-1}}{\Gamma(\nu)\left(\frac{\nu+1}{\nu+2} s_{t-1} + \frac{\frac{\nu+1}{\nu+2}}{\nu} e_t^2\left(\frac{1-y_{t-1}^2}{n_t}\right) \right)^\nu} \exp\left\{-\frac{h}{\frac{\nu+1}{\nu+2} s_{t-1} + \frac{\frac{\nu+1}{\nu+2}}{\nu} e_t^2\left(\frac{1-y_{t-1}^2}{n_t}\right)}\right\}
+\end{align*}\]</span>
+<p>E teremos que <span class="math inline">\(\mathbb{E}[h_{t+1}|h_t] = h_t\)</span>, isto é, <span class="math inline">\(h_t\)</span> é um martingale (pois sua expectância será exatamente igual ao valor da variável no tempo anterior). <span style="color:red">Aisha: Não consegui ver como que da expressão acima vamos ter que a média condicional vai dar isso… Teria que usar que <span class="math inline">\(\mathbb{E}[h_{t+1}|h_t] = \int h f_{h_t|h_{t+1}}(h_t, h_{t+1})dh_t\)</span> ?</span></p>
+<p><span style="color:red">Aisha: No início da página 62 ele começa a falar que quando <span class="math inline">\(\nu \to \infty\)</span>, vamos ter <span class="math inline">\(h_1 = s_0^{-1}\)</span>. Eu tentei fazer o limite da equação (6) e aí temos que <span class="math inline">\(s_1 = \lambda s_0\)</span>. Só que aí não consegui relacionar com <span class="math inline">\(h_1\)</span>. Tentei usar que <span class="math inline">\(h_1 = h_0 \frac{\vartheta_0}{\lambda}\)</span> e substituir o <span class="math inline">\(\vartheta\)</span> pela densidade da <span class="math inline">\(Beta((\nu+1)/2, 1/2)\)</span>, mas ficou uma coisa estranha. É isso mesmo?</span></p>
+<p><span style="color:red">Aisha: Coisas que eu tentei fazer para ajustar o gráfico: </span></p>
+<ul>
+<li><span style="color:red"> Mudar de pbeta para dbeta </span></li>
+<li><span style="color:red"> Multiplicar ao invés de dividir lambda </span></li>
+<li><span style="color:red"> Mudar os parâmetros da beta de lugar </span></li>
+<li><span style="color:red"> Mudar o <span class="math inline">\(\vartheta\)</span> começando em 0 ou em 0.001 </span></li>
+<li><span style="color:red"> Mudar valores de <span class="math inline">\(\nu\)</span></span></li>
+<li><span style="color:red"> Calcular a densidade da beta avaliada em <span class="math inline">\(\lambda / \vartheta\)</span>, mas aí tem valores maiores que 1 e o trem se perde</span></li>
+<li><span style="color:red"> Colocar a densidade da beta “na mão” </span></li>
+<li><span style="color:red"> Usar a densidade da beta não padrão (Zellner, pág 373) para usar <span class="math inline">\(\lambda / \vartheta\)</span> como v.a. (o que não parece fazer sentido olhando a equação (2)) </span></li>
+<li><span style="color:red"> Apagar tudo e começar de novo? </span></li>
+</ul>
+<p><span style="color:blue">Aisha: Coisas que eu ainda não tentei: </span></p>
+<ul>
+<li><span style="color:blue"> <del>Colocar fogo</del> </span></li>
+<li><span style="color:blue"> Rubber duck debugging </span></li>
+</ul>
+<div id="rascunho" class="section level3">
+<h3>Rascunho</h3>
+<p>Da equação (2), temos:</p>
+<span class="math display">\[\begin{align*}
+h_{t+1} = h_t \frac{\vartheta_t}{\lambda} \qquad \text{com } \vartheta_t \sim \mathcal{B}\left(\frac{\nu+1}{2}, \frac{1}{2} \right)
+\end{align*}\]</span>
+<p>Calculando essa equação para <span class="math inline">\(h_t\)</span>, teremos:</p>
+<span class="math display">\[\begin{align*}
+h_{t} &amp;= h_{t-1} \frac{\vartheta_t}{\lambda}
+\end{align*}\]</span>
+<p>Agora, substituindo o termo em (1) que é <span class="math inline">\(h_t^{-\frac{1}{2}}\)</span>, vamos ter:</p>
+<span class="math display">\[\begin{align*}
+h_{t}^{-\frac{1}{2}} &amp;= \left(h_{t-1} \frac{\vartheta_t}{\lambda}\right)^{-\frac{1}{2}}\\
+&amp;= \left(h_{t-1} \right)^{-\frac{1}{2}} \left(\frac{\vartheta_t}{\lambda}\right)^{-\frac{1}{2}}\\
+&amp;= \left(h_{t-1} \right)^{-\frac{1}{2}} \left(\frac{\lambda}{\vartheta_t}\right)^{\frac{1}{2}}\\
+&amp; = \left(h_{t-1} \right)^{-\frac{1}{2}} \left(\frac{\frac{\nu}{\nu+1}}{\vartheta_t}\right)^{\frac{1}{2}}\\
+&amp; = \left(h_{t-1} \right)^{-\frac{1}{2}} \left(\frac{\nu}{\nu+1}\frac{1}{\vartheta_t}\right)^{\frac{1}{2}}
+\end{align*}\]</span>
+<pre class="r"><code>nu = c(1,2,5,7,10)
+eixo&lt;-seq(0.5, 2,length.out = 100)
+vartheta&lt;-seq(0.01,1,length.out = 100)
+
+lambda = nu[5]/(nu[5]+1)
+densidade&lt;- lambda/dbeta(vartheta, shape1 = (nu[5]+1)/2, shape2=1/2)
+plot(eixo, densidade, type='l', ylim=c(0,7), xlim = c(0.5, 2))</code></pre>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABUAAAAPACAMAAADDuCPrAAAAV1BMVEUAAAAAADoAAGYAOmYAOpAAZpAAZrY6AAA6OgA6kNtmAABmAGZmOgBmtv+QOgCQZgCQ29uQ2/+2ZgC2kDq2/7a2///bkDrb////tmb/25D//7b//9v////BNMr3AAAACXBIWXMAAB2HAAAdhwGP5fFlAAAgAElEQVR4nO3d62LT2JauYcOmQ8NuqhvvjTFU7v8627Kd2EnsxB7SnNKY83n+cFhFiqX6eJF8kFePAISs5v4NAGQloABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKELTsgK4AJjN9oib/ihOa+2gDbZm8UVN/wSkV+AuDvplU1wQUxjCprgkojGFSXRNQGMOkuiagMIZJdU1AYRSb6pmAwig21TMBhVFsqmcCCqPYVM8EFEaxqZ4JKIxjVB0TUBjHqDomoDCOUXUsUUD/fl99+T3ya9g6kzOqjuUK6OrTz3Ffw9aZnFF1LFlA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QQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKCk9e8/q8+/5v5N0DUBJS0BZW4CSloCytwEFCBIQAGCBBQgSEDJZLsa/Dj84PAY6J+vx0dCdz/89PPtPwXlCCh57Fp58FzM4Tub1erb8MOnb/9+f/FPQTkCShrP/Ty28RjQ45nnrptffj+e9VNBKU5AyWIXysM1+nCF/vB4ehnTdv/D9fECfr06nIlujv8UlCOgZLHr5MhNpycAAAHpSURBVP4Uc3+SOcTy+XWgQzu3x1zuTlOPj4SevgeFCChZrE893O5PMp8Dugvqfzx9f3M673x6UBRKEVCSeHqMc7A7uXw4fyfS5vSs+/r09Pvhn4JyBJQkzp4cGuxiegro8PDow9P3ns9TdwF9Ti6UIKAkcfYc/JuADuedzwF9fu79/JwVShBQknh7PnmK5fb5Et4ZKDUJKEnszidfva7zOaC77/yf/zrG8uwx0K3XMVGYgJLE8Djnj9c/8/zM+4/t6f1IT9VcexaewgSULDantxa9fBnT/lL96drd60CpSEDJYv80/P4cdL168UL6wwtEn160dP5OJA+BUpaAksb27En4IZHHgD491Hl89NN74alHQMnj9Eqm/WObh4Cevx/p5d1E9JPSBJRM9m85enqW6JDO0xs2n7/nfqBUIqAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQf8LJMj9iKlGFwcAAAAASUVORK5CYII=" width="672" /></p>
+<pre class="r"><code>for (i in 1:length(nu)) {
+  lambda = nu[i]/(nu[i]+1)
+  densidade&lt;- lambda/dbeta(vartheta, shape1 = (nu[i]+1)/2, shape2=1/2)
+  if (i == 1) {
+    plot(eixo, densidade, type='l', ylim=c(0,7), xlim = c(0.5, 2))
+  } else {
+    lines(eixo, densidade)
+  }
+}</code></pre>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABUAAAAPACAMAAADDuCPrAAAAV1BMVEUAAAAAADoAAGYAOmYAOpAAZpAAZrY6AAA6OgA6kNtmAABmAGZmOgBmtv+QOgCQZgCQ29uQ2/+2ZgC2kDq2/7a2///bkDrb////tmb/25D//7b//9v////BNMr3AAAACXBIWXMAAB2HAAAdhwGP5fFlAAAgAElEQVR4nO3da2PaSBigWdKbcSbZSc+0d5uQtP//7xzEVbbBRq9Upbqc86WTdFRgUTwpIRCbFwBCNmvfAYBaCShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgSVHdANwGKWT9TiIy5o7b0NtGXxRi094JIiP26Cf2Sat94+y37LpkfXBDTJNr0TUPogoEm26d5qO01AyUlAk2zTvX6WoKZH1wQ0yTbdE1C6IKBJtulePwE1P7omoIk26p0XQemBgCbaqHf9LEFNj54JaKKNeieg9EBAE23UOwGlBwKaaKPueRGUDghooo26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" width="672" /></p>
+</div>
+</div>
+<div id="caso-geral" class="section level2">
+<h2>Caso geral</h2>
+<p>O artigo considera um modelo <span class="math inline">\(Var(k)\)</span> com matriz de precisão dos erros variante no tempo:</p>
+<span class="math display">\[\begin{equation}\tag{08}
+Y_t = B_{(0)}C_t + B_{(1)}Y_{t-1}+ B_{(2)}Y_{t-2} + \ldots + B_{(k)}Y_{(t-k)} + \mathcal{U}(H_t^{-1})'\epsilon_t \qquad \text{com } \epsilon \sim \mathcal{N}(0, I_m)
+\end{equation}\]</span>
+<span class="math display">\[\begin{equation}\tag{09}
+H_{(t+1)} = \frac{\mathscr{U}(H_t)'\Theta_t\mathscr{U}(H_t)}{\lambda} \qquad \text{com} \Theta \sim \mathcal{B}(\frac{\nu+c+km}{2}, \frac{1}{2})
+\end{equation}\]</span>
+<p>Onde:</p>
+<ul>
+<li><span class="math inline">\(t=1, \ldots, T\)</span> denota o tempo;</li>
+<li><span class="math inline">\(Y_t, \ t=1-k, \ldots, T\)</span> é um vetor de tamanho <span class="math inline">\(m \times 1\)</span> que contém as variáveis observadas;</li>
+<li><span class="math inline">\(C_t\)</span> é um vetor de tamanho <span class="math inline">\(c \times 1\)</span> que contém os regressores determinísticos tais como a constante e a tendência ao longo do tempo;</li>
+<li>A matriz de coeficientes <span class="math inline">\(B_{(0)}\)</span> tem tamanho <span class="math inline">\(m \times c\)</span>;</li>
+<li>As matrizes de coeficientes <span class="math inline">\(B_{(i)}\)</span>, <span class="math inline">\(i= 1, \ldots, k\)</span> são de tamanho <span class="math inline">\(m \times m\)</span>;</li>
+<li><span class="math inline">\(\nu &gt; m-1\)</span> e <span class="math inline">\(\lambda &gt; 0\)</span> são parâmetros;</li>
+<li><span class="math inline">\(\epsilon_t\)</span>, <span class="math inline">\(t = 1, \ldots, T\)</span> tem tamanho <span class="math inline">\(m \times 1\)</span>;</li>
+<li><span class="math inline">\(\Theta_t\)</span>, <span class="math inline">\(t = 1, \ldots, T\)</span> são independentes; <span style="color:red"> São identicamente distribuídas tb? </span></li>
+<li><span class="math inline">\(\mathscr{U}(H)\)</span> é a decomposição de Cholesky (superior) da matriz <span class="math inline">\(H\)</span>, que é positiva definida;</li>
+<li><span class="math inline">\(\mathcal{B}(p,q)\)</span> é a distribuição beta multivariada.</li>
+</ul>
+<p>A distribuição</p>
+<div id="conjugacao-da-beta-e-da-whishart" class="section level3">
+<h3>Conjugação da Beta e da Whishart</h3>
+<div id="wishart" class="section level4">
+<h4>Wishart</h4>
+<p>(retirado de <span class="citation">(Muirhead 2005)</span>)</p>
+<p><strong>Definição W1:</strong> Seja <span class="math inline">\(A=Z'Z\)</span>, onde <span class="math inline">\(Z\)</span> é uma matriz <span class="math inline">\(n \times m\)</span> com distribuição <span class="math inline">\(\mathcal{N}(0, I_n \otimes Sigma)\)</span>, então dizemos que <span class="math inline">\(A\)</span> segue uma distribuição <strong>Wishart</strong> com <span class="math inline">\(n\)</span> graus de liberdade e matriz de covariância <span class="math inline">\(\Sigma\)</span> e denotamos <span class="math inline">\(A \sim \mathcal{W}_m(n, \Sigma)\)</span>, onde o subscrito <span class="math inline">\(m\)</span> indica o tamanho da matriz <span class="math inline">\(A\)</span> <span style="color:red">(então as distribuições normais tem <span class="math inline">\(n\)</span> amostras aleatórias de tamanho <span class="math inline">\(m\)</span>?)</span></p>
+</div>
+<div id="produto-de-kronecker" class="section level4">
+<h4>Produto de Kronecker</h4>
+<p><strong>Observação:</strong> <span class="math inline">\(\otimes\)</span> é o <em>produto de Kronecker para matrizes</em>.</p>
+<p><strong>Definição K1:</strong> Seja <span class="math inline">\(A = (a_{i,j})\)</span> uma matriz <span class="math inline">\(p \times q\)</span> e <span class="math inline">\(B = (b_{m,n})\)</span> uma matriz de tamanho <span class="math inline">\(r \times s\)</span>. O produto de Kronecker de <span class="math inline">\(A\)</span> e <span class="math inline">\(B\)</span>, denotado por <span class="math inline">\(A \otimes B\)</span>, será a matriz de tamanho <span class="math inline">\(pr \times qs\)</span> dada por:</p>
+<span class="math display">\[\begin{align*}
+A \otimes B =
+\begin{bmatrix}
+a_{11}B &amp; a_{12}B &amp; \ldots &amp; a_{1q}B\\
+a_{21}B &amp; a_{22}B &amp; \ldots &amp; a_{2q}B\\
+\vdots &amp; \vdots   &amp; \ddots &amp; \vdots \\
+a_{p1}B &amp; a_{p2}B &amp; \ldots &amp; a_{pq}B
+\end{bmatrix}
+\end{align*}\]</span>
+<p>Este produto também é chamado de <em>produto direto</em>.</p>
+<p>O resultado que usamos na Wishart é o seguinte: Se <span class="math inline">\(\Sigma\)</span> é uma matriz <span class="math inline">\(k \times k\)</span> (não precisa ser quadrada, mas no nosso caso é), então a matriz bloco diagonal <span class="math inline">\(nk \times nk\)</span> com <span class="math inline">\(\Sigma\)</span> sendo repetida <span class="math inline">\(n\)</span> vezes na diagonal é <span class="math inline">\(I_n \otimes \Sigma\)</span>, isto é:</p>
+<span class="math display">\[\begin{align*}
+I_n \otimes \Sigma =
+\begin{bmatrix}
+\Sigma &amp; 0 &amp; \ldots &amp; 0\\
+0 &amp; \Sigma &amp; \ldots &amp; 0\\
+\vdots &amp; \vdots   &amp; \ddots &amp; \vdots \\
+0 &amp; 0 &amp; \ldots &amp; \Sigma
+\end{bmatrix}
+\end{align*}\]</span>
+</div>
+<div id="beta" class="section level4">
+<h4>Beta</h4>
+<div id="caso-univariado" class="section level5">
+<h5>Caso univariado</h5>
+<p><span style="color:red">Dá para fazer uma correspondência entre o univariado e o multivariado ou nada a ver?</span></p>
+<p>(retirado de <span class="citation">(Zellner 1996)</span>)</p>
+<p>Dizemos que uma variável aleatória <span class="math inline">\(x\)</span> segue uma distribuição beta se a sua densidade é dada por:</p>
+<span class="math display">\[\begin{equation}\tag{B1}
+p(x|a,b,c) = \frac{1}{c B(a,b)}\left(\frac{x}{c} \right)^{a-1}\left(1-\frac{x}{c} \right)^{b-1} \qquad 0 \leq x \leq c
+\end{equation}\]</span>
+<p>Onde:</p>
+<ul>
+<li><span class="math inline">\(a, b, c &gt; 0\)</span> são parâmetros;</li>
+<li><span class="math inline">\(B(a,b)\)</span> é a função beta dada por: <span class="math inline">\(B(a,b) = \frac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}\)</span>, com <span class="math inline">\(0 &lt; a, b &lt; -\infty\)</span></li>
+</ul>
+<p>Podemos fazer uma mudança de variável usando <span class="math inline">\(y = \frac{x}{c}\)</span> para obter a forma padrão da densidade beta, dada por:</p>
+<span class="math display">\[\begin{equation}\tag{B1}
+p(y|a,b,c) = \frac{1}{B(a,b)}\left(y \right)^{a-1}\left(1-y \right)^{b-1} \qquad 0 \leq x \leq 1
+\end{equation}\]</span>
+</div>
+<div id="caso-multivariado" class="section level5">
+<h5>Caso multivariado</h5>
+<p><strong>Teorema B1</strong> (teorema 3.3.1 de <span class="citation">(Muirhead 2005)</span>) Sejam <span class="math inline">\(A\)</span> e <span class="math inline">\(B\)</span> independentes onde <span class="math inline">\(A \sim \mathcal{W}_m(n_1, \Sigma)\)</span> e <span class="math inline">\(B \sim \mathcal{W}_m(n_2, \Sigma)\)</span>, com <span class="math inline">\(n_1 &gt; m-1, n_2 &gt; m-1\)</span>. Considere <span class="math inline">\(A+B = T'T\)</span>, onde <span class="math inline">\(T\)</span> é uma matriz diagonal superior de tamanho <span class="math inline">\(m \times m\)</span> com elementos positivos na sua diagonal. Seja <span class="math inline">\(U\)</span> a matriz simétrica de tamanho <span class="math inline">\(m \times m\)</span> definida por <span class="math inline">\(A = T'UT\)</span>. Então, <span class="math inline">\(A + B\)</span> e <span class="math inline">\(U\)</span> são independentes; <span class="math inline">\(A+B \sim \mathcal{W}_m(n_1 + n_2, \Sigma)\)</span> e <span class="math inline">\(U\)</span> tem densidade dada por:</p>
+<span class="math display">\[\begin{equation}\tag{B2}
+\frac{\Gamma_m \left[\frac{1}{2}(n_1 + n_2) \right]}{\Gamma_m \left(\frac{1}{2}n_1\right)\Gamma_m \left(\frac{1}{2}n_2\right)} (det U)^{\frac{n_1 - m -1}{2}}det(I_m- U)^{\frac{n_2 - m -1}{2}} \quad (0 &lt; U &lt; I_m)
+\end{equation}\]</span>
+<p>Onde <span class="math inline">\((0 &lt; U &lt; I_m)\)</span> significa que <span class="math inline">\(U\)</span> e <span class="math inline">\(I_m - U\)</span> são ambas positivas definidas.</p>
+<p>Uma matriz <span class="math inline">\(U\)</span> como no teorema acima é dita seguir uma <em>distribuição beta multivariada</em> com parâmetros <span class="math inline">\(\frac{1}{2}n_1\)</span> e <span class="math inline">\(\frac{1}{2}n_2\)</span>. A notação será <span class="math inline">\(U \sim \mathcal{B}_m(\frac{1}{2}n_1,\frac{1}{2}n_2)\)</span>.</p>
+</div>
+<div id="gerando-valores-de-uma-beta-multivariada" class="section level5">
+<h5>Gerando valores de uma Beta Multivariada</h5>
+<p>Queremos gerar retiradas aleatórias de uma distribuição Beta Multivariada, denotada por <span class="math inline">\(\mathcal{B}_m(\frac{1}{2}n_1,\frac{1}{2}n_2)\)</span>. Para isso, iremos utilizar a densidade da Wishart já implementada no R.</p>
+<p>Usando o teorema (B1), vamos gerar <span class="math inline">\(A\)</span> e <span class="math inline">\(B\)</span> independentes com a <a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/rWishart.html">função <code>rWishart()</code></a>.</p>
+<div id="uma-unica-matriz" class="section level6">
+<h6>Uma única matriz</h6>
+<pre class="r"><code># rWishart(n, df, Sigma) generates n random matrices, distributed according
+# to te Wishart distribution with parameters Sigma and df.
+
+# For the first matrix
+# Set the degrees of freedom
+df1&lt;-10
+
+# Set the covariance matrix
+# The diag(n) creates the nxn identity matrix
+sigma_1 &lt;- diag(4)
+
+# Creates the Wishart first matrix
+A&lt;-rWishart(1, df1, sigma_1)
+A&lt;-matrix(A, nrow=nrow(sigma_1))
+
+# For the second matrix
+# Set the degrees of freedom
+df2&lt;-5
+
+# Set the covariance matrix
+# The diag(n) creates the nxn identity matrix
+sigma_2 &lt;- diag(4)
+
+# Creates the Wishart first matrix
+B&lt;-rWishart(1, df2, sigma_2)
+B&lt;-matrix(B, nrow=nrow(sigma_2))
+
+# Sums A and B
+C&lt;-A+B
+
+# The chol() function gives T, an upper-triangular mxm matrix with positive diagonal elements
+T&lt;-chol(C)
+
+# We now calculate U = T'^{-1}AT^{-1}
+U &lt;- solve(t(T))%*%A%*%solve(T)
+U</code></pre>
+<pre><code>##             [,1]       [,2]       [,3]         [,4]
+## [1,] 0.551452517 0.02632082  0.1165862  0.009399996
+## [2,] 0.026320822 0.63056676  0.1594858  0.025392494
+## [3,] 0.116586202 0.15948579  0.4507778 -0.040829798
+## [4,] 0.009399996 0.02539249 -0.0408298  0.914025898</code></pre>
+</div>
+<div id="caso-geral-1" class="section level6">
+<h6>Caso geral</h6>
+<pre class="r"><code># rWishart(n, df, Sigma) generates n random matrices, distributed according
+# to te Wishart distribution with parameters Sigma and df.
+
+# Set the number of matrices (samples)
+n&lt;-2
+
+# For the first matrix
+# Set the degrees of freedom
+df1&lt;-10
+
+# Set the covariance matrix
+# The diag(n) creates the nxn identity matrix
+sigma_1 &lt;- diag(4)
+
+# Creates the Wishart first matrix
+A&lt;-rWishart(n, df1, sigma_1)
+
+# For the second matrix
+# Set the degrees of freedom
+df2&lt;-5
+
+# Set the covariance matrix
+# The diag(n) creates the nxn identity matrix
+sigma_2 &lt;- diag(4)
+
+# Creates the Wishart first matrix
+B&lt;-rWishart(n, df2, sigma_2)
+
+# Sums A and B
+C&lt;-A+B
+
+# The chol() function gives T, an upper-triangular mxm matrix with positive diagonal elements
+# Creates the T array with the same dimension of C
+T&lt;-C
+
+# Populates T
+for (i in 1:n) {
+  T[,,i]&lt;-chol(C[,,i])
+}
+
+# We now calculate U = T'^{-1}AT^{-1}
+#Creates U
+U&lt;-T
+
+for (i in 1:n) {
+  U[,,i] &lt;- solve(t(T[,,i]))%*%A[,,i]%*%solve(T[,,i])
+}
+
+U</code></pre>
+<pre><code>## , , 1
+## 
+##             [,1]        [,2]        [,3]        [,4]
+## [1,]  0.71943494 -0.08490360 -0.08899042 -0.01464648
+## [2,] -0.08490360  0.83779162 -0.26275350 -0.03250915
+## [3,] -0.08899042 -0.26275350  0.45058651 -0.00186422
+## [4,] -0.01464648 -0.03250915 -0.00186422  0.57646982
+## 
+## , , 2
+## 
+##             [,1]         [,2]       [,3]        [,4]
+## [1,]  0.89558899 -0.063976449 0.06150421 0.062681683
+## [2,] -0.06397645  0.904527426 0.17626704 0.001306728
+## [3,]  0.06150421  0.176267037 0.38160938 0.202950376
+## [4,]  0.06268168  0.001306728 0.20295038 0.601247240</code></pre>
+</div>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div id="referencias" class="section level1 unnumbered">
 <h1>Referências</h1>
 <div id="refs" class="references">
+<div id="ref-muirhead">
+<p>Muirhead, Robb John. 2005. <em>Aspects of Multivariate Statistical Theory</em>. Wiley-Interscience.</p>
+</div>
 <div id="ref-uhlig_1997">
 <p>Uhlig, Harald. 1997. “Bayesian Vector Autoregressions with Stochastic Volatility.” <em>Econometrica</em> 65 (1): 59. doi:<a href="https://doi.org/10.2307/2171813">10.2307/2171813</a>.</p>
+</div>
+<div id="ref-zellner">
+<p>Zellner, Arnold. 1996. <em>An Introduction to Bayesian Inference in Econometrics</em>. A Wiley-Interscience Publication, John Wiley &amp; Sons, Inc.</p>
 </div>
 </div>
 </div>
