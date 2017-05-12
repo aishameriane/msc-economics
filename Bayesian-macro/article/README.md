@@ -1,6 +1,6 @@
 # Readme
 
-<img src="https://imgs.xkcd.com/comics/conditional_risk.png" width="500" align = "right">
+<img src="https://github.com/aishameriane/msc-economics/blob/master/Bayesian-macro/article/grumpy.png" width="500" align = "right">
 
 ## Contents:
 
