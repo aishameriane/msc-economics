@@ -1,6 +1,6 @@
 # Readme
 
-<img src="https://github.com/aishameriane/msc-economics/blob/master/Bayesian-macro/article/grumpy.png" width="100" align = "right">
+<img src="https://github.com/aishameriane/msc-economics/blob/master/Bayesian-macro/article/grumpy.png" width="200" align = "right">
 
 ## Contents:
 
