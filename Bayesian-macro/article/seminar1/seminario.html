@@ -30,7 +30,7 @@
       // Author information
       presenters: [
             {
-        name:  'Aishameriane' ,
+        name:  'A. Schmidt' ,
         company: '',
         gplus: '',
         twitter: '',
@@ -168,6 +168,27 @@ h_{t+1} &amp;= h_t \frac{\vartheta_t}{\lambda} \qquad \text{with} \quad \varthet
 </ul></li>
 </ul>
 
+</article></slide><slide class=''><hgroup><h2>Uhlig (1997) - General model</h2></hgroup><article  id="uhlig-1997---general-model">
+
+<p>The \(Var(k)\)-model with time-varying error precision matrices is given by</p>
+
+<p>\[
+\begin{eqnarray}
+Y_t &amp;= \beta_{(0)} C_t + \beta_{(1)} Y_{t-1} + \ldots + \beta_{(k)} Y_{t-k} + h_t^{-\frac{1}{2}} \epsilon_t \qquad \text{with} \quad \epsilon_t \sim \mathcal{N}(0,1) \tag{01}\\
+h_{t+1} &amp;= h_t \frac{\vartheta_t}{\lambda} \qquad \text{with} \quad \vartheta_t \sim \mathcal{B}_1\left(\frac{\nu + 1}{2}, \frac{1}{2} \right) \tag{02}
+\end{eqnarray}
+\]</p>
+
+<ul class = 'build'>
+<li>Given \(\lambda\) and \(\nu\) positive scalars</li>
+<li>Choosing \(\bar{b}_0 \in \mathbb{R}\), \(n_0 &gt; 0\), \(s_0^2 &gt; 0\) and a function \(g_0(\beta)\geq 0\)</li>
+<li>The prior density will be
+
+<ul class = 'build'>
+<li>\(\pi_0(\beta, h_1) \propto g_0(\beta)f_{NG}(\beta, h_1|\bar{b}_0, \lambda n_0, s_0, \nu)\)</li>
+</ul></li>
+</ul>
+
 </article></slide><slide class=''><hgroup><h2>Importance sampling (example)</h2></hgroup><article  id="importance-sampling-example">
 
 <p>Example from <span class="cite">(Robert and Casella 2010)</span></p>
@@ -181,120 +202,297 @@ p = \mathbb{P}(X \geq 2) = \int\limits_2^\infty \frac{1}{\pi(1+x^2)}dx
 
 <p>Imagine that it is not possible to sample from (xx). We have some options that we will explore.</p>
 
-</article></slide><slide class=''><hgroup><h2>Importance sampling (example - cont.)</h2></hgroup><article  id="importance-sampling-example---cont." class="smaller">
+</article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling" class="smaller">
 
 <h4>Method 1</h4>
 
-<p>\[\tag{24}
+<ul class = 'build'>
+<li><p>\[\tag{24}
 p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j &gt; 2}
-\]</p>
+\]</p></li>
+<li><p>The variance of \(\hat{p}_1\) can be calculated using:</p>
 
-<p>A variância do estimador \(\hat{p}_1\) pode ser obtida da seguinte maneira:</p>
-
-<p>\[\tag{25}
+<ul class = 'build'>
+<li>\[\tag{25}
 \begin{eqnarray}
 Var[\hat{p}_1] =&amp; \\
 =&amp; Var\left[\frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j &gt; 2} \right] \\
 =&amp; \frac{1}{m^2} \sum\limits_{j=1}^m \left( Var[\mathbb{I}_{X_j &gt; 2]} \right) \\
 =&amp;\frac{1}{m^2}mp(1-p) = \frac{p(1-p)}{m}
 \end{eqnarray}
-\]</p>
+\]</li>
+</ul></li>
+<li><p>Since \(\mathbb{P}(X \geq 2)=\) 0.15, the variance of (24) will be \(Var[\hat{p}_1] =\) 0.128 \(/m\).</p></li>
+</ul>
 
-<p>E uma vez que \(\mathbb{P}(X \geq 2)=\) 0.15, a variância do estimador em (24) será dada por \(Var[\hat{p}_1] =\) 0.128 \(/m\).</p>
-
-</article></slide><slide class=''><hgroup><h2>Importance sampling (example - cont.)</h2></hgroup><article  id="importance-sampling-example---cont.-1" class="smaller">
+</article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling-1" class="smaller">
 
 <h4>Method 2</h4>
 
-<p>Considerando que a distribuição de Cauchy(0,1) é simétrica em torno do zero, uma estimativa para \(p\) seria:</p>
+<ul class = 'build'>
+<li><p>The \(\mathcal{C}(0,1)\) distribution is symmetric around \(0\). So, another estimative of \(\mathbb{P}(X \geq 2)\) is:</p>
 
-<p>\[\tag{26}
+<ul class = 'build'>
+<li>\[\tag{26}
 p \approx \hat{p}_2 = \frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| &gt; 2}
-\] Com \[\tag{27}
+\]</li>
+</ul></li>
+<li><p>With</p>
+
+<ul class = 'build'>
+<li>\[\tag{27}
 \begin{eqnarray}
 Var[\hat{p}_2] =&amp; \\
-=&amp; Var\left[\frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| &gt; 2} \right]= \frac{1}{4m^2} \sum\limits_{j=1}^m \left( Var[\mathbb{I}_{|X_j| &gt; 2]} \right) \\
+=&amp; Var\left[\frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| &gt; 2} \right]= \frac{1}{4m^2} \sum\limits_{j=1}^m \left(           Var[\mathbb{I}_{|X_j| &gt; 2]} \right) \\
 =&amp;\frac{1}{4m^2}\cdot 2mp(1-2p) = \frac{p(1-2p)}{2m}
 \end{eqnarray}
-\]</p>
-
-<p>E, novamente usando o fato que \(\mathbb{P}(X \geq 2)=\) 0.15, a variância do estimador em (25) será dada por \(Var[\hat{p}_2] =\) 0.052 \(/m\).</p>
-
-</article></slide><slide class=''><hgroup><h2>Importance sampling (example - cont.)</h2></hgroup><article  id="importance-sampling-example---cont.-2" class="smaller">
-
-<h4>Method 3</h4>
-
-<p>O método 3 é meio comprido e ainda estou vendo como colocar</p>
-
-</article></slide><slide class=''><hgroup><h2>Importance sampling (example - cont.)</h2></hgroup><article  id="importance-sampling-example---cont.-3" class="smaller">
-
-<h4>Method 4</h4>
-
-<p>Idem método 3</p>
-
-</article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling" class="smaller">
+\]</li>
+</ul></li>
+<li>Again, using \(\mathbb{P}(X \geq 2)=\) 0.15, the variance from (25) will be
 
 <ul class = 'build'>
-<li><p>Como existem diversos estimadores de Monte Carlo, se torna um problema saber decidir qual das estimativas é a melhor. O critério para esta decisão será com base na variância do estimador.</p></li>
-<li><p>De acordo com <span class="cite">(Rubinstein 1981)</span>, a redução da variância pode ser vista como uma forma de utilizar conhecimento prévio sobre o problema. Em um extremo, quando não se sabe nada a respeito das densidades envolvidas, não é possível reduzir a variabilidade. Por outro lado, se temos total conhecimento do problema, a variância é zero e métodos de MC não seriam necessários. Em suas palavras: <em>&quot;Variance reduction cannot be obtained from nothing; it is merely a way of not wasting information&quot;</em>.</p></li>
-<li><p>O objetivo é obter uma estimativa para:</p>
-
-<ul class = 'build'>
-<li>\[\tag{14}
-  I=\int g(x)dx\text{,}\quad \quad x \in D \subset \mathbb{R}^n
-  \]</li>
+<li>\(Var[\hat{p}_2] =\) 0.052 \(/m\).</li>
 </ul></li>
 </ul>
 
-</article></slide><slide class=''><hgroup><h2>Importance sampling (cont.)</h2></hgroup><article  id="importance-sampling-cont." class="smaller">
+</article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling-2" class="smaller">
 
-<p>A ideia da amostragem por importância será concentrar a amostragem dos pontos, utilizando integração de Monte Carlo, nas regiões de \(D\) que tem mais &quot;importância&quot;, ao invés de amostrar igualmente de toda a região.</p>
+<h4>Method 3</h4>
+
+<ul class = 'build'>
+<li>There is a major drawback using methods #1 and #2
+
+<ul class = 'build'>
+<li>We want to sample from \([2, +\infty)\) but (xx) and (yy) make draws from \(\mathbb{R}\)!</li>
+</ul></li>
+<li>Using \(\mathbb{P}(X &gt; 2) = 1-\mathbb{P}(X &lt; 2)\) and \(\mathbb{P}(X &gt; 2|X&gt;0) = \frac{1}{2}-\mathbb{P}(0&lt; X &lt; 2)\) we can write \(p\) as
+
+<ul class = 'build'>
+<li>\[ \tag{28}
+  p = \frac{1}{2} - \int\limits_0^2 \frac{1}{\pi(1+x^2)}dx
+  \]</li>
+</ul></li>
+<li>We now pretend that \(X \sim \mathcal{U}(0,2)\) whose p.d.f. is given by \(f_X(x)=\frac{1}{2-0}=\frac{1}{2}\). Thus, multiplying (28) by \(\frac{2}{2}\), we have:
+
+<ul class = 'build'>
+<li>\[ \tag{29}
+\begin{eqnarray}
+p =&amp; \frac{1}{2} - \int\limits_0^2 \overbrace{\frac{2}{\pi(1+x^2)}}^{h(x)}\overbrace{\frac{1}{2}}^{\text{pdf of }X}dx = \frac{1}{2} - \int\limits_0^2 h(x) f_X(x) dx \\
+=&amp; 1/2 - \mathbb{E}[h(X)]
+\end{eqnarray}
+\]</li>
+</ul></li>
+</ul>
+
+</article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling-3" class="smaller">
+
+<h4>Method 3 (cont.)</h4>
+
+<ul class = 'build'>
+<li><p>Based on (29), a new estimator can be proposed:</p>
+
+<ul class = 'build'>
+<li>\[
+\hat{p}_3 = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m h(U_j) = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m     \frac{2}{\pi}(1+U_j^2)
+\]</li>
+</ul></li>
+<li><p>Where \(U_j \sim \mathcal{U}(0,2)\). And:</p>
+
+<ul class = 'build'>
+<li>\[
+\begin{eqnarray}
+Var(\hat{p}_3) &amp;= 0 - Var\left(\frac{1}{m} \sum\limits_{j=1}^m h(U_j) \right)\\
+&amp;= \frac{1}{m^2} \sum\limits_{j=1}^m Var(h(U_j)) = \frac{1}{m} Var(h(U_j))
+\end{eqnarray}
+\]</li>
+</ul></li>
+<li><p>Using \(Var(X) = \mathbb{E}(X^2)- \mathbb{E}(X)^2\) we have:</p>
+
+<ul class = 'build'>
+<li>\[ \tag{30}
+Var(\hat{p}_3) = \frac{1}{m} \left[\mathbb{E}(h^2(U))- \mathbb{E}(h(U))\right]
+\]</li>
+</ul></li>
+</ul>
+
+</article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling-4" class="smaller">
+
+<h4>Method 3 (cont.)</h4>
+
+<ul class = 'build'>
+<li><p>Using integrals, it&#39;s easy to show that:</p>
+
+<ul class = 'build'>
+<li>\[
+\begin{eqnarray}
+\mathbb{E}[h(U)] &amp;= \int\limits_0^2 \underbrace{\frac{2}{\pi(1^2 + u^2)}}_{h(U)}\underbrace{\frac{1}{2}}_{\text{pdf of }U} du\\
+&amp;= \frac{1}{\pi}\int\limits_0^2 \frac{1}{\pi(1^2 + u^2)} du = \frac{1}{\pi}tg^{-1}(2)
+\end{eqnarray}
+\]</li>
+</ul></li>
+<li><p>And</p>
+
+<ul class = 'build'>
+<li>\[
+\mathbb{E}[h^2(U)] = \int\limits_0^2 \underbrace{\left(\frac{2}{\pi(1^2 + u^2)}\right)^2}_{h^2(U)}\underbrace{\frac{1}{2}}_{\text{pdf of }U} du = \frac{2+5tg^{-1}(2)}{5\pi^2}
+\]</li>
+</ul></li>
+</ul>
+
+<p>Thus, \(Var(\hat{p}_3) = \frac{1}{m} \left[\mathbb{E}(h^2(U))- \mathbb{E}(h(U))\right] =\) 0.0285 \(/m\).</p>
+
+</article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling-5" class="smaller">
+
+<h4>Method 4</h4>
+
+<ul class = 'build'>
+<li>Consider now \(Y \sim \mathcal{U}(0,1/2)\). We can change variables in (23) using \(Y=\frac{1}{X}\).
+
+<ul class = 'build'>
+<li>With some patience, its possible to show that</li>
+<li>\[
+  p = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy
+\]</li>
+</ul></li>
+<li>Taking \(h(Y) = \frac{2}{\pi(1+y^2)}\) we have
+
+<ul class = 'build'>
+<li>\[ 
+\begin{eqnarray}
+p =&amp; \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}\frac{2}{\underbrace{2}_{\text{pdf of }Y}}dy \\
+=&amp; \tag{31} 2\cdot\mathbb{E}\left(\frac{1}{4}h(Y)\right)=\frac{1}{2}\mathbb{E}(h(Y))
+\end{eqnarray}
+\]</li>
+</ul></li>
+</ul>
+
+</article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling-6" class="smaller">
+
+<h4>Method 4</h4>
+
+<ul class = 'build'>
+<li><ol class = 'build'>
+<li>can be approximated by:</li>
+</ol>
+
+<ul class = 'build'>
+<li>\[ \tag{32}
+\hat{p}_4 = \frac{1}{4m}\sum\limits_{j=1}^m h(Y_j)
+\]</li>
+</ul></li>
+<li><p>Whose variance is:</p>
+
+<ul class = 'build'>
+<li>\[
+Var[\hat{p}_4] = \frac{1}{16m^2} \sum\limits_{j=1}^m Var[h(Y_j)] = \frac{m}{16m^2} Var[h(Y_j)] = \frac{Var[h(Y_j)]}{16m}
+\]</li>
+</ul></li>
+<li><p>Using the same mathemagic from before, we have</p>
+
+<ul class = 'build'>
+<li>\[
+\begin{eqnarray}
+\mathbb{E}[h(Y_j)] = \frac{4}{\pi}tg^{-1}(1/2)\\
+\mathbb{E}[h^2(Y_j)] = \frac{4(2+5 tg^{-1}(1/2))}{5\pi^2}
+\end{eqnarray}
+\]</li>
+</ul></li>
+</ul>
+
+<p>Thus, \(Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2=\) 9.37510^{-5} \(/m\).</p>
+
+</article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling-7" class="smaller">
+
+<ul class = 'build'>
+<li>Since there are many unbiased estimators, how we choose among them?
+
+<ul class = 'build'>
+<li>The one with smaller variance!</li>
+</ul></li>
+<li>From <span class="cite">(Rubinstein 1981)</span>:
+
+<ul class = 'build'>
+<li>Variance reduction is a way to use your prior knowledge</li>
+<li>No prior knowledge \(\Rightarrow\) no variance reduction</li>
+<li>Total knowledge \(\Rightarrow\) no uncertainty - so why use MC methods?</li>
+<li><em>&quot;Variance reduction cannot be obtained from nothing; it is merely a way of not wasting information&quot;</em></li>
+</ul></li>
+<li><p>Formally, we want to obtain an estimate for:</p>
+
+<ul class = 'build'>
+<li><p>\[ \tag{14}
+  I=\int g(x)dx\text{,}\quad \quad x \in D \subset \mathbb{R}^n
+  \]</p></li>
+<li><p>But this estimate should consider the regions in \(D\) that have more &quot;importance&quot;</p></li>
+</ul></li>
+</ul>
+
+</article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling-8" class="smaller">
 
 <p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABaAAAANgCAMAAADtRj90AAAAjVBMVEUAAAAAADoAAGYAOpAAZrYzMzM3frg6AAA6ADo6AGY6Ojo6OpA6kNtNr0pmAABmADpmAGZmOpBmZjpmZmZmkNtmtrZmtv+QOgCQkDqQkNuQ29uQ2/+2ZgC2Zma225C2/7a2/9u2///bkDrbkGbbtmbbtrbb25Db///kGhzy8vL/tmb/25D//7b//9v///+7LtvuAAAACXBIWXMAAB2HAAAdhwGP5fFlAAAgAElEQVR4nO3de2Pbxr6YayXx2unudt2enl2lbdhL2J4mh3b0/T9eBRKXwY2CiN8QQ+J5/ljLpqkBpMivxsMB+PIGQJFetj4BAKYJNEChBBqgUAINUCiBBiiUQAMUSqABCiXQAIUSaIBCCTRAoQQaoFACDVAogQYo1DaBPr68vPz8x+Kn//3bS88vf2Y8t7V+fHv5+hAHPj3MlxT2apNAH7swLEnK919fJn356APfk3XxevszPq062w/PrHcO//73TQ58mPiSbvOjBZi2SaD7aZifvL2H/Kffez3v+SkJ238bz8d7M8TJAH/4jB/feid36h0yeTx9+PzjpDfY+R8As+l7f/74K3CHA7c/mz71Mw+4owICPbnacUqa8XGgq9gMKjdcFhl36uNnND8hknOayl3/8XMn06cd5sevz2Jc3zsceCrQFjqgKFsEeljGLkbjP3mpJoVT/xh/SWaLl9b06jJeFhlm6uNnXBLXhnI8Q01OeraTSQcn81c9fRzoOx24z/QZCrNhoM/z5nqmfJlDTy82p908ToW0yXoSmImRBtP0j5/RHK7O2zl4U69sDvrZ72Rvnjr10ecvwKi+dzjw5QtgzgwF2zDQdVouofjyNjN/7s8uD1M5a5dABlPq5oPrFve6/vEzuse/zh+6cuqf5XnkZqTBpzSRw+PksHc48OllblygEFsE+hLHdlZ3jlEVmtGq6PSawzAq3Ye1Gbr0rYvXYRSpj59xdmzPdHqm23zoXCeP7edx+dV4FeEw/YnmP7BAQ/G2C3SbjMtk7zWZ9c1XY9Cks2Qvxtfkeek/689H7Of342d0g38d1K/nfNbJUOkzL5/p1+Q0h5/a5XOeGDj3gS8PT28OAcqwXaDb6HShOXzYjIlAXxL383//9WX+4pdhyz7xjHoCe5ru91s9Fx92ss7hMf1JNDlJnw107gMLNJRvs0B3aTiH5hyT0/Q6Q+IwzmjTqfmpZp3BqwPPP+OyBnGcDfzwpJNO9hN6WVUZzGTnA535wDOPAgXZLNBtPs6JuuR6dr/CW/rcwRPajR3zc83kZ8Cc+We0Cy8z8T8OOpnsmxvsOZmayQ7+NXG/AycvzgKF2izQbS8OSSdmNyzUJua5XbPTf+IPTG+VWPiM3k7AsWH9qvBdnjv8eTO1qDBYj7/fgT/ehwdsbbNAf0l+3fah23tw5SP7gU4GO8xNoVcsQb+1M9lrqydpYbuJ/HHwJ1Oz5WuBznrg4UY8U2koz2aBPueiiUQzde3dHGOilxOBTnahHSfmid1zrhbo6jOuvpw26uSxOcVk7aZ2GB/l6kJDzgOPLrj3eiEUZ4tA14ul3bV8g5ez5gudzr1ryZ1Lm51pIx+tnHzwjHaj9pThFPhcx5mXPCdeBL0a6JwHHt+DSqGhNNsF+jCRhn6gx9maeCnv0D0ytwnk480h159xmjmbs+HyQXf99fgSlOHGuLclM+hMB26/2O9f/A8Wu4GNbBXon/9nugTaFLr3wtXEXHh0w7beK4Mz26iv7GRb9ozDtQnmsJPtOstgM2H73E8EOueB33oLH3OXGwJb2irQv/zZf5Hq0tgk0PM3cB7NDesYnWa6fvpwdnj9Gc1JTT9h9qqbiVn5eHH4aqCzHrhy7J7mshUo0FaBbpLUv2nR9SRNBbp7YbBZUh2uVFzZabzsGe1a7WRGBx/cLcJM3Hjvk4HOeuDJg5lCQ1G2DnSl29BbB/p6K3tz6/GtoocdOnw4gb7+jMvywP+Y22Q9WB5pf2C0dxgZPrd/fleWmfMeeGhymRrY1Fbb7HoNbvdQfDTbHQV66g6l/Tadrif/42fU20Rm9/D1X5I7NL+Z2oExsTp8JdB5Dzy04CnAnRUR6HbVdO6eco3RvZKmbvHfq93lCddmhh88ozql6pCzl7L0VhSaZ09vDJlY654PdOYDD1mEhvKUE+iqH9duePQ29S/1qbcrTOPUf2+A2TGvPOPQ/OHcGkDvGpdT+5ypa0Mm1lLm16AzH3jqcN5fBcpSRKDbBHXzwEnjyWS3BN3drzR9wmF+BWHZM07dHx6nK9eb9bd32xtd5/c2HeP0rVPueuCB40c/yID7KyLQvRn0lUCPtvM2uz6aTA1voXl4Gbft+78ZXQQ9P7nsvaXr5AXTvXWX7krHiXtsDN7p698kb7Y1DnT2A/ddvSQG2MhWge61oN09N/0W170P7P0z/DTI68TOhql9bf2rO64csrt8uj38uOXnxl7OqkvmRCeP6c+S5jRmAp3/wG/jZ9jDAYXZ6k1jewVp/30+eJ/qodGV3sdhXns7Gybr23uLvw/6PNx3PfPzo1klSfeg1O/zkiSvf6zmNGYCfY8DtwMOb1kFFGKrQI8WKrotYvOvVA2v9B6vt6aXW0zX9+NnJE6D4U/z99hrzN059dCPYHMaVwKd9cDJrrpmHV+foTRbBLrboHDR7fT94G2YToOcjuuW7DGrN3hM3sPtErOZZyT+/m04/55cBkg2+w3v+/SanNfLcPWleaOu8Wec/cDj/Yn6DMXZLNBdFpOFiy4ul8nxoFLHqbXrXlm6KXh7a+lB2bqNHnPPuEE3le1O5tg+0v3pYF77fuCp6/7uceDhFT52QEOBNgl0b+k4vfLtk/O60RJ0955Y45Eujbo069ozVnxKvdPtrT9cfBn8YXUaE+9TfpcDf3RnV2B7mwS6jcNrM5H7MviDTwS6P/+tJ+dTl4B3N7Ovfjn7jFu9p69/KqNQDt6e6vLAlbe6zXvg9AtgeQOKtEmgR3FsAjNKy/XVh+H7WtcPfZm+wvCcqUMTpNlnxBl8NukEvT2N89ciuo+LDtw9bc2/HICMNgn0cKbc/RN/eHO66+maeI+rauTXyelxt49vboodvw84/SkwWirPeWH10gMfLT5DwbYJdL+Paah6E9uP4lGNMqzc4TwPHsyPX7s/bX4794xgzU+c8UJM5oWFzQ4MhNko0G/dP7Dv+frUNu/sdBgW8V6nsdmBgRDbBXoDp9GEfV+nUcjnDyy0p0Bf5uybL7pudhqFfP7AUnsK9MdvrvLcp1HI5w8stadAz9xXeTenUcjnDyy1t0AX8A/8zU6jkM8fWGpPgf77tyI2MGx2GoV8/sBSewo0wEMRaIBCCTRAoQQaoFACDVAogQYolEADFEqgAQol0ACFEmiAQgk0QKEEGqBQAg1QqLsH+nzT+HsfFOABCTRAoQQaoFACDVAogQYolEADFEqgAQol0ACFEmiAQgk0QKEEGqBQAg1QKIEGKJRAAxRKoAEKJdAAhRJogEIJNEChBBqgUAINUCiBBiiUQAMUKlsrjy8//zF5QIEGWCS2ld//5c/6Vz++vbR++j09oEADLBLayvcqv9a//P5rF+hf/kyeI9AAy4S28vTSBvr9l9NrHAINsExoK48vL1/rX55m+izQAAuFtvIg0ABhBBqgUJGt/Pu3XqDb9ej+AYsK9F/vtj4HgGnRgf5S/7rdxfF18KSiAv3XxdanATAlV6C7fdDdJrt/XBQT6L86W58KwFiuQFfr0e+z5+NL8lBhgf7rL4UGShbZymrW3Nb479/OLxJWSx29tehSljj+Gtr6hAAGsgW6cSrzSsJRnyUaKE32QL9PoXv77YoI9FSeFRooTPZAH0ucQc8EWqGBkkQHerirrsg16H6SFRooU64LVWqnl+GkuqxAD36r0EBBMgX6cl+76oH+AkcRgR7XWKCBAmUK9HH6ZtBvRQV66jGFBooRfbOk12op+pc/z3PnqSu9Cwj0dIoFGihNaCu///rzH81LhdXq89QN7YoJ9PSjCg0UI7yV57nzaLNdcsCtAz0XYoEGChPeyvPMefJGo/UBCwn03OMKDZQixwy69y7eowNuHOj5DAs0UJa7t3LjQF+psEADZRHoZX8GcHc7C/TVBgs0UJR9BvrqHyo0UIZ9BfqDAgs0UJJdBvqDP1ZooAi7CvSH/RVooCB7DPSHT1BooAR7CvSC+go0UI4dBnrBUxQaKMCOAr2ovQINFGN/gV70JIEGtrefQC9Mr0IDpRDo254GkN3uAh32PIDMBHrmeQoNbG03gV7cXYEGCiHQc8/Mf0oAV+0t0KHPBMhpL4H+xMKFNQ6gDAK95qkAGe0s0OHPBchGoGefq9DAtnYS6E81V6CBIgj0/LPznhLAB/YV6M89W6GBTe0j0J8srkADJRDoK8/PeUoAH9lVoD/7fIUGtiTQV54v0MCWdhHoz/dWoIHtCXTQRwBE21OgP/8RAg1sSKDDPgQg1h4Cfct0WKCBzQl03McAhNpRoG/5GIEGtrODQN/WWoEGtibQoR8FEGc/gb7towQa2IxAB38YQJTnD/StU2FTaGBjAh39cQBBdhPoO34gQAiBjv9AgBBPH+jbVyoEGtiWQGf4SIAIewn0nT8UYD2BzvKhAOs9e6DXrFMINLApgf7wY6NPCWCZnQR6zccqNLANgc71wQArCXSuDwZY6ckDvW6VQqCBLQn0xx8de0oAC+0j0Os+WqGBTQh0xg8HWOO5A712CizQwIYEesHHR54SwFK7CPRmHw+wgkAv+HiFBrYg0HkHALjZUwd6/QRYoIHtCPSSEeJOCWCxPQR60xEAbiXQS0ZQaGADzxzoiLoKNLAZgV40RtQpASy3g0BvPgbATQQ6/xgANxHoRWMoNHB/TxzomLYKNLAVgV42SswpAXzC8we6iFEAPk+g7zIKwOc9b6CDXt7zKiGwFYFeOE7EKQF8xtMHuphxAD5JoO81DsAnCfS9xgH4pKcNdNiLe14lBDYi0EtHWj8QwKc8e6CLGgngMwT6jiMBfMazBjpw5ViggW0I9D2HAviEJw90cWMBLPakgQ6d9Qo0sAmBXjxYyFgAiwn04sFCxgJYTKDvPBjAUgK9fLSYwQAWEujlo8UMBrDQcwb6L4EGHt9zBzp2uKDRAJYR6OXDBY0GsIxA3384gEUE+hPjRQ0HsIRAf2K8qOEAlhDoT4wXNRzAEk8Z6OBddgINbOKpAx09YNh4AAsI9CYDAnxMoD8zYtyAAB8S6M+MGDcgwIcE+jMjxg0I8KFnDHT4Jg6BBrbwzIEue0iADwj0p8aMHBLgOoH+1JiRQwJcJ9CfGjNySIDrBPpTY0YOCXCdQH9qzMghAa57wkBn2GVnGwewgScOdJZRYwcFuEKgPzdq7KAAVwj050aNHRTgCoH+3KixgwJcIdCfGzV2UIArni/QWTZx2MYB3N/zBjrTuNHDAswR6E+OGz0swByB/uS40cMCzBHoT44bPSzAHIH+5LjRwwLMEeitxwWY8XSBzrTL7s0UGri3pw10tpHjBwaYJNCfHTl+YIBJAv3ZkeMHBpgk0J8dOX5ggEkCXcDIAFOeLdD5NnGYQgN39qyBzjh2jqEBxgT602PnGBpgTKA/PXaOoQHGBLqMsQFGBPrzg2cZG2BIoD8/eJaxAYaeLNA5d9kJNHBfTxrorKPnGRxgQKA/P3qewQEGBLqY0QH6BPqG4TONDtAj0DcMn2l0gJ7nCnTeTRzWOIC7es5AP+r4AAmBLml8gIRAlzQ+QEKgSxofICHQJY0PkBDoksYHSDxVoHPvshNo4J6eMtCZhr/DTwCAjkAXdgSAhkAXdgSAhkAXdgSAhkAXdgSAhkAXdgSAxjMF+g57LAQauJ9nDHSe0e91CICaQN90CIUG8hPo8o4BcCbQ5R0D4EygyzsGwJlAl3cMgLMnCvRdXsATaOBunjDQWQa/60EAKgJ920EUGshOoIs8CoBAF3oUAIEu9CgAAl3oUQCeKdB3evlOoIF7eb5A5xj7/ocBEOhCDwMg0LceRqGB3AS61OMAuyfQpR4H2D2BLvU4wO49TaDvtjYs0MCdPF2gMwy90YGAvRPoYg8E7J1AF3sgYO8E+tYDKTSQmUAXfCRg3wS64CMB+/Ysgb7jwoNAA/fxbIGOH3nLQwG7FtnK7//y54IDCjTAIoGt/PHt5TX9/eG9xD//MTqgQAMsEtjK00sa6L9/O6e43+w3gQZYKrCVx5eXr93vDi8vk4V+nkArNJBXYCsPaaBPl+WN02iV4/EDbQoN3EemQP/928tPv9cPfukf8LOB/qeHFvKVBfYpLtDVonMb6FPT5dEUemeB/ieNBm4VG+gv3a8vE+jzo71V6P0FWqGB2+QJ9PdfX36p90QnCx//uBBogCXyBDrZ0HHqHhVogE+IC/SPb22KuxWO3mT6csD9LXEoNHCTLIFOoyzQAg3cJkugj8neutOLQId8fYHdyRLodEf0cCN0lgtV7nzpyNLDCTSwRmygL1lOt9Z9/7V3AbhAAyyV40KVLtXnB1deqLKEQANPKMuVhIdm3blKdbufoz6gQAMskiXQp5fLwvPxXnezE2jgCcXeLOm1mjS/T57be40OFqDfnivQHx1PoIE1Alv5/def/6jXn5u79Y/7nCXQd79Ds0ADdxDcynOZq9WN0znEg/Xn8wEzBjp42NUHFGhgjeBWnpJV5+//PHpDwjeBBlgqfgY9MWvuHVCgARbJ8O5THxxQoAEWEeiMBxRoYA2BznhAgQbWeIZA332X3dIjCjSwxjMFOnbUgEMKNGzlNLyIOdKP/+fPj58UQaAzHlKgIZfD8D5sqeqCuWbHb3VHzYH6A48zV9N1V9rNNb56U7/5cZee5QICnfGQAg05dJcq998OpNG2s2rvcdTRy8V0SWCHia77PjjAqdtC/D7mT/9xZtzU5aYXc1uPDx9P8gU64yEFGnJIAp3W9ZjcRbMr5mkipF8HY7QJvQzRnxx37+SXPO3l5f+dHrc7jeRnwzDczYATs/c+gc54SIGGHNIZbjfHrZJ7/vXhnNxLgV/fmnns1zaXr+Mx6oTWQ9SB/k/f0gMck9WK43mUyXG700g7P7XOUf3x5D8AEgKd8ZACDTlc4vrLn4deoavgVXPc5v/PhU4KeHxJZ6zvYzTz2kM7SP2hp16WLx/VdfetCfTkuO3hm+Mfu3Psn1H1xI8WqAU64yEFGnK4TE3PhTx2099jXb9DW8/+S3S9qlaB7qWyXa9+f/T08tK7u301SG++Owp0spjcnEYb7suPk+ocL5P6L8lRBTqLZRuhBRpyOAc12YrRTVi/9N6+OlkOfkvDXUkDfa7w+++aIU4v3bJ0NVx1qFOS1vOLhL9Pj9ve0bM6yW7h5PyUet27uZ3cr/OvHzaeIND3v07lbeEPBYGGHM6Brmt5np9+feumwdX/T+6OOPR6+P5xyfT1Mtduhjh1/W9nzsdrgU7GbWfjyfS9WdqoA10/vLNAhw4aclCBhhzSJYh2SaG51/FNgT6ds9kMcUqWipv58SFdaU5fMByMm55GG/SmxYf0FcmJt2wdEeiMBxVoyCFdgmiXco9JGaeWdqvpaz/Qye+O5yI3QyQv+zX5P09+v/afPjnuxBhvbd6r//u3L8k+EoHOQ6BhM+kSRNu5ZjG62eA83HtcPZ6EO12qrt+qrx2ifdnvPNY5ou1KytlhEOjBS5H1ZHkwr/5yWRr5r78lezoEOg+Bhs2kSxCXiL42u5/f0ksHe7uMByHt2tutMx+6QDf79Zosn3/9mnzsl5lx6zH6E/TmCOeBTy/dxj2BzkOgYTO9HRXp8sEllMm1g8lidDUHTordu5Kw/shmiPMS86E3Ri/QvWsAB+PWY7w/JV1nqZ90KX8zuT4IdC4CDZuZWt89B7e3baKb/p5dDXR3HUkd6F/+T3sZ4DmivUD3NnH0x23GeH9+On+vn3R5LbL5CIHORqBhM/1LQ45doHtrGqf+HHpwZXUv0Jewt0Mcqwl6cqH2az/Q/UWN/rjNGKf+ydRPOnWvZ34V6IwWbb4WaMjhONo3MRXoy9y6d7lg8sJhL9DdXTS6QF+c6jl0Guj+SP3fzQS63kVdL3xcls33sQa9yXUqy34sCDTkcBztm5gOdG8jW3/hunp+NcYhWQhJA90tjVxekTzv4nidOnx/3OlANy9kNnfEa2fn+wl05JhBhxVoyOE42jfxuizQyT2N6kDXd8o4/3I60JeJbpPY+oFkoP64SaAHEa/vY3o5n+YVyOe/F4dAw84ch/sm3qvX3gMjMbx/RtrV7krC9mZ27RCjQL//truScHAf5+M40JfbefRfR2x3U/dudirQmQg0bOU4fFnuvXMTgU5mvW/Dexqll3ofhoE+TQS6i/3g7nXT90o6vfS3TXdd/toOMp7yjwh0xsMKNORwHL5I19yI6GvVwGbmOkj2INDpG6TUhW4v5x4H+rW9q93wwpSpQH/tTd4HqyOXJtevUQp0JgINW+kFulkDrtcg2ltxHPpLCMM9E6Mp7tfuhkindPxm13JzA5BB6IfjHpqfE83D6cuLyS3uTsmrk/MEOuNhBRpyOE5daV2Hs/8WhP2p7fBK794e6fc/bNrbu8qkLXl7aWFv3js3oU4uG++vs9Q1796R6xqBXnnYa8cVaMjhNHjt70v9YNW73nsNDq70/tL/bf8uzvVbXb2+9Zc/RqsSg1f2BuO2Y6T7rHsX1TQj924oMqffyr9/m3z32UjPEmhTaNhKssn42AXzcPlFdwVgP6T/ZTDIodfV9496bYdIr95OVzQuc+j+3uWJcZPrEofPfz9MMvf/aIFjGOjBy5M5CDSwTrvqcJxcyD0tev3tiktb643Lwz3XH+2M6xzHPybeDp+bA/dbef7E8k6iowO90YWEAg2bSW6TkadYx3T82yetg9t/3GDQysO4+MFyBTpwyLgDCzRk0LuPRo4ZZe8AHy9EzDutXJEYtjK9i3UWAg2sdIzJ5xXtZpCs89UPjVvZvOdhrgMKNLBOu1Vj3QJC+SZamb6leYYDCjSwVnfR9FObauX5p1Ouif3TBdpGaCCTyVbW/37I8q+Hpwn0kiMLNLDCdCt7F+PEllqgAZaZaWV/G2DkcodAAywz3cr+PvDQtfjgQG92nYpAA7lNtfKQtDl8v12mQMeNGHlogQZWGLeyuYYm0xYWgQZYZtTKus/ZrlQRaIBlJi/1znl5jkAD6/z/n7D1ua4zbOUh191H2gM+XaCvHFugIYPdBjrzjTjeninQC44t0JDBbgN9zH73EYEG1tltoO9wQIEGVtlvoH98y3yHqNhAb3idikDDRvYb6EPuNyXME+iwAWMPLtCQwW4DXe2yyzuFFmhgnd0GOv9dsAUaWGfXgX6kd/UuItDzRxdoyGC3ga5uYyfQYUcXaMhg14HOuxFaoIF1dh3ovG8zLtDAOjcF+vDy0+/zQ3b3wC/qrWinLvXO9m4q5wMKNLDKLYFu3iVqeoVgWL5rla7v+DnI/fSja30Y6Iu4denQQG96nYpAwzbWBLrX0ObdV79MB/o0dVlIN9CXDx9dbWGg434sZAl01HjRhxdoyOCWQB/OHbsU+fWt/8ZRVeDO9yE69RJbLXuM0jf9hlO53oZqYaDjjinQwDq3Bvq1/sXPf/RT1y57nNIlkMmb45+agvc2VEw/GmAi0IPVl2My44844BMGevb4Ag0Z3Bjoywtq1ST6tQ70sKW9QJ9eJtr3XuCv7a/aV+imHw0wvt3oI11JuHGgPzy+QEMG7939a4lBoC9LF++B/un3mYumT+kScvUR70+b6+30H135gFtMBPqBLlQRaNihGwN9CfLx0rjDVKCPSf8uqT3NTlnf58oTixnTj95MoHMeX6AhgxsCXS0on5egj/VSx+SbkxyTHF9m0++ZngnucbKV04/eTKBzHl+gIYPbAl1tyDi1q8rtq4TpBoh0Wn1od3tMbpFoi7/g0dtNvEgo0GHHF2jI4LZA//w/viWbhttLB9MJclLj6gP+eEvWrgdOk9s1ph+93ce7OIIJNLDObYH+5X/XST6Htwl0r6dJoH98O4e5mhJPveo3/SJj+P2ax7cbDb5UcXTAwEC3/x2Cxrv5BOb+XKAhg9sCXfX22M6hu0tWOukCRf3q4GHmMpDjZLenH13hod80dus+f/gTQqAhg9sC3UxtD+dpcxXoYUzrheqz7trtqUlxNf9e+uga41aef7DkW4d+qkB/dAYCDRnccKFKEuh2I/RotSB5rL730cQySPOn46ny3HLICuNW9i5RvwjdNiLQwCq3XUmYBPr91/Uac09yGWBzG6WX/zQx0+6uG1/w6CqjVrbnNRB13F0FWqEhg/WBfk2uzu4kgT61M+dq3WKQv9525O//OvVokHErj5N9DnvpUKCBdW4LdHKTuvcMv//vqKbJJrlDG73xzoxeiduZeJaLSCZbOdHosAMLNLDObYFu2nu5XHDqrkbdrTiq5eQv7Uf2A33srUpf5uPDR6PMtrK3Rh649U6ggXVuCfQxmRFXZZ56g+z2Ob39GMeJW/N3D9QrIMfQeWzLNrusZyDQEO+WQDcX4TUrFt2bEE5NQE8vvR3RX/p/kr4yd3zp7l4a+3pd5ZED/dEu5DsQaLi/WwKdbH84L20Mf993SrLdezmxt4vi/QMvW+uGj4a53soMb/KdIdAxo606Bfvs4H5uCXQ3ya3L220onpjypncNfW/wa/oHvRJfbl80fDTMRCu7nx31i4WxN/94qkDbCA33d1Ogm0SH7lTOcG1Kz/SFKpdAt5s5Im/PIdDAOjcGOl7V56x3Lxq18lzl84pLOmuP+6Ej0MA6xQQ6/uYbA8NWtu9Oe5lKf6k7HfdDQqCBdYoJ9CnvAsfU7UabNefql+dfnXdEh61DCzSwTjGBfjvkfX+Tqbe8qlvc3bu/SnWJl3oLNOxSOYHObRzo5HrIpsrHl7iFFoEG1tlzoJsqH7rVlWoZOmqNIy7QBVyn8uFJCDTE222gT+0LgtXKcxPlsgMdMlimsxBoiLfbQF9ukVRtqktvJRJ5QaFAAywzbOVl8/PPf5z/P7lZiBn0TWch0MDtRq1MLk9pJs3naXXUbhKBBtbZ7RJHpb2HSDqBLnAXh0DDPu060M29+l/T34ZdLiPQwDr7DvTAOdBhN+MQaGAdgc53QIEGVhHofAcUaGCVPQc6fXOtl3jefsEAABmmSURBVPg79ocFuogLCQUa7m/HgZ7oc2iiwwMdMVbAaUyfh0BDvP0Gut7BMRJ2U+pnC/T18xBoiLffQCfvpCjQ689DoCHejgM9UL8vYYHvqCLQsFMCXasv/A58W0SBBtYR6ItjdJ4FGlhrXaCPWd+HO9a1Vg4u+Q46oEADq6wM9MI55ym4fbe40srL9Dn6PREFGljnpkAfmt3Cx/Gmh3PsBjcc+vEtbm/EzWZb2dwYOvyAQYEu5DoVgYa7uyXQ70WbDXSzd603Yz7FT08/b66VhwyrG5cDBgc6YKiMJyLQEO+WQHe9HQW6mj///J+HL7cdY6+hvs10K0/hV3h3B3zWQE+eiUBDvFsCfWizPAx0tVrwtf82rPXTCg30IXzvRnLAZwv01TMRaIj33t1/WiIJdJXfLtC9tYFDPbeuQ508XGSgL5s3uhM9hr5WKNDAOjcE+se3NsuDXRzvXa5/309yqYGevl1Sae9JKNCwVzcEupoe14E+jNaav7TPSf6k1EAfBTrsTAQa4t0Q6FO76eHv33q7096n1k2Vk2WQ8ZL0NpbNoAu81FugYa9uC3Sdsfcip+E9JR0+JDPRYgPd3HE0zx5AgQbWWRXoU38TxyH57fERAp35gLsKtEJDvFWBPvQ2cSQvHvZn0wK9RjEXEgo03NttLxJeAj1e4ehWpI8PEOhD3gvQgwO9fqTVBBru64YLVdpAn/q7oHuXozzAGnTuy2cEGljnhkBXvT2Hub/Jrnq4bXK13FF4oKuzmtqz8eM/BN026XkD7VVCuI8bAt1c4P0e4cEmu67Jh2Yr3vd/LTXQ1flO3COp93Nm3QGfLtC2ccB93RLo+tXAQ38PR1q2Y7N37f2pXwoN9PmHyHgReqbbtxxQoIFVbgl0e4FHv7qHdHdHPbk+t7zQQFdXRF5+ohyTszvfHTrkxUOBBta5KdD1NdKDe9yf0/bav2X/5bLwQ5H3g27XZM7T/PTRmLMVaGCd2wJ9ztjoPUiSW1s0r74dz82eeOOV+xu1sp3Y924cItBXCDTc1Y2BnnYY9rlq4HvHv/9awJvLzgf69DK4cUjMgkxMoAu6TkWg4c5CA12/vV83tz5lu9HF501dqHI501NvueZQZqADTmg9gYa7ig30W1W7rnX1BLoMk4E+z+zPr3l+TR4V6BkCDXcVHujE3KUg25gM9HlD3WXtvN5aV+oSR8AJrSfQcFc5Az1446uNTQf6S3fT0fOpnl8jLOlFQoGG/coZ6FNBCxxTgZ5+QxWBnnftFUuBhnA5A/12KOUFwspnAl3QhSpFBfra2Qg0hMsa6KKMW1nvORmLWTgXaGCdPQe6WXzOssAh0MBaew50e3F6pgMKNLDKrgOd+YARgS7qQkKBBvJ47EBHnFAAgQZyuNrKU4b7oQo0sM7elzgGLxRGLkgLNLDOzgN9eBmK27ot0MA6uw705bruoahZ9DMHeuJ8BBrC7TnQj7APurBAXzkfgYZwew70cZzjU2ChBRpYZ8eBPl+mMmrxudrl3ItDoGHHdhzow3SJq0KH3IxDoIF19hvoyfe9fatXpiMWOSICXdiFhAINd7XfQFcrHJMdrqbQEfexjgz0+rMJItBwR/sN9HFurfkUtNdOoIF19h3oyQyfXzwMeJlQoIF19h3oyZWM6d0dNxxQoIFV1gX6uHC7w+WK6m3foHAq0JOLGQJ9hUDDHa0M9LINab1LqmPeT+rz5gI9qnTUTuinDvT4jAQawt0U6ENzc87juGTHibly783/Qi4CucGwlafp67zn5tU3HPAZAz1/RgIN4W4J9HtvZwN9mApcFeht1zfeprfZzbLNbo5Aw/3cEuhTu0Q7CvT5lbf/PFzIOMVMSdeZulBlTsjNOAICXdx1KgIN93RLoA9tloeBrmalXy8X46XvUFJkoPMfMC7QMScUQqDhft67+++WSAJd5bcLdC+8h3ryWYe6Uf1WoG8g0LBrNwS6WhuoczvYxfEe4vr3h94UetDrbQh0CIGG+7kh0Ml8+NAP9LFdve1SXWmXe+PfmXU5gQ5hIzTczw2B7laU//6tt93hvcNNlZNlkLfeW5dst9Ih0CEEGu7ntkDXHX4v8uC1wPa3h95WiOS9WTcrtECHEGi4n1WBPvWXlg/Jb4+9QH//9TzVnrsF810IdAiBhvtZFehDb0KcvHjYn033n1LKlYT5D/jUgfYqIeR324uEl0CPVzi66fFx+hXBmYfvQaBjCDTczQ0XqrSBPo1uMtTF9zB9OZ5Af0aBFxIKNNzRDYGu9mScw9zfZFc93Da5WsuYCLQljk8psc8CDfdzQ6CbC7zfazvYZNc1+dDs1/j+r2/9p3iRcDmBhn27JdD1q4GH/mw4nUEfmxsOvT+1m0if7x9nm91yAg37dkug21sp95eTD+nujnqmfG755dXDy9UqLlT5BIGGfbsp0PW7kUzdlv+1f8v+82Xhya3xN7xlkkDHEGi4m9sCPb2anLyJVPPq4eWts5sLCTe9ab9AxxBouJsbAz3tMOxztaxRVfny7iXb3nFUoGMINNxNaKCbt5FqZ8qnqHcnCSDQMWY3Zws0RIsN9FvV5G4ho5lAF+HxAl3kdSrzPzYEGqKFBzpR9bl3v+hNPW6go04oiEDDveQMdBFvpNIS6CACDfeSM9CnghY4BDqMQMO95Az026GUFwgrAh1EoOFesga6KAIdRKDhXgQ63wEFGlhFoPMdUKCBVQQ63wEFGmARgQ4i0EC0hwt0oRcSzp6XQAO3ethAh51QFIEGggl0FIEGggl0FIEGggl0FIEGggl0FIEGggl0FIEGgmUL9HHmnn0CDbBMrkBX7587fC/GywEFGmCRoEAfhu9OXr8P49kvf6YHFGiARUICXb2L1+ANyk/DYrcHFGiARUICfWjmyl2hZ9835ukDPTgzgQZuFRHoOsa9JucK9EwGSyDQQKyAQP/9W/0y4PtEun03r9yBvn2EbAQaiBUQ6FPT5TTKp/6SdHJAgQZYZH2g2wn0+bXCJsrtLo6vwwMKNMAi6wP9nuJmH92h63G3D7rbZPePC4EGWGJ9oI9dlU/JIvThPHt+/8PuIYEG+ITVge5WOHqT6ffHz+vR1VJHby16b0scCg3canWg0yinv26cYq8kFGhgN1YH+tjfWzcK9Hu0e/vtBBpgmdWBTl4Y7G2EbhzNoAUauMnaQA+31g131e1wDdqrhECMtYGuttPVUa5aPbx68PQynFQ/b6Bt4wBiRSxxXJYwqlS3+zlO53nz+S53g1XpdYGemaWWQaCBUKsD3cyRj7272R2nbwb9FhXomwfISaCBUOsvVGnvNdqsdfz49sufzR2iR2vSAg2wUMi9OAZ9Pv+qmllP3dBOoAGWCbofdPfOg+dejzbbJQcUaIBFgt6T8Ps/p/cZnb7RaH1AgQZYJPxdvdN7c0weUKABFgkP9IcHFGiARQQ6jkADoQQ6zvRVNAIN3EigAwk0EEmgAwk0EOmxAj29iFAMgQYiPWagI08okEADkQQ6kEADkQQ6kEADkQQ6kEADkQQ6kEADkQQ6kEADkQQ6kEADkQQ60OQ2bYEGbiTQkQQaCCTQkQQaCCTQkQQaCPRQgZ5c4y2JQAOBHjLQoScUSaCBQAIdSaCBQAIdSaCBQAIdSaCBQAIdSaCBQAIdSaCBQAIdaWofoEADNxLoUAINxBHoUAINxBHoUAINxBHoUAINxBHoULZxAHEeKdBTeyQKI9BAnEcMdOwJhRJoII5AhxJoII5AhxJoII5Ah3IpIRBHoGMJNBBGoGMJNBBGoGMJNBBGoGMJNBBGoGMJNBBGoGMJNBBGoGMJNBDmgQI9tce4OAINhHnAQAefUCyBBsIIdCyBBsIIdKyJdRiBBm4j0MEEGogi0MEEGogi0MEEGogi0MEEGogi0MEEGogi0MEEGogi0MEEGogi0MEEGojyOIGeuASkRAINRHm8QEefUDCBBqIIdLDxRF+ggdsIdDSBBoIIdDSBBoIIdDSBBoIIdDSBBoIIdDSBBoIIdDSBBoIIdDSBBoIIdDSBBoIIdDSBBoI8TKDHV+gVSqCBIA8X6PATijb6SSLQwG0EOpxAAzEEOpxAAzEEOpxAAzEEOpxAAzEEOpxtHEAMgQ4n0EAMgQ4n0EAMgQ4n0EAMgQ4n0EAMgQ4n0ECMRwn06ALqco1OVaCBmzxaoONPKJ5AAyEEOp5AAyEEOp5AAyEEOp5AAyEEOp5AAyEEOp5AAyEEOp5AAyEEOp5AAyEEOp5AAyEEOp5AAyEEOp5AAyEeJNB/CTSwOw8W6AwnFG/400SggZsIdAYCDUQQ6AwEGogg0BkINBBBoDMQaCCCQGcg0EAEgc5AoIEIAp2BQAMRBDoDgQYiCHQGAg1EEOgMBBqI8BiBHl48XTiBBiI8VqBznFAGAg1EEOgMBBqIINAZDFZkBBq4iUDnINBAAIHOQaCBAAKdg0ADAQQ6B4EGApQf6H8HPJpc/dgbgQbC5erH3gg0EC5XP/ZGoIFwufqxNwINhMvVj70RaCBcrn7sjUAD4XL1Y28EGgiXqx97U36g3x7vOhV3SwIiCHQWAg2sJ9BZCDSwnkBnIdDAegKdhUAD6wl0FgINrCfQWQg0sJ5AZyHQwHqPEOi/BBrYo0cKdJ4TykKggfUEOguBBtYT6CwEGlhPoLMQaGA9gc5CoIH1BDqL/sYTgQZuIdB5CDSwmkDnIdDAagKdh0ADqwl0HgINrCbQeQg0sNoDBPovgQZ26YECnemE8hBoYDWBzkOggdUEOg+BBlYT6DwEGlhNoPMQaGA1gc5DoIHVBDqP3t5AgQZuIdCZCDSwlkBnItDAWgKdiUADawl0JgINrCXQmQg0sFb5gf5LoIF9epxA5zqhTAQaWEugMxFoYC2BzkSggbUEOhOBBtYS6EwEGlhLoDPpnbZCAzcQ6EwEGlhLoDPpbd8WaOAGAp2LQAMrCXQuAg2sJNC5CDSwUvGB/kuggZ16mEBnO6FcBBpYSaBzEWhgJYHORaCBlQQ6F4EGVhLoXAQaWEmgcxFoYCWBzkWggZUEOheBBlYS6FzSK2wEGriBQGcj0MA6Ap2NQAPrlB7ovwQa2KtHCXS+E8pGoIF1BDobgQbWEehsBBpYR6CzEWhgHYHORqCBdQQ6G4EG1hHobAQaWEegsxFoYB2BzkaggXUEOhuBBtYR6Gz+6s5doIEbFB7ovx440G8CDazyIIHOeEL5CDSwikDnI9DAKgKdj0ADqwh0PgINrBIS6MN7c3/+Y9mjAg2wTECg//7tHN2X1wWPCjTAUgGBPry8TLR4+lGBBlhqfaBPl4WMU389Y/rRt10G+q+//gn2Zeu/fM9idaD//u3lp9+rX7xPmb988Oj5gAINT2/rv3zPYnWgT02Be5Pl6UfPBxRoeHpb/+V7FmsD3U6Vz68Kvl599B8XAg3Pbuu/fM9ibaC///ryy5+XXx5eXr5effSGQL/VmVt5ltsQaHZr6798z2JtoI9df0/dcvP0o5cDfu5udg9Nodmrrf/uPYuVrezWMtJp8/Sj9QEFGp7e1n/3nsXKVqb57X49/Wh9wB0FWqHZq63/6j2Lla08JgsYp5cmxdOP1gfcU6ABVljZyuQlwGTL8/Sj9QEFGmCRda1MN9F9/7XJ8vSjzQEFGmCRda388a3Nb1Xl+pKU6UebAwo0wCLrlzguK8xVlNudG9OP1gcUaIBFVrby9HJZYj727ls3/Wh9QIEGWGRtK9u7ijarGj++vU+eR48mBxRogEUC7sUx6HP1q+Gj6QEFGmCRkPtBv7yk90Y6r270Hu0dUKABFglp5fd/bjZqnJJV5+7R3gEFGmCR4Famd+GYOaBAAyxy91YKNMAyAg1QKIEGKJRAAxRKoAEKJdAAhRJogEIJNEChBBqgUAINUCiBBiiUQAMUSqABCiXQAIUSaIBCbRNogM69M/QwBBrY2r0z9DA2+Mp87r/cP/6R5zviKYZ/8NM3vOFr98/QgxDoRx7+wU/f8Iav3T9DD0KgH3n4Bz99wxu+dv8MPYjivzL/+IfhNxvf8IYvcvj9EOhHHv7BT9/whuc6gX7k4R/89A1veK4T6Ece/sFP3/CG57riAw2wVwINUCiBBiiUQAMUSqABCiXQAIUSaIBCCXTl+PLzH1ufw20e98wbD/0ZRJ788WvUSEvHDzz7h/6vWDKBfvfjW3fXlp9+Xz3c93/5M+CkFh0g+Mzfqr9pYUMtGj/+M7ijyJP/8S3vpz8eP/DsH/q/YtFKDPTh/b/y+Ofx9KMh43//tfv2+mV1XN+/WV+vHi7wALFn/vZ2agb70ns47FMYjx/3GbSRGAwTdfIT40d++d/HuvxX/V+9wIV96cfjB5797FDh3/x7U16g//7t8t/5dcGjQeOfQr+LTr2x40586gCxZ37+61RL/j0c9ylMjB/3GXSRSBMRd/IT40d++Zv/qj++JT8cA797xuMHnv3MUBm++femvEC3f4lH09CY/9YTI51CK3fs1S3uxKcOEHvmp/o8q79XybBhn8LU+IGfQZOD3oCBX//x+JFf/iagp/TnS+DZj8cPPPuZoTJ88+9NcYGu/1MP/otPPxo1fmzmDmmg40588gDhgb78TXpPUbeSGPq1H40f+xlcIpr8fIz++vfHjzz5Y/3FOY6/MUMOMx4/e6BzfPPvTWmBbv/qHtJ10OlHw8bPF+i4E58+QK7v/UMX6EyfQsZA95cIYk++P37kyR/qgB66IUPPfjx+7kBn+c7Zm9ICfWr+Ww6nuBOPho1/ivxHWPVXOJ1iBZ349AFCz7x3iPSLk+NTSCoR+RkcRv/yij35/viRJ18HNP3HS+jZj8cPPPvJoXJ85+xOYYHuvn2qDL1efTRu/Pbln4idqOkcK+7EZw4Qeuad92Gbhcosn0IyfvjXPt3lFX3yw/EjT74O6I9v7RFiz348fuDZTw2V5TtndwoLdPI3N/mH/PSjceN3uzgDtqoN+hl04jMHCD3zzqH3wyv+U0jGj/wMLq/iJf+aDj750fiRJ19/TU4vaUADz348fuDZTw2V5TtndwoLdH+Dwperj8aNf361+ev5Gor1a2VpP+NOfOYAoWfeev+r1f6TNMenkI4f+Rkch5s4gk9+NH6Gk3/pAhp79uPxI89+Yqgs3/y7U1ag0wW47gfw9KNx41ePn//SVf9QW/1PsWoy8eX64cIOEHvmrWTCk+VT6E2o4j6D0Ta44JOf2MYX+OXvtll3CwORZz8aP/Tsx0Pl+ebfnbICnf6H7H49/Wjc+J1T0L/2viw73OoDdCLOPBmrTVCOT2F2T1ZYQTN9/YfjdyK+/G1B665Fn/1w/E7gN083VJ5v/t0pK9DH/t63+j/q9KNx43d6//a+UdLPuBOfOUAn4syT8dsJboZPoTd+J+wzOLb9z/P1P078fIn78ncv4mX77hkFOvCbpxsqz+nvTlmBTv/t222enH40bvzOMXYGHXfiMwfoRJz5Rf8ywvhPYXCZYivsM+gm6Hm+/lP/AAj98tcBzXP2vWuQanFnnwyV5/R3p6hAD7e+fb3yaNz4nbA16OgTnzlAJ3ANunq5px0qw6fQG78T9xm0jcj09Z/IWeRLAMc6oJnOvh2/E3j23VC5Tn9vigp0kp5knjX9aNz4rVPYLo6vSw63/gCtmDM/O/Y2s8Z/Cv3xW3GfQXfKeb7+Ez8fA7/86U2Nsnz3DO7l9RZ69slQuU5/b4oKdDW7ukxOqv+86W6giUfjxj+1d/CJ2gf99drhAg8Qe+aVYT+jP4Xh+PGfQXKtX5avfzJ+/Mm/JTeTzfPd040fePZTQ2U6/b0pK9DNT+Dzns3X64/Gjd/tEI34a9bvZ9CJzxwg9szrAXt/mYI/hdH4gZ9Bd7FEejPWuJMfjx/+5T87dAHN8N3TjR949lND5Tr9nSkr0OMbBv/49v6ffPo2xWHjt7unYtbJLpdsBZ/49AGCz7y7n/55xPhPYTx+4GfQHyr+5MfjR3/5Oxm/e9rxs33p85/+jhQW6Pa/dG8Zcfho9PiXcMTtNHofKfrEZw4Qe+b9Ny6K/xSmxg/8DOqNvl+bQ0V//cfjx375Ozm/e7rxI8++N1Tu09+TwgLdTLKSu6yc/53UezTD+NEynPjMASIlE9yffs/2tR+OH+nYXcaW5es/Gj+L3N89ec8+/zf/nhQX6Hff/zm9D2izftU9mmf8UHlOfOYAeeT+FLJ+Bg998g9+9vm/+fekxEB3pnbVP8T4uU88/wEe92ufffDs4z/22d/he3NHyg40wI4JNEChBBqgUAINUCiBBiiUQAMUSqABCiXQAIUSaIBCCTRAoQQaoFACDVAogQYolEBzf6fkbmdH93OHOQLN3aXvS36MfUM/eCoCzd2d33Kj/86owASB5v6OzRvYVe9eF/+WfvAsBJr7O0+hv17+X59hlkCzgbrMJ28pCtcINFuo1jZ++fPwYgsHXCHQbOL7r9V7P9vBAdcINNs4ngP9uvVpQMkEmm2cp9Am0HCNQLORgy3Q8AGBZiMHM2j4gECzjWofh00ccJVAs43T+UVC26DhCoFmE+eLCS1ywFUCzSaqCfTXapnD64QwS6DZQn3H0aNlaLhCoNlCfRvo5q5JwBSBZgPff61fHjzv5XA5IUwTaO6vynI9bz55oRBmCTT3d0ymzUd77WCOQHN/h2Tzxt+/uWc/zBBo7u/Hf0iT/P9Z4YBpAg1QKIEGKJRAAxRKoAEKJdAAhRJogEIJNEChBBqgUAINUCiBBiiUQAMUSqABCiXQAIUSaIBCCTRAoQQaoFACDVCo/wuGBGusKm+TIAAAAABJRU5ErkJggg==" width="720" /></p>
 
-</article></slide><slide class=''><hgroup><h2>Importance sampling (cont.)</h2></hgroup><article  id="importance-sampling-cont.-1">
+<ul class = 'build'>
+<li>When \(X \sim \mathcal{U}(0,1)\) we have \(\int_0^1g(x)dx = \mathbb{E}(g(X)) \approx \frac{1}{n}\sum_1^n g(x_i)\)</li>
+<li>For \(X\sim \mathcal{U}(0,5)\), we have \(\int_0^1g(x)dx = 5\mathbb{E}(g(X)) \approx \frac{5}{n}\sum_1^n g(x_i)\)</li>
+</ul>
 
-<p>Podemos reescrever (14) como:</p>
+</article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling-9" class="smaller">
 
-<p>\[\tag{15}
+<ul class = 'build'>
+<li><p>We can rewrite (14) as:</p>
+
+<ul class = 'build'>
+<li>\[\tag{15}
 I  = \int \frac{g(x)}{m_X(x)}m_X(x) dx = \mathbb{E}_m\left[\frac{g(x)}{m_X(x)} \right]
-\]</p>
+\]</li>
+</ul></li>
+<li><p>Where \(X\) is a random vector with p.d.f. \(m_X(\cdot)\) such as \(m_X(x) &gt; 0 \ \forall \ x \in D\).</p></li>
+<li><p>Then</p>
 
-<p>Onde \(X\) é um vetor aleatório com densidade \(m_X(\cdot)\) tal que \(m_X(x) &gt; 0 \ \forall \ x \in D\). A função \(m_X(\cdot)\) é conhecida como <strong>amostrador de importância</strong>.</p>
-
-</article></slide><slide class=''><hgroup><h2>Importance sampling (cont.)</h2></hgroup><article  id="importance-sampling-cont.-2">
-
-<p>Considere o estimador:</p>
-
-<p>\[\tag{16}
+<ul class = 'build'>
+<li>\[\tag{16}
 \hat{I}_S = \frac{g(X)}{m_X(X)}
-\]</p>
+\]</li>
+</ul></li>
+<li><p>is unbiased for (15) and its variance is given by</p>
 
-<p>Ele é não viesado para (15) e sua variância é dada por:</p>
-
-<p>\[\tag{17}
+<ul class = 'build'>
+<li>\[\tag{17}
 Var[\hat{I}_S] = \int \frac{g^2(X)}{m_X(X)}dx - I^2
-\]</p>
+\]</li>
+</ul></li>
+</ul>
 
-<p>Podemos então aproximar a integral dada em (15) pegando uma amostra aleatória \(X_1, \ldots, X_n\) da densidade \(m_X(x)\) e substituir seu valor na equação de média amostral:</p>
+</article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling-10" class="smaller">
 
-<p>\[\tag{18}
+<ul class = 'build'>
+<li><p>Using a random sample \(X_1, \ldots, X_n\) from the known density \(m_X(x)\), we can approximate (15) using the sample average:</p>
+
+<ul class = 'build'>
+<li>\[\tag{18}
 \theta = \frac{1}{n} \sum\limits_{i=1}^n \frac{g(X_i)}{m_X(X_i)}
-\]</p>
+\]</li>
+</ul></li>
+<li><p>The minimum variance for \(\hat{I}_S\) is given by</p>
 
-</article></slide><slide class=''><hgroup><h2>Importance sampling (cont.)</h2></hgroup><article  id="importance-sampling-cont.-3">
-
-<p><strong>Teorema 4.3.1</strong> A variância mínima para \(\hat{I}_S\) é dada por:</p>
-
-<p>\[\tag{19}
+<ul class = 'build'>
+<li>\[\tag{19}
 Var[\hat{I}_S] = \left(\int |g^2(X)|dx\right)^2 - I^2
-\]</p>
+\]</li>
+</ul></li>
+<li><p>And it happens when the PDF of \(X\) is given by:</p>
 
-<p>E ocorre quando a variável aleatória \(X\) tem densidade:</p>
-
-<p>\[\tag{20}
+<ul class = 'build'>
+<li>\[\tag{20}
 m_X(x) = \frac{|g(x)|}{\int |g(x)|dx}
-\]</p>
+\]</li>
+</ul></li>
+<li>The only problem is: <em>if we had \(g(x)\) in the first place, probably we would not use importance sampling.</em>
+
+<ul class = 'build'>
+<li>Even so, the approach of finding the minimal variance estimator makes sense.</li>
+</ul></li>
+</ul>
 
 </article></slide><slide class=''><hgroup><h2>Importance sampling application in <span class="cite">(Uhlig 1997)</span></h2></hgroup><article  id="importance-sampling-application-in-uhlig_1997">
 
