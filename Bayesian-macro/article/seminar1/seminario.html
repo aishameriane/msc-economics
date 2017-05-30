@@ -110,10 +110,15 @@
 
 <ul class = 'build'>
 <li><em>&quot;Bayesian vector autoregressions with stochastic volatility&quot;</em></li>
-<li>Random shocks from a multivariate Beta distribution in the error precision matrix</li>
+<li>Random shocks from a multivariate Beta distribution in the error precision matrix
+
+<ul class = 'build'>
+<li>Uses results from <span class="cite">(Uhlig 1994)</span> about the conjugacy between Beta and Wishart</li>
+</ul></li>
+<li>Although some expressions are in closed form, numerical methods are needed for posterior computation</li>
 </ul>
 
-</article></slide><slide class=''><hgroup><h2>Uhlig (1997) - A simple case</h2></hgroup><article  id="uhlig-1997---a-simple-case">
+</article></slide><slide class=''><hgroup><h2>Uhlig (1997) - A simple case</h2></hgroup><article  id="uhlig-1997---a-simple-case" class="smaller">
 
 <p>Consider the model given by:</p>
 
@@ -134,7 +139,7 @@ h_{t+1} &amp;= h_t \frac{\vartheta_t}{\lambda} \qquad \text{with} \quad \varthet
 </ul></li>
 </ul>
 
-</article></slide><slide class=''><hgroup><h2>Uhlig (1997) - A simple case (cont.)</h2></hgroup><article  id="uhlig-1997---a-simple-case-cont.">
+</article></slide><slide class=''><hgroup><h2>Uhlig (1997) - A simple case (cont.)</h2></hgroup><article  id="uhlig-1997---a-simple-case-cont." class="smaller">
 
 <p>The posterior density for the simple case is given by</p>
 
@@ -168,24 +173,86 @@ h_{t+1} &amp;= h_t \frac{\vartheta_t}{\lambda} \qquad \text{with} \quad \varthet
 </ul></li>
 </ul>
 
-</article></slide><slide class=''><hgroup><h2>Uhlig (1997) - General model</h2></hgroup><article  id="uhlig-1997---general-model">
+</article></slide><slide class=''><hgroup><h2>Uhlig (1997) - General model</h2></hgroup><article  id="uhlig-1997---general-model" class="smaller">
 
-<p>The \(Var(k)\)-model with time-varying error precision matrices is given by</p>
+<p>The \(Var(k)\)-model with time-varying error precision matrices is given by the measurement equation</p>
+
+<p>\[
+\begin{eqnarray}\tag{zz}
+Y_t &amp;= \beta_{(0)} C_t + \beta_{(1)} Y_{t-1} + \ldots + \beta_{(k)} Y_{t-k} + \mathscr{U}(H_t)&#39;^{-1} \epsilon_t\\
+\text{ or } &amp;Y_t = B X_t + \mathscr{U}(H_t^{-1})&#39;\epsilon_t
+\end{eqnarray}
+\]</p>
 
 <p>\[
 \begin{eqnarray}
-Y_t &amp;= \beta_{(0)} C_t + \beta_{(1)} Y_{t-1} + \ldots + \beta_{(k)} Y_{t-k} + h_t^{-\frac{1}{2}} \epsilon_t \qquad \text{with} \quad \epsilon_t \sim \mathcal{N}(0,1) \tag{01}\\
-h_{t+1} &amp;= h_t \frac{\vartheta_t}{\lambda} \qquad \text{with} \quad \vartheta_t \sim \mathcal{B}_1\left(\frac{\nu + 1}{2}, \frac{1}{2} \right) \tag{02}
+\text{with}&amp; \ \epsilon_t \sim \mathcal{N}(0,I_m)
+\end{eqnarray}
+\]</p>
+
+<p>and the state equation</p>
+
+<p>\[
+\begin{eqnarray}\tag{zz}
+H_{t+1} = \mathscr{U}(H_t)&#39;\Theta_t\mathscr{U}(H_t)\lambda
+\end{eqnarray}
+\]</p>
+
+<p>\[
+\begin{eqnarray}
+\text{with }\Theta_t \sim \mathcal{B}_m\left(\frac{\nu + c + km}{2}, \frac{1}{2} \right)
+\end{eqnarray}
+\]</p>
+
+</article></slide><slide class=''><hgroup><h2>Uhlig (1997) - General model (cont.)</h2></hgroup><article  id="uhlig-1997---general-model-cont." class="smaller">
+
+<p>Assuming \(\lambda\) and \(\nu\) known, we have:</p>
+
+<p>\[
+\pi_0 (B, H_1) \propto g_0(B) \ \mathcal{NW}(B, H_1| \bar{B}_0, \lambda N_0, S_0, \nu)
+\]</p>
+
+<ul class = 'build'>
+<li><p>Which leads to</p></li>
+<li><p>\[ \tag{dd}
+\pi_T(B, H_{T+1}) \propto g_T(B) \ \mathcal{NW}(B, H_{T+1}| \bar{B}_T, \lambda N_T, S_T, \nu)
+\]</p></li>
+<li><p>Where</p>
+
+<ul class = 'build'>
+<li>\(N_t = \lambda N_{t-1} + X_t X_t&#39;\)</li>
+<li>\(\bar{B}_t = (\lambda \bar{B}_{t-1}N_{t-1} + Y_t X&#39;_t)N_t^{-1}\)</li>
+<li>\(S_t = \lambda S_{t-1} + \frac{\lambda}{\nu}e_t(1-X&#39;_tN_t^{-1}X_t)e&#39;_t\)</li>
+<li>\(g_t(B) = g_{t-1}(B)\left|(B-\bar{B}_t)N_t(B-\bar{B}_t)&#39; + \frac{\nu}{\lambda}S_t \right|^{-\frac{1}{2}}\)</li>
+</ul></li>
+</ul>
+
+</article></slide><slide class=''><hgroup><h2>Uhlig (1997) - The prior</h2></hgroup><article  id="uhlig-1997---the-prior">
+
+<ul class = 'build'>
+<li>Prior selection: variant of the Minnesota Prior ()
+
+<ul class = 'build'>
+<li>\(\bar{B}_0\) - random walk specification;</li>
+<li>\(\nu = 20\) (quaterly data) or \(\nu = 60\) (monthly data)</li>
+<li>\(\lambda = \frac{\nu}{\nu+1}\)</li>
+<li>\(g_0(B) = 1\)</li>
+</ul></li>
+</ul>
+
+</article></slide><slide class=''><hgroup><h2>Uhlig (1997) - The posterior</h2></hgroup><article  id="uhlig-1997---the-posterior" class="smaller">
+
+<ul class = 'build'>
+<li><p>If we integrate (dd) over \(H_{T+1}\), we find</p></li>
+<li><p>\[
+\begin{eqnarray}
+log(p(B)) =&amp; \chi + \frac{1}{2} \sum_{i=1}^T \log \left|(B - \bar{B}_t)N_t(B-\bar{B}_t)&#39; + (\nu+1)S_t \right|\\
+&amp; -\frac{l+\nu}{2} \log\left|(B - \bar{B}_T)N_T(B-\bar{B}_T)&#39; + (\nu+1)S_T \right|
 \end{eqnarray}
 \]</p>
 
 <ul class = 'build'>
-<li>Given \(\lambda\) and \(\nu\) positive scalars</li>
-<li>Choosing \(\bar{b}_0 \in \mathbb{R}\), \(n_0 &gt; 0\), \(s_0^2 &gt; 0\) and a function \(g_0(\beta)\geq 0\)</li>
-<li>The prior density will be
-
-<ul class = 'build'>
-<li>\(\pi_0(\beta, h_1) \propto g_0(\beta)f_{NG}(\beta, h_1|\bar{b}_0, \lambda n_0, s_0, \nu)\)</li>
+<li>Since it is not a known p.d.f., we need other techniques to sample from it</li>
 </ul></li>
 </ul>
 
@@ -248,11 +315,7 @@ Var[\hat{p}_2] =&amp; \\
 \end{eqnarray}
 \]</li>
 </ul></li>
-<li>Again, using \(\mathbb{P}(X \geq 2)=\) 0.15, the variance from (25) will be
-
-<ul class = 'build'>
-<li>\(Var[\hat{p}_2] =\) 0.052 \(/m\).</li>
-</ul></li>
+<li><p>Again, using \(\mathbb{P}(X \geq 2)=\) 0.15, the variance from (25) will be \(Var[\hat{p}_2] =\) 0.052 \(/m\).</p></li>
 </ul>
 
 </article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling-2" class="smaller">
@@ -265,14 +328,14 @@ Var[\hat{p}_2] =&amp; \\
 <ul class = 'build'>
 <li>We want to sample from \([2, +\infty)\) but (xx) and (yy) make draws from \(\mathbb{R}\)!</li>
 </ul></li>
-<li>Using \(\mathbb{P}(X &gt; 2) = 1-\mathbb{P}(X &lt; 2)\) and \(\mathbb{P}(X &gt; 2|X&gt;0) = \frac{1}{2}-\mathbb{P}(0&lt; X &lt; 2)\) we can write \(p\) as
+<li>Using \(\mathbb{P}(X &gt; 2) = 1-\mathbb{P}(X &lt; 2) \quad\) and \(\mathbb{P}(X &gt; 2|X&gt;0) = \frac{1}{2}-\mathbb{P}(0&lt; X &lt; 2) \quad\) we can write \(p\) as
 
 <ul class = 'build'>
 <li>\[ \tag{28}
   p = \frac{1}{2} - \int\limits_0^2 \frac{1}{\pi(1+x^2)}dx
   \]</li>
 </ul></li>
-<li>We now pretend that \(X \sim \mathcal{U}(0,2)\) whose p.d.f. is given by \(f_X(x)=\frac{1}{2-0}=\frac{1}{2}\). Thus, multiplying (28) by \(\frac{2}{2}\), we have:
+<li>We now pretend that \(X \sim \mathcal{U}(0,2)\), so its p.d.f. will be \(f_X(x)=\frac{1}{2-0}=\frac{1}{2}\). Thus, multiplying (28) by \(\frac{2}{2}\), we have:
 
 <ul class = 'build'>
 <li>\[ \tag{29}
@@ -320,7 +383,7 @@ Var(\hat{p}_3) = \frac{1}{m} \left[\mathbb{E}(h^2(U))- \mathbb{E}(h(U))\right]
 <h4>Method 3 (cont.)</h4>
 
 <ul class = 'build'>
-<li><p>Using integrals, it&#39;s easy to show that:</p>
+<li><p>Using calculus, we find that:</p>
 
 <ul class = 'build'>
 <li>\[
@@ -337,9 +400,8 @@ Var(\hat{p}_3) = \frac{1}{m} \left[\mathbb{E}(h^2(U))- \mathbb{E}(h(U))\right]
 \mathbb{E}[h^2(U)] = \int\limits_0^2 \underbrace{\left(\frac{2}{\pi(1^2 + u^2)}\right)^2}_{h^2(U)}\underbrace{\frac{1}{2}}_{\text{pdf of }U} du = \frac{2+5tg^{-1}(2)}{5\pi^2}
 \]</li>
 </ul></li>
+<li><p>Thus, \(Var(\hat{p}_3) = \frac{1}{m} \left[\mathbb{E}(h^2(U))- \mathbb{E}(h(U))\right] = \ \) 0.0285 \(/m\).</p></li>
 </ul>
-
-<p>Thus, \(Var(\hat{p}_3) = \frac{1}{m} \left[\mathbb{E}(h^2(U))- \mathbb{E}(h(U))\right] =\) 0.0285 \(/m\).</p>
 
 </article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling-5" class="smaller">
 
@@ -371,9 +433,7 @@ p =&amp; \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy = \int\limits_0^{\
 <h4>Method 4</h4>
 
 <ul class = 'build'>
-<li><ol class = 'build'>
-<li>can be approximated by:</li>
-</ol>
+<li><p>Equation (31) can be approximated by:</p>
 
 <ul class = 'build'>
 <li>\[ \tag{32}
@@ -397,9 +457,8 @@ Var[\hat{p}_4] = \frac{1}{16m^2} \sum\limits_{j=1}^m Var[h(Y_j)] = \frac{m}{16m^
 \end{eqnarray}
 \]</li>
 </ul></li>
+<li><p>Thus, \(Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2= \ \) 9.37510^{-5} \(/m\).</p></li>
 </ul>
-
-<p>Thus, \(Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2=\) 9.37510^{-5} \(/m\).</p>
 
 </article></slide><slide class=''><hgroup><h2>Importance sampling</h2></hgroup><article  id="importance-sampling-7" class="smaller">
 
@@ -494,15 +553,55 @@ m_X(x) = \frac{|g(x)|}{\int |g(x)|dx}
 </ul></li>
 </ul>
 
-</article></slide><slide class=''><hgroup><h2>Importance sampling application in <span class="cite">(Uhlig 1997)</span></h2></hgroup><article  id="importance-sampling-application-in-uhlig_1997">
+</article></slide><slide class=''><hgroup><h2>IS application in <span class="cite">(Uhlig 1997)</span></h2></hgroup><article  id="is-application-in-uhlig_1997" class="smaller">
 
-<p>Aqui vou colocar o modelo geral do Uhlig e explicar a motivação de usar amostragem por importância. A posteriori já está toda bem definida no artigo, então essa parte não tenho que me estressar agora.</p>
+<ul class = 'build'>
+<li><p>The marginal distribution for \(B\) was given by</p></li>
+<li><p>\[
+\begin{eqnarray}\tag{xx}
+log(p(B)) =&amp; \chi + \frac{1}{2} \sum_{i=1}^T \log \left|(B - \bar{B}_t)N_t(B-\bar{B}_t)&#39; + (\nu+1)S_t \right|\\
+&amp; -\frac{l+\nu}{2} \log\left|(B - \bar{B}_T)N_T(B-\bar{B}_T)&#39; + (\nu+1)S_T \right|
+\end{eqnarray}
+\]</p></li>
+<li>The following steps are proposed
+
+<ol class = 'build'>
+<li>Find the maximum (numerically), \(B^*\), and the Hessian of (xx) evaluated at \(vec(B*)\), \(J*\)</li>
+<li>Use \(B*\) and \(J*\) as the parameters of a <em>t-distribution</em>
+
+<ul class = 'build'>
+<li>with \(0&lt; \nu* &lt; T + l + \nu - ml\)</li>
+</ul></li>
+<li>Sample \(B_i\), \(i=1,2,\ldots, n\) from</li>
+</ol></li>
+<li><p>\[ \tag{xx}
+I(B) \propto \left(1+vec(B-B*)&#39;\frac{-J*}{\nu*+ml}vec(B-B*) \right)^{-(\nu* + ml)/2}
+\]</p></li>
+</ul>
+
+</article></slide><slide class=''><hgroup><h2>IS application in <span class="cite">(Uhlig 1997)</span></h2></hgroup><article  id="is-application-in-uhlig_1997-1" class="smaller">
+
+<ul class = 'build'>
+<li>The generated sample from \(I(B)\) can be used in the conditional density for \(H_{T+1}\)
+
+<ul class = 'build'>
+<li>\(H_{T+1}|B \sim \mathcal{W}_m(l+\nu,\Sigma)\)</li>
+<li>\(\Sigma^{-1} = \lambda(B-\bar{B}_T)N_T(B-\bar{B}_T) + \nu S_T\)</li>
+</ul></li>
+<li>And it is possible now to approximate (<em>under certain circunstances</em>) \(\bar{\phi}=\mathbb{E}_{\pi_T}\left[\phi(B, H_{T+1}) \right]\) using:
+
+<ul class = 'build'>
+<li>\[ 
+\bar{\phi}_n = \frac{\sum_{i=1}^n \phi(B_i, H_{T+1,i})w(B_i)}{\sum_{i=1}^n w(B_i)}
+\]</li>
+</ul></li>
+</ul>
 
 </article></slide><slide class=''><hgroup><h2>Next steps</h2></hgroup><article  id="next-steps">
 
 <ul class = 'build'>
 <li>Implement <span class="cite">(Uhlig 1997)</span> algorithm</li>
-<li>Simulate or get some data</li>
+<li>Get data from xxxxxx</li>
 <li>Write</li>
 <li><del>Sleep</del></li>
 </ul>
@@ -516,8 +615,11 @@ m_X(x) = \frac{|g(x)|}{\int |g(x)|dx}
 <div id="ref-rubinstein">
 <p>Rubinstein, Reuven Y. 1981. <em>Simulation and the Monte Carlo Method</em>.</p></div>
 
+<div id="ref-uhlig_1994">
+<p>Uhlig, Harald. 1994. “On Singular Wishart and Singular Multivariate Beta Distributions.” <em>The Annals of Statistics</em> 22 (1): 395–405. doi:<a href='https://doi.org/10.1214/aos/1176325375' title=''>10.1214/aos/1176325375</a>.</p></div>
+
 <div id="ref-uhlig_1997">
-<p>Uhlig, Harald. 1997. “Bayesian Vector Autoregressions with Stochastic Volatility.” <em>Econometrica</em> 65 (1): 59. doi:<a href='https://doi.org/10.2307/2171813' title=''>10.2307/2171813</a>.</p></div></div></article></slide>
+<p>———. 1997. “Bayesian Vector Autoregressions with Stochastic Volatility.” <em>Econometrica</em> 65 (1): 59. doi:<a href='https://doi.org/10.2307/2171813' title=''>10.2307/2171813</a>.</p></div></div></article></slide>
 
 
   <slide class="backdrop"></slide>
