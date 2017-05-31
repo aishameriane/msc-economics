@@ -14,6 +14,9 @@ output:
   ioslides_presentation:
     incremental: true
     autosize: true
+    fig_width: 7
+    fig_height: 6
+    fig_caption: true
 bibliography: references2.bib
 ---
 
@@ -31,57 +34,12 @@ bibliography: references2.bib
     - Uses results from [@uhlig_1994] about the conjugacy between Beta and Wishart
 - Although some expressions are in closed form, numerical methods are needed for posterior computation
 
-## Uhlig (1997) - A simple case{.smaller}
-
-Consider the model given by:
-
-\[
-\begin{eqnarray}
-y_t &= \beta y_{t-1} + h_t^{-\frac{1}{2}} \epsilon_t \qquad \text{with} \quad \epsilon_t \sim \mathcal{N}(0,1) \tag{01}\\
-h_{t+1} &= h_t \frac{\vartheta_t}{\lambda} \qquad \text{with} \quad \vartheta_t \sim \mathcal{B}_1\left(\frac{\nu + 1}{2}, \frac{1}{2} \right) \tag{02}
-\end{eqnarray}
-\]
-
-  - Given $\lambda$ and $\nu$ positive scalars
-  - Choosing $\bar{b}_0 \in \mathbb{R}$, $n_0 > 0$, $s_0^2 > 0$ and a function $g_0(\beta)\geq 0$
-  - The prior density will be
-      - $\pi_0(\beta, h_1) \propto g_0(\beta)f_{NG}(\beta, h_1|\bar{b}_0, \lambda n_0, s_0, \nu)$
-
-## Uhlig (1997) - A simple case (cont.){.smaller}
-
-The posterior density for the simple case is given by
-
-\[
-\begin{eqnarray}
-\pi_T(\beta, h_{T+1}) \propto g_T(\beta) f_{NG}\left(\beta, h_{T+1}| \bar{\beta}_T, \lambda n_T, s_T, \nu \right)
-\end{eqnarray}
-\]
-
-- Where
-    - \[
-      \begin{eqnarray}
-      n_t =& \lambda n_{t-1} + y^2_{t-1}\\
-      \bar{b}_t =& \left(\lambda \bar{b}_{t-1} n_{t-1} + y_t y_{t-1} \right)/n_t
-      \end{eqnarray}
-      \]
-    - \[
-      \begin{eqnarray}
-      s_t =& \lambda s_{t-1} + \frac{\lambda}{\nu}e_t^2\left(1-\frac{y_{t-1}^2}{n_t} \right)\\
-      \end{eqnarray}
-      \]
-    - \[
-      \begin{eqnarray}
-      e_t =& y_t - \bar{b}_{t-1}y_{t-1}\\
-      g_t(\beta) =& g_{t-1}(\beta)\left(\left(\beta_t - \bar{b}_t\right)^2 n_t + \frac{\nu}{\lambda}s_t \right)^{-\frac{1}{2}}
-      \end{eqnarray}
-      \]
-
 ## Uhlig (1997) - General model{.smaller}
 
 The $Var(k)$-model with time-varying error precision matrices is given by the measurement equation
 
 \[
-\begin{eqnarray}\tag{zz}
+\begin{eqnarray}\tag{01}
 Y_t &= \beta_{(0)} C_t + \beta_{(1)} Y_{t-1} + \ldots + \beta_{(k)} Y_{t-k} + \mathscr{U}(H_t)'^{-1} \epsilon_t\\
 \text{ or } &Y_t = B X_t + \mathscr{U}(H_t^{-1})'\epsilon_t
 \end{eqnarray}
@@ -96,8 +54,8 @@ Y_t &= \beta_{(0)} C_t + \beta_{(1)} Y_{t-1} + \ldots + \beta_{(k)} Y_{t-k} + \m
 and the state equation
 
 \[
-\begin{eqnarray}\tag{zz}
-H_{t+1} = \mathscr{U}(H_t)'\Theta_t\mathscr{U}(H_t)\lambda
+\begin{eqnarray}\tag{02}
+H_{t+1} = \mathscr{U}(H_t)'\Theta_t\mathscr{U}(H_t) \lambda^{-1}
 \end{eqnarray}
 \]
 
@@ -111,18 +69,18 @@ H_{t+1} = \mathscr{U}(H_t)'\Theta_t\mathscr{U}(H_t)\lambda
 
 Assuming $\lambda$ and $\nu$ known, we have:
 
-\[
+\[ \tag{(03)}
 \pi_0 (B, H_1) \propto g_0(B) \ \mathcal{NW}(B, H_1| \bar{B}_0, \lambda N_0, S_0, \nu)
 \]
 
 - Which leads to
 
-- \[ \tag{dd}
+- \[ \tag{04}
 \pi_T(B, H_{T+1}) \propto g_T(B) \ \mathcal{NW}(B, H_{T+1}| \bar{B}_T, \lambda N_T, S_T, \nu)
 \]
 
 - Where
-
+    - $e_t = Y_t - \bar{B}_{t-1}X_t$
     - $N_t = \lambda N_{t-1} + X_t X_t'$
     - $\bar{B}_t = (\lambda \bar{B}_{t-1}N_{t-1} + Y_t X'_t)N_t^{-1}$
     - $S_t = \lambda S_{t-1} + \frac{\lambda}{\nu}e_t(1-X'_tN_t^{-1}X_t)e'_t$
@@ -130,15 +88,15 @@ Assuming $\lambda$ and $\nu$ known, we have:
     
 ## Uhlig (1997) - The prior
 
-- Prior selection: variant of the Minnesota Prior ()
+- Prior selection: variant of the Minnesota Prior
     - $\bar{B}_0$ - random walk specification;
     - $\nu = 20$ (quaterly data) or $\nu = 60$ (monthly data)
     - $\lambda = \frac{\nu}{\nu+1}$
     - $g_0(B) = 1$
     
-## Uhlig (1997) - The posterior {.smaller}
+## Uhlig - The marginal posterior $p(B)$ {.smaller}
 
-- If we integrate (dd) over $H_{T+1}$, we find
+- If we integrate (04) over $H_{T+1}$, we find
 
 - \[
 \begin{eqnarray}
@@ -157,54 +115,31 @@ Example from [@casella_MC]
 We want, for $X \sim \mathcal{C}(0,1)$, estimate $\mathbb{P}(X \geq 2)$:
 
 \[
-\tag{xx}
+\tag{I-1}
 p = \mathbb{P}(X \geq 2) = \int\limits_2^\infty \frac{1}{\pi(1+x^2)}dx
 \]
 
-Imagine that it is not possible to sample from (xx). We have some options that we will explore.
+Imagine that it is not possible to sample from (I-1). We have some options that we will explore.
 
 ## Importance sampling {.smaller}
 
 #### Method 1
 
-- \[\tag{24}
+- \[
 p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2}
 \]
 
-- The variance of $\hat{p}_1$ can be calculated using:
-
-    - \[\tag{25}
-    \begin{eqnarray}
-    Var[\hat{p}_1] =& \\
-    =& Var\left[\frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2} \right] \\
-    =& \frac{1}{m^2} \sum\limits_{j=1}^m \left( Var[\mathbb{I}_{X_j > 2]} \right) \\
-    =&\frac{1}{m^2}mp(1-p) = \frac{p(1-p)}{m}
-    \end{eqnarray}
-    \]
-
-- Since $\mathbb{P}(X \geq 2)=$ `r round(1-pcauchy(2,0,1),2)`, the variance of (24) will be $Var[\hat{p}_1] =$ `r round((round(1-pcauchy(2,0,1),2)*round(pcauchy(2,0,1),2)),3)` $/m$.
-
-## Importance sampling {.smaller}
+- The variance of $\hat{p}_1$ can be calculated using $\frac{p(1-p)}{m}$. Since $\mathbb{P}(X \geq 2)=$ `r round(1-pcauchy(2,0,1),2)`, the variance of (24) will be $Var[\hat{p}_1] =$ `r round((round(1-pcauchy(2,0,1),2)*round(pcauchy(2,0,1),2)),3)` $/m$.
 
 #### Method 2
 
 - The $\mathcal{C}(0,1)$ distribution is symmetric around $0$. So, another estimative of $\mathbb{P}(X \geq 2)$ is:
 
-    - \[\tag{26}
+    - \[
     p \approx \hat{p}_2 = \frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| > 2}
     \]
 
-- With
-
-    - \[\tag{27}
-    \begin{eqnarray}
-    Var[\hat{p}_2] =& \\
-    =& Var\left[\frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| > 2} \right]= \frac{1}{4m^2} \sum\limits_{j=1}^m \left(           Var[\mathbb{I}_{|X_j| > 2]} \right) \\
-    =&\frac{1}{4m^2}\cdot 2mp(1-2p) = \frac{p(1-2p)}{2m}
-    \end{eqnarray}
-    \]
-
-- Again, using $\mathbb{P}(X \geq 2)=$ `r round(1-pcauchy(2,0,1),2)`, the variance from (25) will be $Var[\hat{p}_2] =$ `r round(round(1-pcauchy(2,0,1),2)*(1-2*round(1-pcauchy(2,0,1),2))/2,3)` $/m$.
+- With variance equal to $\frac{p(1-2p)}{2m} =$ `r round(round(1-pcauchy(2,0,1),2)*(1-2*round(1-pcauchy(2,0,1),2))/2,3)` $/m$.
 
 ## Importance sampling {.smaller}
 
@@ -213,11 +148,11 @@ p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2}
 - There is a major drawback using methods #1 and #2
     - We want to sample from $[2, +\infty)$ but (xx) and (yy) make draws from $\mathbb{R}$!
 - Using $\mathbb{P}(X > 2) = 1-\mathbb{P}(X < 2) \quad$ and $\mathbb{P}(X > 2|X>0) = \frac{1}{2}-\mathbb{P}(0< X < 2) \quad$ we can write $p$ as
-    - \[ \tag{28}
+    - \[ 
       p = \frac{1}{2} - \int\limits_0^2 \frac{1}{\pi(1+x^2)}dx
       \]
 - We now pretend that $X \sim \mathcal{U}(0,2)$, so its p.d.f. will be $f_X(x)=\frac{1}{2-0}=\frac{1}{2}$. Thus, multiplying (28) by $\frac{2}{2}$, we have:
-    - \[ \tag{29}
+    - \[ \tag{I-2}
     \begin{eqnarray}
     p =& \frac{1}{2} - \int\limits_0^2 \overbrace{\frac{2}{\pi(1+x^2)}}^{h(x)}\overbrace{\frac{1}{2}}^{\text{pdf of }X}dx = \frac{1}{2} - \int\limits_0^2 h(x) f_X(x) dx \\
     =& 1/2 - \mathbb{E}[h(X)]
@@ -228,7 +163,7 @@ p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2}
 
 #### Method 3 (cont.)
 
-- Based on (29), a new estimator can be proposed:
+- Based on (I-2), a new estimator can be proposed:
 
     - \[
     \hat{p}_3 = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m h(U_j) = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m     \frac{2}{\pi}(1+U_j^2)
@@ -243,33 +178,8 @@ p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2}
     \end{eqnarray}
     \]
 
-- Using $Var(X) = \mathbb{E}(X^2)- \mathbb{E}(X)^2$ we have:
-
-    - \[ \tag{30}
-    Var(\hat{p}_3) = \frac{1}{m} \left[\mathbb{E}(h^2(U))- \mathbb{E}(h(U))\right]
-    \]
+- And using probability theory and calculus, we have $Var(\hat{p}_3) = \frac{1}{m} \left[\mathbb{E}(h^2(U))- \mathbb{E}(h(U))\right] = \ $ `r  round(round((2+5*atan(2))/(5*pi^2),4)-round(((1/pi)*atan(2))^2,4),4)` $/m$.
     
-## Importance sampling {.smaller}    
-
-#### Method 3 (cont.)
-
-- Using calculus, we find that:
-
-    - \[
-    \begin{eqnarray}
-    \mathbb{E}[h(U)] &= \int\limits_0^2 \underbrace{\frac{2}{\pi(1^2 + u^2)}}_{h(U)}\underbrace{\frac{1}{2}}_{\text{pdf of }U} du\\
-    &= \frac{1}{\pi}\int\limits_0^2 \frac{1}{\pi(1^2 + u^2)} du = \frac{1}{\pi}tg^{-1}(2)
-    \end{eqnarray}
-    \]
-
-- And
-
-    - \[
-    \mathbb{E}[h^2(U)] = \int\limits_0^2 \underbrace{\left(\frac{2}{\pi(1^2 + u^2)}\right)^2}_{h^2(U)}\underbrace{\frac{1}{2}}_{\text{pdf of }U} du = \frac{2+5tg^{-1}(2)}{5\pi^2}
-    \]
-
-- Thus, $Var(\hat{p}_3) = \frac{1}{m} \left[\mathbb{E}(h^2(U))- \mathbb{E}(h(U))\right] = \ $ `r  round(round((2+5*atan(2))/(5*pi^2),4)-round(((1/pi)*atan(2))^2,4),4)` $/m$.
-
 ## Importance sampling {.smaller}
 
 #### Method 4
@@ -280,7 +190,7 @@ p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2}
       p = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy
     \]
 - Taking $h(Y) = \frac{2}{\pi(1+y^2)}$ we have
-    - \[ 
+    - \[ \tag{I-3}
     \begin{eqnarray}
     p =& \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}\frac{2}{\underbrace{2}_{\text{pdf of }Y}}dy \\
     =& \tag{31} 2\cdot\mathbb{E}\left(\frac{1}{4}h(Y)\right)=\frac{1}{2}\mathbb{E}(h(Y))
@@ -291,9 +201,9 @@ p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2}
 
 #### Method 4
 
-- Equation (31) can be approximated by:
+- Equation (I-3) can be approximated by:
 
-    - \[ \tag{32}
+    - \[ 
     \hat{p}_4 = \frac{1}{4m}\sum\limits_{j=1}^m h(Y_j)
     \]
 
@@ -303,35 +213,7 @@ p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2}
     Var[\hat{p}_4] = \frac{1}{16m^2} \sum\limits_{j=1}^m Var[h(Y_j)] = \frac{m}{16m^2} Var[h(Y_j)] = \frac{Var[h(Y_j)]}{16m}
     \]
 
-- Using the same mathemagic from before, we have
-
-    - \[
-    \begin{eqnarray}
-    \mathbb{E}[h(Y_j)] = \frac{4}{\pi}tg^{-1}(1/2)\\
-    \mathbb{E}[h^2(Y_j)] = \frac{4(2+5 tg^{-1}(1/2))}{5\pi^2}
-    \end{eqnarray}
-    \]
-
 - Thus, $Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2= \ $ `r (round((4*(2+5*atan(1/2)))/(5*pi^2),4) - round(((4/pi)*atan(1/2))^2,4))/16` $/m$.
-
-## Importance sampling {.smaller}
-
-- Since there are many unbiased estimators, how we choose among them?
-    - The one with smaller variance!
-
-- From [@rubinstein]:
-    - Variance reduction is a way to use your prior knowledge
-    - No prior knowledge $\Rightarrow$ no variance reduction
-    - Total knowledge $\Rightarrow$ no uncertainty - so why use MC methods?
-    - *"Variance reduction cannot be obtained from nothing; it is merely a way of not wasting information"*
-
-- Formally, we want to obtain an estimate for:
-
-    - \[ \tag{14}
-      I=\int g(x)dx\text{,}\quad \quad x \in D \subset \mathbb{R}^n
-      \]
-    
-    - But this estimate should consider the regions in $D$ that have more "importance"
 
 ## Importance sampling {.smaller}
 
@@ -370,9 +252,28 @@ p9
 
 ## Importance sampling {.smaller}
 
-- We can rewrite (14) as:
+- Since there are many unbiased estimators, how we choose among them?
+    - The one with smaller variance!
 
-    - \[\tag{15}
+- From [@rubinstein]:
+    - Variance reduction is a way to use your prior knowledge
+    - No prior knowledge $\Rightarrow$ no variance reduction
+    - Total knowledge $\Rightarrow$ no uncertainty - so why use MC methods?
+    - *"Variance reduction cannot be obtained from nothing; it is merely a way of not wasting information"*
+
+- Formally, we want to obtain an estimate for:
+
+    - \[ \tag{I4}
+      I=\int g(x)dx\text{,}\quad \quad x \in D \subset \mathbb{R}^n
+      \]
+    
+    - But this estimate should consider the regions in $D$ that have more "importance"
+
+## Importance sampling {.smaller}
+
+- We can rewrite (I-4) as:
+
+    - \[\tag{I-5}
     I  = \int \frac{g(x)}{m_X(x)}m_X(x) dx = \mathbb{E}_m\left[\frac{g(x)}{m_X(x)} \right]
     \]
 
@@ -380,45 +281,42 @@ p9
 
 - Then 
 
-    - \[\tag{16}
+    - \[
     \hat{I}_S = \frac{g(X)}{m_X(X)}
     \]
     
-- is unbiased for (15) and its variance is given by
+- is unbiased for (I-5) and its variance is given by
 
-    - \[\tag{17}
+    - \[
     Var[\hat{I}_S] = \int \frac{g^2(X)}{m_X(X)}dx - I^2
     \]
 
 ## Importance sampling {.smaller}
 
-- Using a random sample $X_1, \ldots, X_n$ from the known density $m_X(x)$, we can approximate (15) using the sample average:
+- Using a random sample $X_1, \ldots, X_n$ from the known density $m_X(x)$, we can approximate (I-5) using the sample average:
 
-    - \[\tag{18}
+    - \[
     \theta = \frac{1}{n} \sum\limits_{i=1}^n \frac{g(X_i)}{m_X(X_i)}
     \]
 
 - The minimum variance for $\hat{I}_S$ is given by
 
-    - \[\tag{19}
+    - \[
     Var[\hat{I}_S] = \left(\int |g^2(X)|dx\right)^2 - I^2
     \]
 
 - And it happens when the PDF of $X$ is given by: 
 
-    - \[\tag{20}
+    - \[
     m_X(x) = \frac{|g(x)|}{\int |g(x)|dx}
     \]
 
-- The only problem is: *if we had $g(x)$ in the first place, probably we would not use importance sampling.*
-    - Even so, the approach of finding the minimal variance estimator makes sense.
-
 ## IS application in [@uhlig_1997] {.smaller}
 
-- The marginal distribution for $B$ was given by
+- The marginal distribution for $B$ is given by
 
 - \[
-\begin{eqnarray}\tag{xx}
+\begin{eqnarray}
 log(p(B)) =& \chi + \frac{1}{2} \sum_{i=1}^T \log \left|(B - \bar{B}_t)N_t(B-\bar{B}_t)' + (\nu+1)S_t \right|\\
 & -\frac{l+\nu}{2} \log\left|(B - \bar{B}_T)N_T(B-\bar{B}_T)' + (\nu+1)S_T \right|
 \end{eqnarray}
@@ -429,7 +327,7 @@ log(p(B)) =& \chi + \frac{1}{2} \sum_{i=1}^T \log \left|(B - \bar{B}_t)N_t(B-\ba
     2. Use $B*$ and $J*$ as the parameters of a *t-distribution*
         * with $0< \nu* < T + l + \nu - ml$
     3. Sample $B_i$, $i=1,2,\ldots, n$ from
-- \[ \tag{xx}
+- \[ 
 I(B) \propto \left(1+vec(B-B*)'\frac{-J*}{\nu*+ml}vec(B-B*) \right)^{-(\nu* + ml)/2}
 \]
 
@@ -446,9 +344,12 @@ I(B) \propto \left(1+vec(B-B*)'\frac{-J*}{\nu*+ml}vec(B-B*) \right)^{-(\nu* + ml
 
 ## Next steps
 
-- Implement [@uhlig_1997] algorithm
-- Get data from xxxxxx
-- Write
-- ~~Sleep~~
+  - Get data 
+  - Implement [@uhlig_1997] algorithm
+  - Write
+
+```{r, out.width = "200px", echo=FALSE, fig.align= 'right'}
+knitr::include_graphics("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Estudo\\Seminario\\grumpy.png")
+```
 
 ## References
