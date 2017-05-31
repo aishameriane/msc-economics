@@ -13,7 +13,7 @@ date: "24 de maio de 2017"
 output: 
   ioslides_presentation:
     incremental: true
-    autosize: true
+    autosize: false
     fig_width: 7
     fig_height: 6
     fig_caption: true
@@ -110,7 +110,7 @@ log(p(B)) =& \chi + \frac{1}{2} \sum_{i=1}^T \log \left|(B - \bar{B}_t)N_t(B-\ba
 
 ## Importance sampling (example)
 
-Example from [@casella_MC]
+[Example](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Bayesian-macro/article/self-study/importance-sampling.html) from [@casella_MC]
 
 We want, for $X \sim \mathcal{C}(0,1)$, estimate $\mathbb{P}(X \geq 2)$:
 
@@ -119,7 +119,7 @@ We want, for $X \sim \mathcal{C}(0,1)$, estimate $\mathbb{P}(X \geq 2)$:
 p = \mathbb{P}(X \geq 2) = \int\limits_2^\infty \frac{1}{\pi(1+x^2)}dx
 \]
 
-Imagine that it is not possible to sample from (I-1). We have some options that we will explore.
+Imagine that it is not possible to sample from (I-1) and [numerical methods](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Bayesian-macro/lecture_notes/int_num_exemplos.html) are needed. 
 
 ## Importance sampling {.smaller}
 
