@@ -27,12 +27,6 @@ bibliography: references2.bib
 3. Importance sampling application in [@uhlig_1997]
 4. Next steps
 
-## Uhlig (1997)
-
-- *"Bayesian vector autoregressions with stochastic volatility"*
-- Random shocks from a multivariate Beta distribution in the error precision matrix
-    - Uses results from [@uhlig_1994] about the conjugacy between Beta and Wishart
-- Although some expressions are in closed form, numerical methods are needed for posterior computation
 
 ## Uhlig (1997) - General model{.smaller}
 
@@ -40,7 +34,12 @@ The $Var(k)$-model with time-varying error precision matrices is given by the me
 
 \[
 \begin{eqnarray}\tag{01}
-Y_t &= \beta_{(0)} C_t + \beta_{(1)} Y_{t-1} + \ldots + \beta_{(k)} Y_{t-k} + \mathscr{U}(H_t)'^{-1} \epsilon_t\\
+Y_t &= \beta_{(0)} C_t + \beta_{(1)} Y_{t-1} + \ldots + \beta_{(k)} Y_{t-k} + \mathscr{U}(H_t^{-1})' \epsilon_t
+\end{eqnarray}
+\]
+
+\[
+\begin{eqnarray}
 \text{ or } &Y_t = B X_t + \mathscr{U}(H_t^{-1})'\epsilon_t
 \end{eqnarray}
 \]
@@ -51,15 +50,15 @@ Y_t &= \beta_{(0)} C_t + \beta_{(1)} Y_{t-1} + \ldots + \beta_{(k)} Y_{t-k} + \m
 \end{eqnarray}
 \]
 
-and the state equation
+- and the state equation
 
-\[
+- \[
 \begin{eqnarray}\tag{02}
 H_{t+1} = \mathscr{U}(H_t)'\Theta_t\mathscr{U}(H_t) \lambda^{-1}
 \end{eqnarray}
 \]
 
-\[
+- \[
 \begin{eqnarray}
 \text{with }\Theta_t \sim \mathcal{B}_m\left(\frac{\nu + c + km}{2}, \frac{1}{2} \right)
 \end{eqnarray}
@@ -69,7 +68,7 @@ H_{t+1} = \mathscr{U}(H_t)'\Theta_t\mathscr{U}(H_t) \lambda^{-1}
 
 Assuming $\lambda$ and $\nu$ known, we have:
 
-\[ \tag{(03)}
+\[ \tag{03}
 \pi_0 (B, H_1) \propto g_0(B) \ \mathcal{NW}(B, H_1| \bar{B}_0, \lambda N_0, S_0, \nu)
 \]
 
@@ -129,11 +128,11 @@ Imagine that it is not possible to sample from (I-1) and [numerical methods](htt
 p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2}
 \]
 
-- The variance of $\hat{p}_1$ can be calculated using $\frac{p(1-p)}{m}$. Since $\mathbb{P}(X \geq 2)=$ `r round(1-pcauchy(2,0,1),2)`, the variance of (24) will be $Var[\hat{p}_1] =$ `r round((round(1-pcauchy(2,0,1),2)*round(pcauchy(2,0,1),2)),3)` $/m$.
+- The variance of $\hat{p}_1$ can be calculated using $\frac{p(1-p)}{m}$:  $Var[\hat{p}_1] =$ `r round((round(1-pcauchy(2,0,1),2)*round(pcauchy(2,0,1),2)),3)` $/m$.
 
 #### Method 2
 
-- The $\mathcal{C}(0,1)$ distribution is symmetric around $0$. So, another estimative of $\mathbb{P}(X \geq 2)$ is:
+- The $\mathcal{C}(0,1)$ distribution is symmetric around $0$. Then, another estimative of $\mathbb{P}(X \geq 2)$ is:
 
     - \[
     p \approx \hat{p}_2 = \frac{1}{2m}\sum\limits_{j=1}^m \mathbb{I}_{|X_j| > 2}
@@ -146,12 +145,8 @@ p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2}
 #### Method 3
 
 - There is a major drawback using methods #1 and #2
-    - We want to sample from $[2, +\infty)$ but (xx) and (yy) make draws from $\mathbb{R}$!
-- Using $\mathbb{P}(X > 2) = 1-\mathbb{P}(X < 2) \quad$ and $\mathbb{P}(X > 2|X>0) = \frac{1}{2}-\mathbb{P}(0< X < 2) \quad$ we can write $p$ as
-    - \[ 
-      p = \frac{1}{2} - \int\limits_0^2 \frac{1}{\pi(1+x^2)}dx
-      \]
-- We now pretend that $X \sim \mathcal{U}(0,2)$, so its p.d.f. will be $f_X(x)=\frac{1}{2-0}=\frac{1}{2}$. Thus, multiplying (28) by $\frac{2}{2}$, we have:
+    - We want to sample from $[2, +\infty)$ but both strategies make draws in larger regions!
+- Using $X \sim \mathcal{U}(0,2)$ it is possible to rewrite $p$:
     - \[ \tag{I-2}
     \begin{eqnarray}
     p =& \frac{1}{2} - \int\limits_0^2 \overbrace{\frac{2}{\pi(1+x^2)}}^{h(x)}\overbrace{\frac{1}{2}}^{\text{pdf of }X}dx = \frac{1}{2} - \int\limits_0^2 h(x) f_X(x) dx \\
@@ -159,65 +154,17 @@ p \approx \hat{p}_1 = \frac{1}{m}\sum\limits_{j=1}^m \mathbb{I}_{X_j > 2}
     \end{eqnarray}
     \]
     
-## Importance sampling {.smaller}    
-
-#### Method 3 (cont.)
-
 - Based on (I-2), a new estimator can be proposed:
 
     - \[
     \hat{p}_3 = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m h(U_j) = \frac{1}{2} - \frac{1}{m} \sum\limits_{j=1}^m     \frac{2}{\pi}(1+U_j^2)
     \]
-
-- Where $U_j \sim \mathcal{U}(0,2)$. And:
-
-    - \[
-    \begin{eqnarray}
-    Var(\hat{p}_3) &= 0 - Var\left(\frac{1}{m} \sum\limits_{j=1}^m h(U_j) \right)\\
-    &= \frac{1}{m^2} \sum\limits_{j=1}^m Var(h(U_j)) = \frac{1}{m} Var(h(U_j))
-    \end{eqnarray}
-    \]
-
-- And using probability theory and calculus, we have $Var(\hat{p}_3) = \frac{1}{m} \left[\mathbb{E}(h^2(U))- \mathbb{E}(h(U))\right] = \ $ `r  round(round((2+5*atan(2))/(5*pi^2),4)-round(((1/pi)*atan(2))^2,4),4)` $/m$.
+    
+- $Var(\hat{p}_3) = \frac{1}{m} \left[\mathbb{E}(h^2(U))- \mathbb{E}(h(U))\right] = \ $ `r  round(round((2+5*atan(2))/(5*pi^2),4)-round(((1/pi)*atan(2))^2,4),4)` $/m$.    
     
 ## Importance sampling {.smaller}
 
-#### Method 4
-
-- Consider now $Y \sim \mathcal{U}(0,1/2)$. We can change variables in (23) using $Y=\frac{1}{X}$.
-    - With some patience, its possible to show that
-    - \[
-      p = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy
-    \]
-- Taking $h(Y) = \frac{2}{\pi(1+y^2)}$ we have
-    - \[ \tag{I-3}
-    \begin{eqnarray}
-    p =& \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}dy = \int\limits_0^{\frac{1}{2}} \frac{1}{\pi(1+y^{2})}\frac{2}{\underbrace{2}_{\text{pdf of }Y}}dy \\
-    =& \tag{31} 2\cdot\mathbb{E}\left(\frac{1}{4}h(Y)\right)=\frac{1}{2}\mathbb{E}(h(Y))
-    \end{eqnarray}
-    \]
-    
-## Importance sampling {.smaller}
-
-#### Method 4
-
-- Equation (I-3) can be approximated by:
-
-    - \[ 
-    \hat{p}_4 = \frac{1}{4m}\sum\limits_{j=1}^m h(Y_j)
-    \]
-
-- Whose variance is:
-
-    - \[
-    Var[\hat{p}_4] = \frac{1}{16m^2} \sum\limits_{j=1}^m Var[h(Y_j)] = \frac{m}{16m^2} Var[h(Y_j)] = \frac{Var[h(Y_j)]}{16m}
-    \]
-
-- Thus, $Var[h(Y_j)] =\mathbb{E}[h^2(Y_j)] -\mathbb{E}[h(Y_j)]^2= \ $ `r (round((4*(2+5*atan(1/2)))/(5*pi^2),4) - round(((4/pi)*atan(1/2))^2,4))/16` $/m$.
-
-## Importance sampling {.smaller}
-
-```{r, echo=FALSE}
+```{r, out.width = "600px", echo=FALSE, fig.align= 'center'}
 library(ggplot2)
 windowsFonts(xkcd=windowsFont("xkcd"))
 
@@ -247,69 +194,21 @@ p9 <- ggplot(data.frame(x = c(0, 1)), aes(x = x)) +
 p9
 ```
 
-- When $X \sim \mathcal{U}(0,1)$ we have $\int_0^1g(x)dx = \mathbb{E}(g(X)) \approx \frac{1}{n}\sum_1^n g(x_i)$
-- For $X\sim \mathcal{U}(0,5)$, we have $\int_0^1g(x)dx = 5\mathbb{E}(g(X)) \approx \frac{5}{n}\sum_1^n g(x_i)$
-
 ## Importance sampling {.smaller}
 
-- Since there are many unbiased estimators, how we choose among them?
-    - The one with smaller variance!
+Formally, we want to obtain an estimate for:
 
-- From [@rubinstein]:
-    - Variance reduction is a way to use your prior knowledge
-    - No prior knowledge $\Rightarrow$ no variance reduction
-    - Total knowledge $\Rightarrow$ no uncertainty - so why use MC methods?
-    - *"Variance reduction cannot be obtained from nothing; it is merely a way of not wasting information"*
+\[ \tag{I4}
+I=\int\limits_\Theta g(x)p(\theta|y)d\theta = \int\limits_\Theta \frac{g(x)p(\theta|y)}{m(\theta)}m(\theta) d\theta = \mathbb{E}_m\left[\frac{g(x)p(\theta|y)}{m(\theta)} \right]
+\]
 
-- Formally, we want to obtain an estimate for:
-
-    - \[ \tag{I4}
-      I=\int g(x)dx\text{,}\quad \quad x \in D \subset \mathbb{R}^n
-      \]
-    
-    - But this estimate should consider the regions in $D$ that have more "importance"
-
-## Importance sampling {.smaller}
-
-- We can rewrite (I-4) as:
-
-    - \[\tag{I-5}
-    I  = \int \frac{g(x)}{m_X(x)}m_X(x) dx = \mathbb{E}_m\left[\frac{g(x)}{m_X(x)} \right]
-    \]
-
-- Where $X$ is a random vector with p.d.f. $m_X(\cdot)$ such as $m_X(x) > 0 \ \forall \ x \in D$.
-
-- Then 
+- Where $\theta$ is a random vector with p.d.f. $m(\cdot)$ such as $m(\theta) > 0 \ \forall \ \theta \in D \quad$. Then
 
     - \[
-    \hat{I}_S = \frac{g(X)}{m_X(X)}
+    I \approx \hat{I}_S(\theta) = \frac{1}{S} \sum\limits_{i=1}\frac{g(\theta^i)f(\theta^i)}{m_X(\theta)}
     \]
     
-- is unbiased for (I-5) and its variance is given by
-
-    - \[
-    Var[\hat{I}_S] = \int \frac{g^2(X)}{m_X(X)}dx - I^2
-    \]
-
-## Importance sampling {.smaller}
-
-- Using a random sample $X_1, \ldots, X_n$ from the known density $m_X(x)$, we can approximate (I-5) using the sample average:
-
-    - \[
-    \theta = \frac{1}{n} \sum\limits_{i=1}^n \frac{g(X_i)}{m_X(X_i)}
-    \]
-
-- The minimum variance for $\hat{I}_S$ is given by
-
-    - \[
-    Var[\hat{I}_S] = \left(\int |g^2(X)|dx\right)^2 - I^2
-    \]
-
-- And it happens when the PDF of $X$ is given by: 
-
-    - \[
-    m_X(x) = \frac{|g(x)|}{\int |g(x)|dx}
-    \]
+- is unbiased for (I-5) and its variance is given by $Var[\hat{I}_S] = \int g^2(\theta)\frac{f^2(\theta)}{m(\theta)}d\theta - I^2$
 
 ## IS application in [@uhlig_1997] {.smaller}
 
