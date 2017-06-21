@@ -1,0 +1,717 @@
+---
+title: "Artigo Bayesiana"
+author: "Aishameriane Schmidt"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+   - \usepackage{calrsfs}
+date: "16 de junho de 2017"
+output: html_document
+---
+
+# Data preparation
+
+## Getting data from IPEA
+
+The folowing series were obtained from [IPEA site](http://www.ipeadata.gov.br) for the period from mar/2002 to feb/2017:
+
+* Exchange rate R\$/US\$ (comercial, compra, média do período) <span style="color:red">Aisha: Ver como traduzir</span>. Obs: inflação já descontada, a taxa está em termos reais.
+* IPCA (% a.m) as the inflation index <span style="color:red">Aisha: Ver como traduzir o "ao mês"</span>
+* Unemployment rate (%) for the Metropolitan Regions. Reference period: 30 days.
+* SELIC (% a.m., overnight) as the interest rate.
+
+I had to drop several months for all series because the unemployment rate is available only from 2002/03 to 2016/02.
+
+### Exchange rate
+```{r}
+# install.packages("lubridate")
+library(lubridate)
+library(ggplot2)
+
+# Lê os dados e armazena numa variável
+setwd("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Séries IPEA")
+cambio <- read.csv("cambio.csv", sep = ";", dec=",", header=T)
+
+# Limpeza dos dados
+
+# Vê como estão os dados
+str(cambio)
+head(cambio)
+
+## Muda o nome das colunas e salva apenas as duas primeiras (a terceira está em branco)
+colnames(cambio)<-c("data","cambio")
+cambio<-cambio[,1:2]
+
+## Adiciona "01" ao fim de todas as datas para poder usar a função do lubridate depois
+cambio$data<-paste(cambio$data,".01",sep="")
+
+## Converte o campo para uma data
+cambio$data<-ymd(cambio$data)
+
+## Encontra qual linha tem fevereiro de 2002 e fevereiro de 2017
+# Observação: período lula: janeiro 2003 a janeiro 2011 e período Dilma: 01 janeiro 2011 a 31 de agosto de 2016
+inicio <- which(cambio$data == "2002-03-01")
+fim <- which(cambio$data == "2016-02-01")
+
+## Corta os dados
+cambio<-cambio[inicio:fim,]
+
+# Verifica como ficaram os dados
+str(cambio)
+head(cambio)
+tail(cambio)
+
+# Plota o gráfico
+q <- ggplot(data = cambio, aes(data, cambio)) + geom_line() +
+  scale_x_date(limits = c(ymd("2002-03-01"), ymd("2016-02-01")), date_breaks = "12 months", date_minor_breaks = "3 months") + xlab("") + ylab("Exchange rate (% a.m.)")
+q + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+### Inflation
+
+```{r}
+library(lubridate)
+library(ggplot2)
+
+# Lê os dados e armazena numa variável
+setwd("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Séries IPEA")
+inflacao <- read.csv("inflacao.csv", sep = ";", dec=",", header=T)
+
+# Limpeza dos dados
+
+# Vê como estão os dados
+str(inflacao)
+head(inflacao)
+
+## Muda o nome das colunas e salva apenas as duas primeiras (a terceira está em branco)
+colnames(inflacao)<-c("data","inflacao")
+inflacao<-inflacao[,1:2]
+
+## Adiciona "01" ao fim de todas as datas para poder usar a função do lubridate depois
+inflacao$data<-paste(inflacao$data,".01",sep="")
+
+## Converte o campo para uma data
+inflacao$data<-ymd(inflacao$data)
+
+## Encontra qual linha tem fevereiro de 2002 e fevereiro de 2017
+# Observação: período lula: janeiro 2003 a janeiro 2011 e período Dilma: 01 janeiro 2011 a 31 de agosto de 2016
+inicio <- which(inflacao$data == "2002-03-01")
+fim <- which(inflacao$data == "2016-02-01")
+
+## Corta os dados
+inflacao<-inflacao[inicio:fim,]
+
+# Verifica como ficaram os dados
+str(inflacao)
+head(inflacao)
+tail(inflacao)
+
+# Plota o gráfico
+q <- ggplot(data = inflacao, aes(data, inflacao)) + geom_line() +
+  scale_x_date(limits = c(ymd("2002-03-01"), ymd("2016-02-01")), date_breaks = "12 months", date_minor_breaks = "3 months") + xlab("") + ylab("Inflation (% a.m.)")
+q + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
+### Interest Rate (Selic)
+
+```{r}
+library(lubridate)
+library(ggplot2)
+
+# Lê os dados e armazena numa variável
+setwd("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Séries IPEA")
+juros <- read.csv("juros.csv", sep = ";", dec=",", header=T)
+
+# Limpeza dos dados
+
+# Vê como estão os dados
+str(juros)
+head(juros)
+
+## Muda o nome das colunas e salva apenas as duas primeiras (a terceira está em branco)
+colnames(juros)<-c("data","juros")
+juros<-juros[,1:2]
+
+## Adiciona "01" ao fim de todas as datas para poder usar a função do lubridate depois
+juros$data<-paste(juros$data,".01",sep="")
+
+## Converte o campo para uma data
+juros$data<-ymd(juros$data)
+
+## Encontra qual linha tem fevereiro de 2002 e fevereiro de 2017
+# Observação: período lula: janeiro 2003 a janeiro 2011 e período Dilma: 01 janeiro 2011 a 31 de agosto de 2016
+inicio <- which(juros$data == "2002-03-01")
+fim <- which(juros$data == "2016-02-01")
+
+## Corta os dados
+juros<-juros[inicio:fim,]
+
+# Verifica como ficaram os dados
+str(juros)
+head(juros)
+tail(juros)
+
+# Plota o gráfico
+q <- ggplot(data = juros, aes(data, juros)) + geom_line() +
+  scale_x_date(limits = c(ymd("2002-03-01"), ymd("2016-02-01")), date_breaks = "12 months", date_minor_breaks = "3 months") + xlab("") + ylab("Interest rate (% a.m.)")
+q + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+### Unemployment rate
+
+```{r}
+library(lubridate)
+library(ggplot2)
+
+# Lê os dados e armazena numa variável
+setwd("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Séries IPEA")
+desemprego <- read.csv("desemprego.csv", sep = ";", dec=",", header=T)
+
+# Limpeza dos dados
+
+# Vê como estão os dados
+str(desemprego)
+head(desemprego)
+
+## Muda o nome das colunas e salva apenas as duas primeiras (a terceira está em branco)
+colnames(desemprego)<-c("data","desemprego")
+desemprego<-desemprego[,1:2]
+
+## Adiciona "01" ao fim de todas as datas para poder usar a função do lubridate depois
+desemprego$data<-paste(desemprego$data,".01",sep="")
+
+## Converte o campo para uma data
+desemprego$data<-ymd(desemprego$data)
+
+## Encontra qual linha tem fevereiro de 2002 e fevereiro de 2017
+# Observação: período lula: janeiro 2003 a janeiro 2011 e período Dilma: 01 janeiro 2011 a 31 de agosto de 2016
+inicio <- which(desemprego$data == "2002-03-01")
+fim <- which(desemprego$data == "2016-02-01")
+
+## Corta os dados
+desemprego<-desemprego[inicio:fim,]
+
+# Verifica como ficaram os dados
+str(desemprego)
+head(desemprego)
+tail(desemprego)
+
+# Plota o gráfico
+q <- ggplot(data = desemprego, aes(data, desemprego)) + geom_line() +
+  scale_x_date(limits = c(ymd("2002-02-01"), ymd("2017-02-01")), date_breaks = "12 months", date_minor_breaks = "3 months") + xlab("") + ylab("Unemployment rate (%)")
+q + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+## Seasonal adjustment
+
+Useful links about the seasonal package:
+
+- [seas start year error R](https://stackoverflow.com/questions/30361807/seas-start-year-error-r)
+- [seasonal website](http://www.seasonal.website/)
+- [seasonal help](https://cran.r-project.org/web/packages/seasonal/seasonal.pdf)
+- [seasonal and trend decomposition in R](https://anomaly.io/seasonal-trend-decomposition-in-r/)
+- [Position scales for date/time in ggplot2](http://ggplot2.tidyverse.org/reference/scale_date.html)
+- [Labeling axis of dates in ggplot?](https://stackoverflow.com/questions/39782331/labeling-axis-of-dates-in-ggplot)
+- [Seasonal adjustment plots](https://www.rdocumentation.org/packages/seasonal/versions/1.5.1/topics/plot.seas)
+
+*Observation:* <span style="color:red">There is something strange in the exchange data plot, because it does not have de black line. Dont forget to verify later.</span>
+
+*To-do list:* 
+
+* Verify all red topics
+* Try to make the plots using ggplot2
+* See if Mateus used something different (x11, instead seats, maybe?)
+
+
+```{r}
+# Ajuste sazonal - todas as séries juntas
+## Achei ruim de visualizar
+dados<- data.frame(cambio$data, cambio$cambio, juros$juros, inflacao$inflacao, desemprego$desemprego)
+colnames(dados)<-c("data", "cambio", "juros", "inflacao", "desemprego")
+
+## install.packages("seasonal")
+library(seasonal)
+
+## Cria um objeto do tipo série temporal
+dados_seas <- ts(dados[,-1], frequency = 12, start=c(2002,3))
+dados_seas2<-seas(dados_seas)
+plot(dados_seas2)
+```
+
+```{r}
+# Ajuste sazonal - séries separadamente
+
+inflacao_seas <- ts(inflacao[,-1], frequency = 12, start=c(2002,3))
+inflacao_seas2<-seas(inflacao_seas)
+
+juros_seas <- ts(juros[,-1], frequency = 12, start=c(2002,3))
+juros_seas2<-seas(juros_seas)
+
+desemprego_seas <- ts(desemprego[,-1], frequency = 12, start=c(2002,3))
+desemprego_seas2<-seas(desemprego_seas)
+
+cambio_seas <- ts(cambio[,-1], frequency = 12, start=c(2002,3))
+cambio_seas2<-seas(cambio_seas)
+
+par(mfrow=c(2,2))
+plot(inflacao_seas2, main = "Inflation")
+plot(juros_seas2, main = "Interest")
+plot(desemprego_seas2, main = "Unemployment")
+plot(cambio_seas2, main = "Exchange")
+
+```
+
+## Checking with Mateus data
+
+```{r}
+# install.packages("R.matlab")
+library(R.matlab)
+
+dados_mateus <- readMat("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\DADOS_dessaz.mat")
+
+#head(dados_mateus)
+paste(tail(inflacao_seas2$data[,1]), tail(desemprego_seas2$data[,1]), tail(juros_seas2$data[,1]), tail(cambio_seas2$data[,1]))
+paste(head(inflacao_seas2$data[,1]), head(desemprego_seas2$data[,1]), head(juros_seas2$data[,1]), head(cambio_seas2$data[,1]))
+```
+
+## Saving the adjusted data into new variables
+
+```{r}
+inflacao_adj  <-inflacao_seas2$data[,1]
+desemprego_adj<-desemprego_seas2$data[,1]
+juros_adj     <-juros_seas2$data[,1]
+cambio_adj    <-cambio_seas2$data[,1]
+
+dados_adj<-data.frame(cambio$data, inflacao_adj, desemprego_adj, juros_adj, cambio_adj)
+colnames(dados_adj)<-c("data", "inflacao", "desemprego", "juros", "cambio")
+tail(dados_adj)
+```
+
+# Model
+
+The model will be something like this:
+
+\[
+\begin{bmatrix}
+   \text{IPCA}_t \\
+   \text{DES}_t \\
+   \text{SELIC}_t \\
+   \text{CAM}_t
+\end{bmatrix}
+=
+\underbrace{
+\begin{bmatrix}
+   \phi^{\text{IPCA}_t}_{0} \\
+   \phi^{\text{DES}_t}_{0} \\
+   \phi^{\text{SELIC}_t}_{0} \\
+   \phi^{\text{CAM}_t}_{0}
+\end{bmatrix}}_{B_{(0)C_t}}
++
+\underbrace{
+\begin{bmatrix}
+    \phi_{11} & \phi_{12} & \phi_{13} & \phi_{14} \\
+    \phi_{21} & \phi_{22} & \phi_{23} & \phi_{24} \\
+    \phi_{31} & \phi_{32} & \phi_{33} & \phi_{34} \\
+    \phi_{41} & \phi_{42} & \phi_{43} & \phi_{44} \\
+\end{bmatrix}
+\begin{bmatrix}
+   \text{IPCA}_{t-1} \\
+   \text{DES}_{t-1} \\
+   \text{SELIC}_{t-1} \\
+   \text{CAM}_{t-1}
+\end{bmatrix}}_{BX_t}
++
+\mathscr{U}(H_t^{-1})
+\begin{bmatrix}
+   \varepsilon^{\text{IPCA}_t}_{t} \\
+   \varepsilon^{\text{DES}_t}_{t} \\
+   \varepsilon^{\text{SELIC}_t}_{t} \\
+   \varepsilon^{\text{CAM}_t}_{t}
+\end{bmatrix}
+\]
+
+# Establishing the prior
+
+Uhlig's suggestion is to use a modification of the Minnesota random walk prior:
+
+* $\bar{B_0}$ correspond to a random walk specification;
+* $\nu = 60$ (monthly data);
+* $\lambda = \frac{\nu}{\nu+1}$;
+* $g_0(B)=1$;
+* $S_0$ is the diagonal matrix of the average squared residuals from $AR(1)$ univariate regressions for each series;
+* There is no need to take log because the series are in per cent;
+* <span style="color:red">It says to include a constant and time trend, I really don't know where<\span>
+
+## Running the AR(1) for the data
+
+* [Cookbook](http://www.personal.psu.edu/asb17/old/sta4853/files/sta4853-11print.pdf)
+
+```{r}
+inflacao_ar<-arima(dados_adj$inflacao, order=c(1,0,0))
+desemprego_ar<-arima(dados_adj$desemprego, order=c(1,0,0))
+juros_ar<-arima(dados_adj$juros, order=c(1,0,0))
+cambio_ar<-arima(dados_adj$cambio, order=c(1,0,0))
+
+inflacao_ar_coef<-inflacao_ar$coef[1]
+inflacao_ar_coef
+desemprego_ar_coef<-desemprego_ar$coef[1]
+desemprego_ar_coef
+juros_ar_coef<-juros_ar$coef[1]
+juros_ar_coef
+cambio_ar_coef<-cambio_ar$coef[1]
+cambio_ar_coef
+```
+
+* For the next step, take a look [here](https://tonyyateshomepage.files.wordpress.com/2014/03/building-to-bayesian-vars.pdf), [here](http://www.kthohr.com/bmr), [here](http://apps.eui.eu/Personal/Canova/Articles/ch10.pdf) and [here](https://www.ecb.europa.eu/pub/pdf/scpwps/ecbwp1494.pdf?7a3b1329a8345a4451700a0cdceb3b46).
+
+Thinking out loud:
+
+* Since I have only one lag, my $B$ matrix have size $4 \times 4$
+
+The elements of $\Sigma_\alpha$ will have the form
+
+Obs: it's UBAR{V}
+
+\begin{equation}\label{eq-6.018}
+\bar{V}_{i_{jj}} =
+\begin{cases}
+ \frac{a_1}{r^2} \qquad \text{para coeficientes da própria variável e } r=1, \ldots, p \text{depende do coeficiente ser relativo à defasagem de ordem } r \\
+\frac{a_2}{r^2} \frac{\sigma_{ii}}{\sigma_{jj}} \qquad \text{para coeficientes de defasagem } r \text{da variável } j \text{na equação de } i\\
+a_3 \sigma_{ii} \qquad \text{para coeficientes de variáveis exógenas.}
+\end{cases}
+\end{equation}
+
+What's next?
+
+Koop's code:
+
+## Head
+```{}
+%--------------------------------------------------------------------------
+% Bayesian estimation, prediction and impulse response analysis in VAR
+% models. Dependent on your choice of forecasting, the VAR model is:
+%
+% Iterated forecasts:
+%     Y(t) = A0 + Y(t-1) x A1 + ... + Y(t-p) x Ap + e(t)
+%
+% so that in this case there are p lags of Y (from 1 to p).
+%
+% Direct h-step ahead foreacsts:
+%     Y(t+h) = A0 + Y(t) x A1 + ... + Y(t-p+1) x Ap + e(t+h)
+%
+% so that in this case there are also p lags of Y (from 0 to p-1).
+%
+% In any of the two cases, the model is written as:
+%
+%                   Y(t) = X(t) x A + e(t)
+%
+% where e(t) ~ N(0,SIGMA), and A summarizes all parameters. Note that we
+% also use the vector a which is defined as a=vec(A). 
+%
+%--------------------------------------------------------------------------
+```
+
+# Loading data
+
+```{}
+tic;
+
+%------------------------------LOAD DATA-----------------------------------
+% Load Quarterly US data on inflation, unemployment and interest rate, 
+% 1953:Q1 - 2006:Q3
+load Yraw.dat;
+
+
+% In any case, name the data you load 'Yraw', in order to avoid changing the
+% rest of the code. Note that 'Yraw' is a matrix with T rows by M columns,
+% where T is the number of time series observations (usually months or
+% quarters), while M is the number of VAR dependent macro variables.
+```
+
+## Getting ready
+
+* <span style="color:red"> Meu modelo tem intercepto? Qual o significado dele? <\span>
+* <span style="color:red"> Precisa de previsão? Nesse caso tem que separar uma amostra para "conferência"? <\span>
+
+
+```{}
+%----------------------------PRELIMINARIES---------------------------------
+% Define specification of the VAR model
+constant = 1;        % 1: if you desire intercepts, 0: otherwise 
+p = 2;               % Number of lags on dependent variables
+forecasting = 1;     % 1: Compute h-step ahead predictions, 0: no prediction
+forecast_method = 0; % 0: Direct forecasts 
+                     % 1: Iterated forecasts
+h = 4;               % Number of forecast periods
+
+% Set prior for BVAR model:
+prior = 2;  % prior = 1 --> Noninformative Prior
+            % prior = 2 --> Minnesota Prior
+            % prior = 3 --> Natural conjugate Prior
+```
+
+## Data handling
+
+* <span style="color:red">Vou precisar de um ou mais lags? Qual a justificativa pra quantidade de lags? Se colocar mais defasagens precisa aumentar a ordem do AR da priori de minnesota?<\span>
+
+```{}
+%--------------------------DATA HANDLING-----------------------------------
+% Get initial dimensions of dependent variable
+[Traw M] = size(Yraw);
+
+% The model specification is different when implementing direct forecasts,
+% compared to the specification when computing iterated forecasts.
+if forecasting==1
+    if h<=0
+        error('You have set forecasting, but the forecast horizon choice is wrong')
+    end    
+
+    % Now create VAR specification according to forecast method
+    if forecast_method==0       % Direct forecasts
+        Y1 = Yraw(h+1:end,:);
+        Y2 = Yraw(2:end-h,:);
+        Traw = Traw - h - 1;
+    elseif forecast_method==1   % Iterated forecasts
+        Y1 = Yraw;
+        Y2 = Yraw;
+    else
+        error('Wrong choice of forecast_method')
+    end
+else
+   Y1 = Yraw;
+   Y2 = Yraw;
+end
+        
+% Generate lagged Y matrix. This will be part of the X matrix
+Ylag = mlag2(Y2,p); % Y is [T x M]. ylag is [T x (Mp)]
+
+% Now define matrix X which has all the R.H.S. variables (constant, lags of
+% the dependent variable and exogenous regressors/dummies)
+if constant
+    X1 = [ones(Traw-p,1) Ylag(p+1:Traw,:)];
+else
+    X1 = Ylag(p+1:Traw,:);  %#ok<UNRCH>
+end
+
+% Get size of final matrix X
+[Traw3 K] = size(X1);
+
+% Create the block diagonal matrix Z
+Z1 = kron(eye(M),X1);
+
+% Form Y matrix accordingly
+% Delete first "LAGS" rows to match the dimensions of X matrix
+Y1 = Y1(p+1:Traw,:); % This is the final Y matrix used for the VAR
+
+% Traw was the dimesnion of the initial data. T is the number of actual 
+% time series observations of Y and X
+T = Traw - p;
+```
+
+## Previsão
+
+* <span style="color:red">Preciso disso?<\span>
+
+```{}
+
+%========= FORECASTING SET-UP:
+% Now keep also the last "h" or 1 observations to evaluate (pseudo-)forecasts
+if forecasting==1
+    if forecast_method==0  % Direct forecasts, we only need to keep the 
+        Y = Y1(1:end-1,:);                             % last observation
+        X = X1(1:end-1,:);
+        Z = kron(eye(M),X);
+        T = T - 1;
+    else              % Iterated forecasts, we keep the last h observations
+        Y = Y1(1:end-h,:);
+        X = X1(1:end-h,:);
+        Z = kron(eye(M),X);
+        T = T - h;
+    end
+else
+    Y = Y1;
+    X = X1;
+    Z = Z1;
+end
+```
+
+## Prioris
+
+
+
+```{}
+%--------------------------------PRIORS------------------------------------
+% First get Ordinary Least Squares (OLS) estimators
+A_OLS = inv(X'*X)*(X'*Y); % This is the matrix of regression coefficients
+a_OLS = A_OLS(:);         % This is the vector of coefficients, i.e. it holds
+                          % that a_OLS = vec(A_OLS)
+SSE = (Y - X*A_OLS)'*(Y - X*A_OLS);
+SIGMA_OLS = SSE./(T-K);
+
+%-----------------Prior hyperparameters for bvar model
+% Define hyperparameters
+if prior == 1 % Noninformtive
+    % I guess there is nothing to specify in this case!
+    % Posteriors depend on OLS quantities
+elseif prior == 2 % Minnesota
+    A_prior = 0*ones(K,M);   
+    a_prior = A_prior(:);
+    
+    % Hyperparameters on the Minnesota variance of alpha
+    a_bar_1 = 0.5;
+    a_bar_2 = 0.5;
+    a_bar_3 = 10^2;
+    
+    % Now get residual variances of univariate p-lag autoregressions. Here
+    % we just run the AR(p) model on each equation, ignoring the constant
+    % and exogenous variables (if they have been specified for the original
+    % VAR model)
+    sigma_sq = zeros(M,1); % vector to store residual variances
+    for i = 1:M
+        % Create lags of dependent variable in i-th equation
+        Ylag_i = mlag2(Yraw(:,i),p);
+        Ylag_i = Ylag_i(p+1:Traw,:);
+        % Dependent variable in i-th equation
+        Y_i = Yraw(p+1:Traw,i);
+        % OLS estimates of i-th equation
+        alpha_i = inv(Ylag_i'*Ylag_i)*(Ylag_i'*Y_i);
+        sigma_sq(i,1) = (1./(T-p+1))*(Y_i - Ylag_i*alpha_i)'*(Y_i - Ylag_i*alpha_i);
+    end
+    
+    % Now define prior hyperparameters.
+    % Create an array of dimensions K x M, which will contain the K diagonal
+    % elements of the covariance matrix, in each of the M equations.
+    V_i = zeros(K,M);
+    
+    % index in each equation which are the own lags
+    ind = zeros(M,p);
+    for i=1:M
+        ind(i,:) = constant+i:M:K;
+    end
+   for i = 1:M  % for each i-th equation
+        for j = 1:K   % for each j-th RHS variable
+            if constant==1
+                if j==1
+                    V_i(j,i) = a_bar_3*sigma_sq(i,1); % variance on constant                
+                elseif find(j==ind(i,:))>0
+                    V_i(j,i) = a_bar_1./(ceil((j-1)/M)^2); % variance on own lags           
+                else
+                    for kj=1:M
+                        if find(j==ind(kj,:))>0
+                            ll = kj;                   
+                        end
+                    end
+                    V_i(j,i) = (a_bar_2*sigma_sq(i,1))./((ceil((j-1)/M)^2)*sigma_sq(ll,1));           
+                end
+            else
+                if find(j==ind(i,:))>0
+                    V_i(j,i) = a_bar_1./(ceil((j-1)/M)^2); % variance on own lags
+                else
+                    for kj=1:M
+                        if find(j==ind(kj,:))>0
+                            ll = kj;
+                        end                        
+                    end
+                    V_i(j,i) = (a_bar_2*sigma_sq(i,1))./((ceil((j-1)/M)^2)*sigma_sq(ll,1));            
+                end
+            end
+        end
+    end
+
+    
+    % Now V is a diagonal matrix with diagonal elements the V_i
+    V_prior = diag(V_i(:));  % this is the prior variance of the vector a  
+    
+    % SIGMA is equal to the OLS quantity
+    SIGMA = SIGMA_OLS;
+    
+elseif prior == 3 % Normal-Wishart (nat conj)
+    % Hyperparameters on a ~ N(a_prior, SIGMA x V_prior)
+    A_prior = 0*ones(K,M);   
+    a_prior = A_prior(:);
+    V_prior = 10*eye(K);
+    % Hyperparameters on inv(SIGMA) ~ W(v_prior,inv(S_prior))
+    v_prior = M;
+    S_prior = eye(M);
+    inv_S_prior = inv(S_prior);
+end
+```
+
+# Posteriori
+
+```{}
+%============================ POSTERIORS ==================================
+%==========================================================================
+    
+%--------- Posterior hyperparameters of ALPHA and SIGMA with Diffuse Prior
+if prior == 1
+    % Posterior of alpha|Data ~ Multi-T(kron(SSE,inv(X'X)),alpha_OLS,T-K)
+    V_post = inv(X'*X);
+    a_post = a_OLS;
+    A_post = reshape(a_post,K,M);
+    
+    % posterior of SIGMA|Data ~ inv-Wishart(SSE,T-K)
+    S_post = SSE;
+    v_post = T-K;
+    
+    % Now get the mean and variance of the Multi-t marginal posterior of alpha
+    alpha_mean = a_post;
+    alpha_var = (1/(v_post - M - 1))*kron(S_post,V_post);
+    
+%--------- Posterior hyperparameters of ALPHA and SIGMA with Minnesota Prior
+elseif prior == 2
+    % ******Get all the required quantities for the posteriors       
+    V_post = inv( inv(V_prior) + kron(inv(SIGMA),X'*X) );
+    a_post = V_post * ( inv(V_prior)*a_prior + kron(inv(SIGMA),X'*X)*a_OLS );
+    A_post = reshape(a_post,K,M);
+     
+    % In this case, the mean is a_post and the variance is V_post
+   alpha_mean=a_post;
+%--------- Posterior hyperparameters of ALPHA and SIGMA with Normal-Wishart Prior
+elseif prior == 3
+    % ******Get all the required quantities for the posteriors       
+    % For alpha
+    V_post = inv( inv(V_prior) + X'*X );
+    A_post = V_post * ( inv(V_prior)*A_prior + X'*X*A_OLS );
+    a_post = A_post(:);
+    
+    % For SIGMA
+    S_post = SSE + S_prior + A_OLS'*X'*X*A_OLS + A_prior'*inv(V_prior)*A_prior - A_post'*( inv(V_prior) + X'*X )*A_post;
+    v_post = T + v_prior;
+    
+    % Now get the mean and variance of the Multi-t marginal posterior of alpha
+    alpha_mean = a_post;
+    alpha_var = (1/(v_post - M - 1))*kron(S_post,V_post); 
+end
+
+%======================= PREDICTIVE INFERENCE =============================
+%==========================================================================
+
+X_tplus1 = [1 Y(T,:) X(T,2:M*(p-1)+1)];
+
+% As a point forecast use predictive mean 
+
+Pred_mean = X_tplus1*A_post;
+
+
+% Print some results
+disp('The mean of alpha is in the vector alpha_mean')
+disp('Its variance is in the vector alpha_var')
+disp('Point forecast is Pred_mean')
+
+
+toc;
+```
+
+## Verifying the BMR package
+
+```{r}
+#install.packages("RcppArmadillo")
+#install.packages("doParallel")
+#install.packages("devtools")
+#library(devtools)
+#install_github("kthohr/BMR")
+```
