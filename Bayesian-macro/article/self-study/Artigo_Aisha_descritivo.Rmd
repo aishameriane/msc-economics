@@ -1,0 +1,565 @@
+---
+title: "Artigo Bayesiana"
+author: "Aishameriane Schmidt"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+   - \usepackage{calrsfs}
+date: "16 de junho de 2017"
+output: html_document
+---
+
+# Data
+
+## Description
+
+The series that are going to be used in the VAR model are:
+
+* IPCA index, for inflation (% monthly);
+* SELIC tax, for interest rate (% monthly);
+* Exchange rate, R\$/US\$, <span style="color:red">(comercial, compra, média do período). Obs: inflação já descontada, a taxa está em termos reais.</span>
+* IBC-Br index (economic activity index, calculated by the Central Bank)
+
+## Webscrapping (on hold)
+
+I used the code available [here](http://cienciadosdados.com.br/2015/09/02/acesse-a-base-de-dados-do-ipea-por-scraping-via-r/). It goes through the IPEA's site to get the tables (pretty awesome).
+
+For now I'm gonna use only the Excel to avoid wasting time with this, but I intend to do this in the future.
+
+To-do:
+
+* Find a good regex to get the correct format for the data and not miss the decipal separator, the minus sign and the two digit numbers;
+
+
+```{r, eval = FALSE}
+# install.packages("rvest")
+library(rvest)
+
+ipca <- html("http://www.ipeadata.gov.br/ExibeSerie.aspx?serid=38513&module=M")
+selic <- html("http://www.ipeadata.gov.br/ExibeSerie.aspx?serid=32241&module=M")
+cambio <- html("http://www.ipeadata.gov.br/ExibeSerie.aspx?serid=32098&module=M")
+
+sites<-list(ipca, selic, cambio)
+
+tabela<- list(0,0,0)
+
+# Still in progress, need to check the tests below first
+
+for (i in 1:length(sites)){ 
+  pagina<-sites[[i]]
+
+  dados<-pagina %>%
+  html_nodes(".dxgvDataRow")%>%
+  html_text()
+
+  dados<-gsub("rnttt", "", dados)
+  dados<-gsub("[[:punct:]]","",dados)
+
+  data<-substr(dados, 1, 10)
+  risco<-substr(dados, 11, 100)
+  risco<-gsub("[[:punct:]]","",risco)
+
+  tabela[i]<-data.frame(data,risco,stringsAsFactors=FALSE)
+
+  tabela[i]
+}
+
+# Some individual tests - the sizes and formats are ok
+
+pagina<-sites[[1]]
+
+  dados<-pagina %>%
+  html_nodes(".dxgvDataRow")%>%
+  html_text()
+
+  dados<-gsub("rnttt", "", dados)
+  dados<-gsub("[[:punct:]]","",dados)
+
+  data<-substr(dados, 1, 10)
+  risco<-substr(dados, 11, 100)
+  risco<-gsub("[[:punct:]]","",risco)
+
+  tabela[[1]]<-data.frame(data,risco,stringsAsFactors=FALSE)
+
+  tabela[[1]]
+
+
+pagina <- html("http://www.ipeadata.gov.br/ExibeSerie.aspx?serid=38513&module=M")
+
+dados<-pagina %>%
+html_nodes(".dxgvDataRow")%>%
+html_text()
+
+dados<-gsub("rnttt", "", dados)
+dados<-gsub("[[:punct:]]","",dados)
+
+data<-substr(dados, 1, 8)
+risco<-substr(dados, 9, 100)
+risco<-as.numeric(gsub("[[:punct:]]","",risco))
+
+tabela<-data.frame(data,risco,stringsAsFactors=FALSE)
+
+tabela  
+
+library(stringr)
+
+risco <- str_replace_all(substr(dados, 9, 100), "[^\\d]+", " ")
+  
+```
+
+The same goes to the data from IBC-Br:
+
+```{r, eval=FALSE}
+# IBC-Br is available only in BCB's site
+#install.packages("XLConnect")
+library(XLConnect)
+library(readxl)
+
+www <- "http://www.bcb.gov.br/pec/Indeco/Port/IE1-54.xlsx" 
+temp <- tempfile()
+download.file(www, temp, mode='wb')
+data <- loadWorkbook(temp)
+```
+
+Things I need to remember later on:
+
+```{r}
+# Block to get the specific periods I want
+
+```
+
+```{r}
+# Block for some graphs
+```
+
+## Reading raw data from Mateus file
+
+All data were transformed from monthly values to annual variation, calculated as follows:
+
+![](C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Imagens anotações\\001.png)
+
+
+```{r, message = FALSE, warning = FALSE}
+# Acquiring data
+
+library(readxl)
+library(lubridate)
+
+  dados_list <- lapply(excel_sheets("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Séries IPEA\\DADOS_IBCBR.xls")[2:5], 
+                     read_excel, 
+                     path = "C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Séries IPEA\\DADOS_IBCBR.xls", skip = 1, col_names = FALSE)
+
+  for (i in 1:length(dados_list)) {
+    dados_list[[i]]<-dados_list[[i]][,1:2]
+  }
+  
+# Interpreting the first column as data
+
+## Replacing the bar by a dot in the IBC-Br series and inverting month-year to year-month format
+
+  dados_list[[1]][,1]<- gsub("/", ".", dados_list[[1]][,1], fixed=TRUE)
+  dados_list[[1]][,1]<- paste(substr(dados_list[[1]][,1], 4, 8), substr(dados_list[[1]][,1], 3, 3), substr(dados_list[[1]][,1], 0, 2), sep="")
+  
+## Adding a day to allow declare as a date
+
+  for (i in 1:length(dados_list)) {
+    dados_list[[i]][,1]<-paste(dados_list[[i]][,1], ".01", sep="")
+    dados_list[[i]][,1]<-ymd(dados_list[[i]][,1])
+  }
+  
+## Dropping out extra information
+  
+  for (i in 1:length(dados_list)) {
+    inicio <- which(dados_list[[i]][,1] == "2003-01-01")
+    fim <- which(dados_list[[i]][,1] == "2017-04-01")
+    dados_list[[i]]<-dados_list[[i]][inicio:fim,]
+  }
+
+## Changing to a index with base = 2003-03-01
+  for (i in 1:length(dados_list)) {
+    dados_list[[i]][,2]<-(dados_list[[i]][,2]/dados_list[[i]][1,2])*100
+  }
+
+  ## Creating a new series with lagged variables
+  dados_list_an <- dados_list
+  for (i in 1:length(dados_list_an)) {
+    dados_list_an[[i]]<-dados_list_an[[i]][13:nrow(dados_list_an[[i]]),]
+  }
+  
+## Calculating the annual variation
+  for (i in 1:length(dados_list_an)) {
+    dados_list_an[[i]][,2]<-((dados_list_an[[i]][,2]/dados_list[[i]][1:160,2]) -1)*100
+  }
+  
+  
+## Saving everything in a new document
+  
+  dados_artigo <- data.frame(dados_list[[1]][13:172,1], dados_list[[1]][13:172,2], dados_list_an[[1]][,2], dados_list[[2]][13:172,2], dados_list_an[[2]][,2], dados_list[[3]][13:172,2], dados_list_an[[3]][,2], dados_list[[4]][13:172,2], dados_list_an[[4]][,2])
+  
+  head(dados_artigo)
+  colnames(dados_artigo) <- c("Data", "IBCraw", "IBCvar", "IPCAraw", "IPCAvar", "SELICraw", "SELICvar", "EXRTraw", "EXRTvar")
+  write.csv(dados_artigo, file = "C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final.csv", row.names = FALSE)
+  
+```
+
+# Descriptives
+
+## Graphs
+
+### IBC-Br (for product)
+
+```{r, message = FALSE, warning = FALSE}
+
+# Block for IBC-Br
+library(ggplot2)
+library(reshape2)
+
+# IBC-Br
+
+## Raw series
+  q <- ggplot(dados_list[[1]], aes(dados_list[[1]][,1], dados_list[[1]][,2]))+
+    geom_line(size=0.8, colour="blue")+
+    scale_x_date(limits = c(ymd("2003-01-01"), ymd("2017-04-01")), date_breaks = "12 months", date_minor_breaks = "3 months")+
+    xlab("")+
+    ylab("IBC-Br (%)")+
+    ggtitle("IBC-Br")+
+    theme(plot.title = element_text(lineheight = 1, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="")
+  q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))   
+  
+## Annual variation
+  
+    q <- ggplot(dados_list_an[[1]], aes(dados_list_an[[1]][,1], dados_list_an[[1]][,2]))+
+    geom_line(size=0.8, colour="darkblue")+
+    scale_x_date(limits = c(ymd("2004-01-01"), ymd("2017-04-01")), date_breaks = "12 months", date_minor_breaks = "3 months")+
+    xlab("")+
+    ylab("IBC-Br (12mo variation)")+
+    ggtitle("IBC-Br - variation")+
+    theme(plot.title = element_text(lineheight = 1, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="")
+  q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  
+# Both series together
+  
+  ibcbr <- data.frame(c(dados_list[[1]][13:172,1:2]), dados_list_an[[1]][,2]) 
+  melt_ibcbr <- melt(ibcbr, id = "X1")
+  
+  p1 <- ggplot(melt_ibcbr, aes(x=X1, y=value, colour=variable, group=variable))+
+    geom_line(size=0.8)+
+    scale_colour_manual(values=c("blue", "darkblue"), labels=c("% monthly", "12 mo variation")) +
+    scale_x_date(limits = c(ymd("2004-01-01"), ymd("2017-04-01")), date_breaks = "12 months", date_minor_breaks = "3 months")+
+    xlab("")+
+    ylab("IBC-Br")+
+    ggtitle("IBC-Br")+
+    theme(plot.title = element_text(lineheight = 1, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="") + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  p1
+```
+
+### IPCA (for inflation)
+
+
+```{r, message = FALSE, warning = FALSE}
+
+# Block for IPCA
+library(ggplot2)
+library(reshape2)
+
+# IPCA
+
+## Raw series
+  q <- ggplot(dados_list[[2]], aes(dados_list[[2]][,1], dados_list[[2]][,2]))+
+    geom_line(size=0.8, colour="tomato")+
+    scale_x_date(limits = c(ymd("2003-01-01"), ymd("2017-04-01")), date_breaks = "12 months", date_minor_breaks = "3 months")+
+    xlab("")+
+    ylab("IPCA (% monthly)")+
+    ggtitle("IPCA (inflation, base=01/2003)")+
+    theme(plot.title = element_text(lineheight = 1, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="")
+  q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))   
+  
+## Annual variation
+  
+    q <- ggplot(dados_list_an[[2]], aes(dados_list_an[[2]][,1], dados_list_an[[2]][,2]))+
+    geom_line(size=0.8, colour="red4")+
+    scale_x_date(limits = c(ymd("2004-01-01"), ymd("2017-04-01")), date_breaks = "12 months", date_minor_breaks = "3 months")+
+    xlab("")+
+    ylab("IPCA (12mo variation)")+
+    ggtitle("IPCA - variation")+
+    theme(plot.title = element_text(lineheight = 1, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="")
+  q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  
+# Both series together
+  
+  ipca <- data.frame(c(dados_list[[2]][13:172,1:2]), dados_list_an[[2]][,2]) 
+  melt_ipca <- melt(ipca, id = "X1")
+  
+  p2 <- ggplot(melt_ipca, aes(x=X1, y=value, colour=variable, group=variable))+
+    geom_line(size=0.8)+
+    scale_colour_manual(values=c("tomato", "red4"), labels=c("%", "12 mo variation")) +
+    scale_x_date(limits = c(ymd("2004-01-01"), ymd("2017-04-01")), date_breaks = "12 months", date_minor_breaks = "3 months")+
+    xlab("")+
+    ylab("IPCA")+
+    ggtitle("IPCA (inflation)")+
+    theme(plot.title = element_text(lineheight = 1, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  
+  p2
+```
+
+### SELIC (for interest rate)
+
+
+```{r, message = FALSE, warning = FALSE}
+
+# Block for SELIC
+library(ggplot2)
+library(reshape2)
+
+# IPCA
+
+## Raw series
+  q <- ggplot(dados_list[[3]], aes(dados_list[[3]][,1], dados_list[[3]][,2]))+
+    geom_line(size=0.8, colour="seagreen3")+
+    scale_x_date(limits = c(ymd("2003-01-01"), ymd("2017-04-01")), date_breaks = "12 months", date_minor_breaks = "3 months")+
+    xlab("")+
+    ylab("SELIC (overnight, monthly)")+
+    ggtitle("SELIC (overnight, base=01/2003)")+
+    theme(plot.title = element_text(lineheight = 1, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="")
+  q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))   
+  
+## Annual variation
+  
+    q <- ggplot(dados_list_an[[3]], aes(dados_list_an[[3]][,1], dados_list_an[[3]][,2]))+
+    geom_line(size=0.8, colour="seagreen4")+
+    scale_x_date(limits = c(ymd("2004-01-01"), ymd("2017-04-01")), date_breaks = "12 months", date_minor_breaks = "3 months")+
+    xlab("")+
+    ylab("SELIC (12mo variation)")+
+    ggtitle("SELIC - variation")+
+    theme(plot.title = element_text(lineheight = 1, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="")
+  q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  
+# Both series together
+  
+  selic <- data.frame(c(dados_list[[3]][13:172,1:2]), dados_list_an[[3]][,2]) 
+  melt_selic <- melt(selic, id = "X1")
+  
+  p3 <- ggplot(melt_selic, aes(x=X1, y=value, colour=variable, group=variable))+
+    geom_line(size=0.8)+
+    scale_colour_manual(values=c("seagreen3", "seagreen4"), labels=c("%", "12 mo variation")) +
+    scale_x_date(limits = c(ymd("2004-01-01"), ymd("2017-04-01")), date_breaks = "12 months", date_minor_breaks = "3 months")+
+    xlab("")+
+    ylab("SELIC")+
+    ggtitle("SELIC (interest rate)")+
+    theme(plot.title = element_text(lineheight = 1, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="") + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  
+  p3
+```
+
+### Exchange rate
+
+
+```{r, message = FALSE, warning = FALSE}
+
+# Block for cambio
+library(ggplot2)
+library(reshape2)
+
+# cambio
+
+## Raw series
+  q <- ggplot(dados_list[[4]], aes(dados_list[[4]][,1], dados_list[[4]][,2]))+
+    geom_line(size=0.8, colour="lemonchiffon3")+
+    scale_x_date(limits = c(ymd("2003-01-01"), ymd("2017-04-01")), date_breaks = "12 months", date_minor_breaks = "3 months")+
+    xlab("")+
+    ylab("Exchange Rate (R$/US$)")+
+    ggtitle("Exchange Rate (comercial, base=01-2003)")+
+    theme(plot.title = element_text(lineheight = 1, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="")
+  q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))   
+  
+## Annual variation
+  
+    q <- ggplot(dados_list_an[[4]], aes(dados_list_an[[4]][,1], dados_list_an[[4]][,2]))+
+    geom_line(size=0.8, colour="lemonchiffon4")+
+    scale_x_date(limits = c(ymd("2004-01-01"), ymd("2017-04-01")), date_breaks = "12 months", date_minor_breaks = "3 months")+
+    xlab("")+
+    ylab("Exchange rate (12mo variation)")+
+    ggtitle("Exchange rate- variation")+
+    theme(plot.title = element_text(lineheight = 1, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="")
+  q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  
+# Both series together
+  
+  exr <- data.frame(c(dados_list[[4]][13:172,1:2]), dados_list_an[[4]][,2]) 
+  melt_exr <- melt(exr, id = "X1")
+  
+  p4 <- ggplot(melt_exr, aes(x=X1, y=value, colour=variable, group=variable))+
+    geom_line(size=0.8)+
+    scale_colour_manual(values=c("lemonchiffon3", "lemonchiffon4"), labels=c("%", "12 mo variation")) +
+    scale_x_date(limits = c(ymd("2004-01-01"), ymd("2017-04-01")), date_breaks = "12 months", date_minor_breaks = "3 months")+
+    xlab("")+
+    ylab("Exchange rate")+
+    ggtitle("Exchange rate")+
+    theme(plot.title = element_text(lineheight = 1, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  
+  p4
+```
+
+
+
+```{r, message = FALSE, echo = FALSE, warning = FALSE}
+library(ggplot2)
+
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  require(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+  
+# Everything together
+  multiplot(p1, p2, p3, p4, cols =2)
+```
+
+## Descriptives
+
+
+```{r, results='asis', message=FALSE, warning = FALSE}
+library("knitr")
+library(stargazer, quietly = TRUE)
+
+stargazer(data.frame(dados_list[[1]][13:172,2], dados_list_an[[1]][,2], dados_list[[2]][13:172,2], dados_list_an[[2]][,2], dados_list[[3]][13:172,2], dados_list_an[[3]][,2], dados_list[[4]][13:172,2], dados_list_an[[4]][,2]), header=FALSE, type='html', digits = 2, covariate.labels = c("IBC-Br", "IBC-Br (12mo var)", "IPCA","IPCA (12mo var)", "SELIC", "SELIC (12mo var)", "Ex rate", "Ex rate (12mo var)"))
+
+```
+
+## Autocorrelation
+
+```{r, message = FALSE, warning = FALSE}
+library(fpp)
+library(tseries)
+library(forecast)
+library(ggplot2)
+
+dados_artigo <- read.csv("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final.csv", sep = ",", header = TRUE, dec = ".")
+
+for (i in 2:ncol(dados_artigo)) {
+  dados_artigo[,i]<-ts(dados_artigo[,i], start = c(2004,1), frequency = 12) 
+}
+
+ggtsdisplay(dados_artigo$IBCraw, main = "IBC-Br - Raw data (base = 01/2003)")
+ggtsdisplay(dados_artigo$IBCvar, main = "IBC-Br - Variation (12mo)")
+adf.test(dados_artigo$IBCraw, alternative = "stationary")
+adf.test(dados_artigo$IBCvar, alternative = "stationary")
+
+ggtsdisplay(dados_artigo$IPCAraw, main = "IPCA - Raw data (base = 01/2003)")
+ggtsdisplay(dados_artigo$IPCAvar, main = "IPCA - Variation (12mo)")
+adf.test(dados_artigo$IPCAraw, alternative = "stationary")
+adf.test(dados_artigo$IPCAvar, alternative = "stationary")
+
+ggtsdisplay(dados_artigo$SELICraw, main = "SELIC - Raw data (base = 01/2003)")
+ggtsdisplay(dados_artigo$SELICvar, main = "SELIC - Variation (12mo)")
+adf.test(dados_artigo$SELICraw, alternative = "stationary")
+adf.test(dados_artigo$SELICvar, alternative = "stationary")
+
+ggtsdisplay(dados_artigo$EXRTraw, main = "Exchange Rate - Raw data (base = 01/2003)")
+ggtsdisplay(dados_artigo$EXRTvar, main = "Exchange Rate - Variation (12mo)")
+adf.test(dados_artigo$EXRTraw, alternative = "stationary")
+adf.test(dados_artigo$EXRTvar, alternative = "stationary")
+```
+
+```{r, results='asis', warning = FALSE, message = FALSE}
+library(knitr)
+library(tseries)
+library(stargazer)
+
+Variable <- rep("a", ncol(dados_artigo)-1)
+Dickey_Fuller <- rep(0, ncol(dados_artigo)-1)
+Lag_Order <- rep(0, ncol(dados_artigo)-1)
+p_value <- rep(0, ncol(dados_artigo)-1)
+Conclusion <- rep("a", ncol(dados_artigo)-1)
+
+for (i in 1:ncol(dados_artigo)-1) {
+  Variable[i] <- colnames(dados_artigo[i+1])
+  Dickey_Fuller[i]<-adf.test(dados_artigo[,i+1], alternative = "stationary")$statistic
+  Lag_Order[i]<-adf.test(dados_artigo[,i+1], alternative = "stationary")$parameter
+  p_value[i]<-adf.test(dados_artigo[,i+1], alternative = "stationary")$p.value
+  Conclusion[i]<- ifelse(p_value[i] < 0.05, "Stationary", "Non Stationary")
+}
+
+df <- data.frame(cbind(Variable, round(Dickey_Fuller,2), Lag_Order, round(p_value,4), Conclusion))
+colnames(df) <- c("Variable", "Dickey Fuller", "Lar Order", "p-value", "")
+
+stargazer(df, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
+```
