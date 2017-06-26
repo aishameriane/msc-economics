@@ -1,0 +1,386 @@
+---
+title: "Artigo Bayesiana - Sem volatilidade estocástica"
+author: "Aishameriane Schmidt"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+   - \usepackage{calrsfs}
+date: "16 de junho de 2017"
+output: html_document
+---
+
+# Data
+
+## Description
+
+The series that are going to be used in the VAR model are:
+
+* IPCA index, for inflation (% monthly);
+* SELIC tax, for interest rate (% monthly);
+* Exchange rate, R\$/US\$, <span style="color:red">(comercial, compra, média do período). Obs: inflação já descontada, a taxa está em termos reais.</span>
+* IBC-Br index (economic activity index, calculated by the Central Bank)
+
+More about the data can be found [here](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Bayesian-macro/article/self-study/Artigo_Aisha_descritivo.html)
+
+```{r, eval = FALSE}
+library(tseries)
+
+dados <- read.csv("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final.csv", sep = ",", header = TRUE, dec = ".")
+
+for (i in 2:ncol(dados)) {
+  dados[,i]<-ts(dados[,i], start = c(2004,1), frequency = 12) 
+}
+
+head(dados)
+columns<-c(3,5,7,9)
+Yraw <- dados[,columns]
+head(Yraw)
+```
+
+# Koops Code for regular VAR
+
+Intro:  Bayesian estimation, prediction and impulse response analysis in VAR models. Dependent on your choice of forecasting, the VAR model is:
+
+* Iterated forecasts:
+
+\begin{equation}
+Y_t = A_0 + Y_{t-1} \times A_1 + ... + Y_{t-p} \times A_p + \varepsilon_t
+\end{equation}
+
+so that in this case there are $p$ lags of $Y$ (from $1$ to $p$).
+
+* Direct h-step ahead foreacsts:
+
+\begin{equation}  
+Y_{t+h} = A_0 + Y_t \times A_1 + ... + Y_{t-p+1} \times A_p + \varepsilon_{t+h}
+\end{equation}
+so that in this case there are also $p$ lags of $Y$ (from $0$ to $p-1$).
+
+In any of the two cases, the model is written as:
+
+\begin{equation}
+Y_t = X_(t)_t \times A + \varepsilon_t
+\end{equation}
+
+where $\varepsilon_t \sim \mathcal{N}(0,\sigma)$, and $A$ summarizes all parameters. Note that we also use the vector $a$ which is defined as $a=vec(A)$.
+
+## Load data
+
+Koop's says to name the data `Yraw`, to avoid changing the code. He also points out that `Yraw`is a matrix with $T$ rows ($T$ is the number os time series observarions, usually months or quarters) and $M$ columns, with the macro data for each VAR component. Since my data is not structured like this - I gonna need get rid of the extra data.
+
+```{r}
+readLines("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Códigos Koop\\BVAR_Analytical\\Yraw.dat", n=10)
+
+Yraw <- read.table("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Códigos Koop\\BVAR_Analytical\\Yraw.dat", header=FALSE, sep="\t")
+```
+
+
+## Preliminaries
+
+Definying the specification of the VAR model.
+
+```{r}
+
+# Constant =1 for intercept and =0 for regression starting on origin
+constant = 1
+
+# Number of lags on dependent variables
+p = 2
+
+# Compute h-step ahead predictions; 0 for no prediction
+forecasting = 1
+
+# Forecast method: 0 - direct; 1 - iterated
+forecast_method = 0
+
+# Number of forecast periods
+h = 4
+
+# Prior setup: 1- non informative; 2 - minnesota; 3 - natural conjugate
+prior = 2
+```
+
+## Data handling
+
+```{r}
+# Get initial dimensions of the dependent variable
+# The function size() in matlab returns a vector with the number of rows and the number of columns of an object. Its correspondence is dim() in R
+# [Traw M] = size(Yraw) associate with Traw the number of lines in Yraw and associates M the number of columns in Yraw
+
+Traw <- nrow(Yraw)
+M <- ncol(Yraw)
+
+if (forecasting == 1) {
+  if (h <= 0) {
+    print("You cannot have less periods than 1 for forecasting, please change your h.")
+  } else if (forecast_method == 0) { # Direct forecasts
+       Y1 = Yraw[(h+1):Traw,]
+       Y2 = Yraw[2:(Traw-h),]
+       Traw = Traw - h - 1
+  } else if (forecast_method == 1) { # Iterated forecasts
+      Y1 = Yraw
+      Y2 = Yraw
+  } else
+      print("Wrong choice of forecast_method.")
+} else {
+      Y1 = Yraw
+      Y2 = Yraw
+}
+
+# Creates the analogous to mlag2 function
+
+mlag2 <- function(B,p){
+  N <- ncol(B)
+  l <- embed(as.matrix(B),p)
+  zeros <- matrix(rep(0, p^2*N) , nrow=p, ncol = N*p)
+  data.frame(rbind(zeros,l)[1:nrow(B),])
+}
+
+# Generate lagged Y matrix. This will be part of the X matrix. 
+## Y is [T x M]. Ylag is [T x (Mp)]
+Ylag <- mlag2(Y2, 2)
+
+# Now define X matrix: it has all the variables: constant, lags of the dependent variable
+## exogenous regressors/dummies
+
+if (constant == 1) {
+  X1 <- cbind(as.matrix(rep(1, Traw-p), ncol=1), Ylag[(p+1):Traw,])
+} else {
+  X1 <- Ylag[(p+1):Traw,]
+}
+
+# Get the dimensions of X matrix
+
+Traw3 <- nrow(X1)
+K <- ncol(X1)
+
+# Creates the block diagonal matrix Z
+## eye(M) in Matlab returns the identity matrix with the size MxM - the equivalent in R is diag(M)
+###remember that M is the number of columns in the original data Yraw
+## kron(M,X1) in matlab gives the kroenecker tensor product between two matrices
+Z1 <- kronecker(diag(M),as.matrix(X1))
+
+# Form Y matrix accordingly
+# Delete first "lags" rows to match the dimensions of X matrix
+## This is the final Y matrix used for the VAR
+
+Y1 <- Y1[(p+1):Traw,]
+
+# Traw was the number of time observations (lines) in Yraw (original data)
+# Tesao (cannot use T because is a function in R) is the number of actual time series observations of Y and X (we discount the p lags from Traw)
+
+Tesao <- Traw - p
+```
+
+## Forecasting set-up
+
+
+```{r}
+# Keeping the last "h" (or 1) observarions to evaluate (pseudo) forecasting (to evaluate quality)
+
+if (forecasting == 1) {
+  if (forecast_method == 0) { # Direct forecasts, only use the last observation
+    Y <- Y1[1:(nrow(Y1)-1),]
+    X <- X1[1:(nrow(X1)-1),]
+    Z <- kronecker(diag(M),as.matrix(X))
+    Tesao <- Tesao - 1
+  } else { # indirect forecasts
+      Y <- Y1[1:(nrow(Y1)-h),]
+      X <- X1[1:(nrow(X1)-h),]
+      Z <- kronecker(diag(M),as.matrix(X))
+      Tesao <- Tesao - h
+  }
+} else {
+    Y <- Y1
+    X <- X1
+    Z <- Z1
+}
+```
+
+
+## Priors
+
+```{r}
+# First step is to get the OLS estimators
+## inv() in matlab is the inverse matrix and * is the matricial product. In R the function to invert a square matrix is
+## solve() and the matrix product is given by %*%. The transpose in Matlab is A' and in R is t(A)
+
+A_OLS <- solve(t(as.matrix(X)) %*% as.matrix(X)) %*% (t(as.matrix(X)) %*% as.matrix(Y)) # This is the matrix of regression coefficients
+a_OLS <- as.vector(A_OLS) # Transform into a single vector, piling up the coefficients from A_OLS. So a_OLS = vec(A_OLS)
+
+SSE <- t((as.matrix(Y)-as.matrix(X) %*% as.matrix(A_OLS))) %*% (as.matrix(Y)-as.matrix(X) %*% as.matrix(A_OLS)) 
+SIGMA_OLS = SSE/(Tesao-K)
+
+# Getting the hyperparameters for bvar model
+
+## Define hyperparameters
+
+if (prior == 1) { # noninformative prior
+ # Nothing happens, the posterior will depend on OLS quantities
+} else if (prior ==2 ) { # the Minnesota prior
+  A_prior <- 0*matrix(rep(1, K*M), ncol = M)
+  a_prior <- as.vector(A_prior)
+  
+  # Hyperparameters on the Minnesota variance of alpha --- check this later with Guilherme
+  a_bar_1 <- 0.5
+  a_bar_2 <- 0.5
+  a_bar_3 <- 10^2
+  
+  # Now we get the residual variances of univariate p-lag autoregressions 
+  ## (i.e., we are going to estimate M AR(p) models, one for each column of Yraw). 
+  ## Here we just run the AR(p) model on each equation, ignoring the constant and exogenous variables 
+  ## (if they have beeen specificed for the original var model)
+  ## I have no idea why Koop didn't use something like autoarima() and instead went through all the trouble doing the estimates by hand
+  
+  sigma_sq <- matrix(rep(0, M), ncol=1)
+  
+  for (i in 1:M){
+    # Create lags of dependent variable in i-th equation
+    Ylag_i <- mlag2(as.matrix(Yraw[,i]),p)
+    Ylag_i <- Ylag_i[(p+1):Traw,]
+    
+    # Dependent variable in i-th equation
+    Y_i = Yraw[(p+1):Traw,i]
+    
+    # OLS estimates of i-th equation
+    
+    alpha_i <- solve(t(as.matrix(Ylag_i)) %*% as.matrix(Ylag_i)) %*% (t(as.matrix(Ylag_i)) %*% as.matrix(Y_i))
+    sigma_sq[i,1] <- (1/(Tesao-p+1)) * t(as.matrix(Y_i)-as.matrix(Ylag_i) %*% alpha_i) %*% (as.matrix(Y_i)-as.matrix(Ylag_i) %*% alpha_i)
+  }
+  
+  # Now we define the prior hyperparameters
+  ## First, create an array of dimensions K x M, which will contain the K diagonal elements of the covariance matrix
+  ## in each of the M equations
+  
+  V_i <- matrix(rep(0, K*M), ncol = M)
+  
+  # index in each equation which are the own lags
+  
+  ind <- matrix(rep(0, p*M), ncol = p)
+  
+  for (i in 1:M){
+    ind[i,] <- seq(from = constant+i, to = K, by = M)
+  }
+  
+  for (i in 1:M) { # for each i-th equation
+    for (j in 1:K) { # for each j-th RHS variable (wtf the fuck is RHS?) - the code below is the function by parts from the class
+      if (constant == 1) {
+        if (j == 1) {
+          V_i[j,i] = a_bar_3 * sigma_sq[i,1] # Variance on constant
+        } else if ((j %in% ind[i,])>0) {
+            V_i[j,i] <- a_bar_1/(ceiling((j-1)/M)^2) # Variance of own lags
+         } else {
+            for (k_j in 1:M) {
+              if ((j %in% ind[k_j,])>0) {
+                l_l <- k_j
+              }
+            }
+             V_i[j,i] <- (a_bar_2 * sigma_sq[i,1])/((ceiling((j-1)/M)^2)*sigma_sq[l_l,1])
+          }
+      } else {
+          if ((j %in% ind[i,])>0) {
+            V_i[j,i] <- a_bar_1/(ceiling((j-1)/M)^2) # Variance of own lags
+          } else {
+            for (k_j in 1:M) {
+              if ((j %in% ind[k_j,])>0) {
+                l_l <- k_j
+              }
+            }
+            V_i[j,i] <- (a_bar_2 * sigma_sq[i,1])/((ceiling((j-1)/M)^2)*sigma_sq[l_l,1])
+          }
+        }
+      }
+  }
+  # Now V is a diagonal matrix with diagonal elements the V_i
+  ## So proud I could figure it out after some time thinking, some lasanha, screams and frustration
+  V_prior <- diag(as.vector(V_i))
+  
+  # SIGMA is equal to the OLS quantity
+  SIGMA <- SIGMA_OLS
+} else if (prior == 3) { # The Normal-Wishart prior (conjugate natural)
+    # Hyperparameters on a ~ N(a_prior, SIGMA x V_prior)
+    A_prior <- 0*matrix(rep(1, K*M), ncol = M)
+    a_prior <- as.vector(A_prior)
+    V_prior <- 10*diag(K)
+    # Hyperparameters in inv(SIGMA) ~ W(nu_prior, inv(S_prior))
+    # I changed from v (lower) to nu because it is very confusing to use V and v for V_prior and v_prior, 
+    ## (for god sake, life is already messy without this additional complication)
+    nu_prior <- M
+    S_prior <- diag(M)
+    inv_S_prior <- solve(S_prior)
+}
+
+# A little dramatic pause for appreciation, this was hard.
+```
+
+# Posterior
+
+```{r}
+# Posterior hyperparameters of ALPHA and SIGMA with noninformative (diffuse) prior
+  if (prior == 1) {
+    # Posterior of alpha|Data ~ Multivariate-T(kron(SSE, inv(X'X)), alpha_OLS, T-K)
+    V_post <- solve(t(as.matrix(X)) %*% as.matrix(X))
+    a_post <- a_OLS
+    A_post <- matrix(a_post, ncol=M, byrow=FALSE)
+    
+    # Posterior of SIGMA|Data ~ inv~Wishart(SSE, T-K)
+    S_post <- SSE
+    nu_post <- Tesao-K
+    
+    # Now get the mean and variance of the Multi-t marginal posterior of alpha
+    alpha_mean <- a_post
+    alpha_var <- (1/(nu_post-M-1))*kronecker(as.matrix(S_post), as.matrix(V_post))
+  } else if (prior == 2) { # Posterior hyperparameters of Alpha and Sigma with Minnesota Prior
+    # Get all the required quantities for the posteriors
+    V_post <- solve(solve(as.matrix(V_prior)) + kronecker(solve(as.matrix(SIGMA)),t(as.matrix(X)) %*% as.matrix(X)))
+    a_post <- as.matrix(V_post) %*% (solve(as.matrix(V_prior)) %*% as.matrix(a_prior) + kronecker(solve(as.matrix(SIGMA)), t(as.matrix(X)) %*% as.matrix(X)) %*% as.matrix(a_OLS))
+    A_post <- matrix(a_post, ncol=M, byrow=FALSE)
+    
+    # In this case, the mean is a_post and the variance is V_post -- CHECK WHY
+    alpha_mean <- a_post
+    alpha_var <- V_post # In koop's code this one is missing
+  } else if (prior == 3) { # Posterior hyperparameters of alpha and SIGMA with Normal-Wishart prior
+    # Get all the required quantities for the posteriors
+    ## For alpha
+    V_post <- solve(solve(as.matrix(V_prior))+ t(as.matrix(X) %*% as.matrix(X)))
+    A_post <- V_post %*% (solve(as.matrix(V_prior)) %*% as.matrix(A_prior) + t(as.matrix(X) %*% as.matrix(X) %*% A_OLS))
+    a_post <- as.vector(A_post)
+    
+    # For sigma
+    S_post <- SSE + S_prior + 
+      t(as.matrix(A_OLS)) %*% t(as.matrix(X)) %*% as.matrix(X) %*% A_OLS + 
+      t(as.matrix(A_prior)) %*% solve(as.matrix(V_prior)) %*% as.matrix(A_prior) -
+      t(as.matrix(A_post)) %*% (solve(as.matrix(V_prior))+ t(as.matrix(X)) %*% as.matrix(X)) %*% as.matrix(A_post)
+    nu_post <- Tesao + nu_prior
+    
+    # Now get the mean and variance of the Multi-t marginal posterior of alpha
+    alpha_mean <- a_post
+    alpha_var <- (1/(nu_post - M - 1)) %*% kronecker(S_post, V_post) # changed from v to nu here as well 
+  }
+```
+
+## Predictive Inference
+
+```{r}
+X_tplus1 <- as.numeric(paste(c(1, Y[Tesao, ], X[Tesao, 2:(M*(p-1)+1)])))
+
+Pred_mean <- X_tplus1 %*% as.matrix(A_post)
+```
+
+## Printing results (yay)
+
+I gonna need to work out a way to exibit the results without getting too messy.
+
+```{r}
+# Mean of alpha
+round(alpha_mean,2)
+
+# Var of alpha
+round(alpha_var, 2)
+
+# Point forecast
+round(Pred_mean, 2)
+```
+
