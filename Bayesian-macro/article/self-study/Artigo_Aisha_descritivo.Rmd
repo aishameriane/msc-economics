@@ -1,5 +1,5 @@
 ---
-title: "Artigo Bayesiana"
+title: "Artigo Bayesiana - Descritivas"
 author: "Aishameriane Schmidt"
 header-includes:
    - \usepackage{bigints}
@@ -177,6 +177,16 @@ library(lubridate)
     dados_list[[i]]<-dados_list[[i]][inicio:fim,]
   }
 
+## Select what you wanna do with data from now on:
+  # 1 - anual variation
+  # 2 - first difference: x_(it)=z_(it)-z_(it-1)
+  # 3 - second difference: x_(it)=z_(it)-z_(it-2)
+  # 4 - logarithm: x_(it) = ln(z_(it))
+  # 5 - first difference of logarithms: x_(it)= ln(z_(it))-ln(z_(it-1))
+  
+  transformation <- 1
+
+# Transformation == 1
 ## Changing to a index with base = 2003-03-01
   for (i in 1:length(dados_list)) {
     dados_list[[i]][,2]<-(dados_list[[i]][,2]/dados_list[[i]][1,2])*100
@@ -188,11 +198,10 @@ library(lubridate)
     dados_list_an[[i]]<-dados_list_an[[i]][13:nrow(dados_list_an[[i]]),]
   }
   
-## Calculating the annual variation
+## Calculating the anual variation
   for (i in 1:length(dados_list_an)) {
     dados_list_an[[i]][,2]<-((dados_list_an[[i]][,2]/dados_list[[i]][1:160,2]) -1)*100
   }
-  
   
 ## Saving everything in a new document
   
@@ -202,6 +211,16 @@ library(lubridate)
   colnames(dados_artigo) <- c("Data", "IBCraw", "IBCvar", "IPCAraw", "IPCAvar", "SELICraw", "SELICvar", "EXRTraw", "EXRTvar")
   write.csv(dados_artigo, file = "C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final.csv", row.names = FALSE)
   
+```
+
+* First difference (under construction)
+
+```{r, echo = FALSE}
+# Transformation == 2
+# 2 - first difference: x_(it)=z_(it)-z_(it-1)
+
+# Main procedure: we need a new data frame with the lagged variable
+
 ```
 
 # Descriptives
