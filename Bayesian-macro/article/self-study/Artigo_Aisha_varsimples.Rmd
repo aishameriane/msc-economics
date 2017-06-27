@@ -87,10 +87,10 @@ Definying the specification of the VAR model.
 constant = 1
 
 # Number of lags on dependent variables
-p = 2
+p = 1
 
 # Compute h-step ahead predictions; 0 for no prediction
-forecasting = 1
+forecasting = 0
 
 # Forecast method: 0 - direct; 1 - iterated
 forecast_method = 0
@@ -140,7 +140,7 @@ mlag2 <- function(B,p){
 
 # Generate lagged Y matrix. This will be part of the X matrix. 
 ## Y is [T x M]. Ylag is [T x (Mp)]
-Ylag <- mlag2(Y2, 2)
+Ylag <- mlag2(Y2, p)
 
 # Now define X matrix: it has all the variables: constant, lags of the dependent variable
 ## exogenous regressors/dummies
@@ -364,9 +364,10 @@ if (prior == 1) { # noninformative prior
 ## Predictive Inference
 
 ```{r}
-X_tplus1 <- as.numeric(paste(c(1, Y[Tesao, ], X[Tesao, 2:(M*(p-1)+1)])))
-
-Pred_mean <- X_tplus1 %*% as.matrix(A_post)
+  if (forecasting == 1) {
+  X_tplus1 <- as.numeric(paste(c(1, Y[Tesao, ], X[Tesao, 2:(M*(p-1)+1)])))
+  Pred_mean <- X_tplus1 %*% as.matrix(A_post)
+  }
 ```
 
 ## Printing results (yay)
@@ -381,6 +382,8 @@ round(alpha_mean,2)
 round(alpha_var, 2)
 
 # Point forecast
-round(Pred_mean, 2)
+ if (forecasting == 1) {
+  round(Pred_mean, 2)
+ }
 ```
 
