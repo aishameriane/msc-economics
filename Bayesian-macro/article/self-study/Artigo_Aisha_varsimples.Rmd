@@ -24,7 +24,7 @@ The series that are going to be used in the VAR model are:
 
 More about the data can be found [here](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Bayesian-macro/article/self-study/Artigo_Aisha_descritivo.html)
 
-```{r, eval = FALSE}
+```{r}
 library(tseries)
 
 dados <- read.csv("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final.csv", sep = ",", header = TRUE, dec = ".")
@@ -61,7 +61,7 @@ so that in this case there are also $p$ lags of $Y$ (from $0$ to $p-1$).
 In any of the two cases, the model is written as:
 
 \begin{equation}
-Y_t = X_(t)_t \times A + \varepsilon_t
+Y(t) = X_(t) \times A + \varepsilon(t)
 \end{equation}
 
 where $\varepsilon_t \sim \mathcal{N}(0,\sigma)$, and $A$ summarizes all parameters. Note that we also use the vector $a$ which is defined as $a=vec(A)$.
@@ -70,7 +70,7 @@ where $\varepsilon_t \sim \mathcal{N}(0,\sigma)$, and $A$ summarizes all paramet
 
 Koop's says to name the data `Yraw`, to avoid changing the code. He also points out that `Yraw`is a matrix with $T$ rows ($T$ is the number os time series observarions, usually months or quarters) and $M$ columns, with the macro data for each VAR component. Since my data is not structured like this - I gonna need get rid of the extra data.
 
-```{r}
+```{r, eval = FALSE}
 readLines("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Códigos Koop\\BVAR_Analytical\\Yraw.dat", n=10)
 
 Yraw <- read.table("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Códigos Koop\\BVAR_Analytical\\Yraw.dat", header=FALSE, sep="\t")
@@ -90,13 +90,13 @@ constant = 1
 p = 1
 
 # Compute h-step ahead predictions; 0 for no prediction
-forecasting = 0
+forecasting = 1
 
 # Forecast method: 0 - direct; 1 - iterated
 forecast_method = 0
 
 # Number of forecast periods
-h = 4
+h = 3
 
 # Prior setup: 1- non informative; 2 - minnesota; 3 - natural conjugate
 prior = 2
@@ -240,7 +240,6 @@ if (prior == 1) { # noninformative prior
     # Create lags of dependent variable in i-th equation
     Ylag_i <- mlag2(as.matrix(Yraw[,i]),p)
     Ylag_i <- Ylag_i[(p+1):Traw,]
-    
     # Dependent variable in i-th equation
     Y_i = Yraw[(p+1):Traw,i]
     
@@ -294,7 +293,7 @@ if (prior == 1) { # noninformative prior
       }
   }
   # Now V is a diagonal matrix with diagonal elements the V_i
-  ## So proud I could figure it out after some time thinking, some lasanha, screams and frustration
+  ## <So proud I could figure it out after some time thinking, some pizza, screams and frustration>
   V_prior <- diag(as.vector(V_i))
   
   # SIGMA is equal to the OLS quantity
@@ -365,8 +364,13 @@ if (prior == 1) { # noninformative prior
 
 ```{r}
   if (forecasting == 1) {
+    if (2 > (M*(p-1)+1)) { # This if is because R can invert vectors if the first entrance is bigger than the second, while matlab doesn't
+  X_tplus1 <- as.numeric(paste(c(1, Y[Tesao,])))
+  Pred_mean <- matrix(X_tplus1, nrow=1) %*% as.matrix(A_post)
+    } else {
   X_tplus1 <- as.numeric(paste(c(1, Y[Tesao, ], X[Tesao, 2:(M*(p-1)+1)])))
-  Pred_mean <- X_tplus1 %*% as.matrix(A_post)
+  Pred_mean <- matrix(X_tplus1, nrow=1) %*% as.matrix(A_post) 
+    }
   }
 ```
 
@@ -385,5 +389,73 @@ round(alpha_var, 2)
  if (forecasting == 1) {
   round(Pred_mean, 2)
  }
+```
+
+## Residuals
+
+```{r}
+library(ggplot2)
+error <- Y-as.matrix(X)%*%as.matrix(A_post)
+
+q1 <- qplot(seq_along(error[,1]), error[,1]) + xlab("")+ ylab("IBC-Br (residuals)")
+q2 <- qplot(seq_along(error[,2]), error[,2]) + xlab("")+ ylab("IPCA (residuals)")
+q3 <- qplot(seq_along(error[,3]), error[,3]) + xlab("")+ ylab("SELIC (residuals)")
+q4 <- qplot(seq_along(error[,4]), error[,4]) + xlab("")+ ylab("ExRate (residuals)")
+
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  require(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+# Everything together
+  multiplot(q1, q2, q3, q4, cols =2)
+
+par(mfrow=c(2,2))
+hist(error[,1], main = "IBC-Br residuals", xlab="")
+hist(error[,2], main = "IPCA residuals", xlab="")
+hist(error[,3], main = "SELIC residuals", xlab="")
+hist(error[,4], main = "ExRate residuals", xlab="")
+  
 ```
 
