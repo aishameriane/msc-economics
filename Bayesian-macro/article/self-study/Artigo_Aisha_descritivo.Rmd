@@ -19,7 +19,7 @@ The series that are going to be used in the VAR model are:
 
 * IPCA index, for inflation (% monthly);
 * SELIC tax, for interest rate (% monthly);
-* Exchange rate, R\$/US\$, <span style="color:red">(comercial, compra, média do período). Obs: inflação já descontada, a taxa está em termos reais.</span>
+* Exchange rate, R\$/US\$, <span style="color:red">(comercial, compra, média do período). Obs: inflação já descontada.</span>
 * IBC-Br index (economic activity index, calculated by the Central Bank)
 
 ## Webscrapping (on hold)
@@ -187,29 +187,33 @@ library(lubridate)
   transformation <- 1
 
 # Transformation == 1
-## Changing to a index with base = 2003-03-01
-  for (i in 1:length(dados_list)) {
+## Transforming only IBC-Br and IPCA
+## Changing ibcbr and ipca to a index with base = 2003-03-01
+  for (i in 1:2) {
     dados_list[[i]][,2]<-(dados_list[[i]][,2]/dados_list[[i]][1,2])*100
   }
 
   ## Creating a new series with lagged variables
   dados_list_an <- dados_list
-  for (i in 1:length(dados_list_an)) {
+  for (i in 1:2) {
     dados_list_an[[i]]<-dados_list_an[[i]][13:nrow(dados_list_an[[i]]),]
   }
   
 ## Calculating the anual variation
-  for (i in 1:length(dados_list_an)) {
+  for (i in 1:2) {
     dados_list_an[[i]][,2]<-((dados_list_an[[i]][,2]/dados_list[[i]][1:160,2]) -1)*100
   }
   
+## Transforming SELIC into annual rate
+  dados_list_an[[3]][,2] <- round(((1+dados_list_an[[3]][,2]/100)^(12)-1)*100,2)
+  
 ## Saving everything in a new document
   
-  dados_artigo <- data.frame(dados_list[[1]][13:172,1], dados_list[[1]][13:172,2], dados_list_an[[1]][,2], dados_list[[2]][13:172,2], dados_list_an[[2]][,2], dados_list[[3]][13:172,2], dados_list_an[[3]][,2], dados_list[[4]][13:172,2], dados_list_an[[4]][,2])
+  dados_artigo <- data.frame(dados_list[[1]][13:172,1], dados_list[[1]][13:172,2], dados_list_an[[1]][,2], dados_list[[2]][13:172,2], dados_list_an[[2]][,2], dados_list[[3]][13:172,2], dados_list_an[[3]][13:172,2], dados_list[[4]][13:172,2], dados_list_an[[4]][13:172,2])
   
   head(dados_artigo)
   colnames(dados_artigo) <- c("Data", "IBCraw", "IBCvar", "IPCAraw", "IPCAvar", "SELICraw", "SELICvar", "EXRTraw", "EXRTvar")
-  write.csv(dados_artigo, file = "C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final.csv", row.names = FALSE)
+  write.csv(dados_artigo, file = "C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final2.csv", row.names = FALSE)
   
 ```
 
@@ -248,7 +252,12 @@ library(reshape2)
     theme(legend.position = "bottom")+
     labs(colour="")
   q + 
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))   
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  
+  pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Estudo\\Seminario\\Seminário 02\\graphs\\ibcbr_01.pdf")
+q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+dev.off()
   
 ## Annual variation
   
@@ -263,6 +272,11 @@ library(reshape2)
     labs(colour="")
   q + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  
+  pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Estudo\\Seminario\\Seminário 02\\graphs\\ibcbr_02.pdf")
+q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+dev.off()
   
 # Both series together
   
@@ -307,6 +321,11 @@ library(reshape2)
   q + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1))   
   
+  pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Estudo\\Seminario\\Seminário 02\\graphs\\ipca_01.pdf")
+q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+dev.off()
+  
 ## Annual variation
   
     q <- ggplot(dados_list_an[[2]], aes(dados_list_an[[2]][,1], dados_list_an[[2]][,2]))+
@@ -320,6 +339,11 @@ library(reshape2)
     labs(colour="")
   q + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  
+  pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Estudo\\Seminario\\Seminário 02\\graphs\\ipca_02.pdf")
+q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+dev.off()
   
 # Both series together
   
@@ -350,7 +374,7 @@ library(reshape2)
 library(ggplot2)
 library(reshape2)
 
-# IPCA
+# SELIC
 
 ## Raw series
   q <- ggplot(dados_list[[3]], aes(dados_list[[3]][,1], dados_list[[3]][,2]))+
@@ -363,7 +387,12 @@ library(reshape2)
     theme(legend.position = "bottom")+
     labs(colour="")
   q + 
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))   
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))  
+  
+  pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Estudo\\Seminario\\Seminário 02\\graphs\\selic_01.pdf")
+q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+dev.off()
   
 ## Annual variation
   
@@ -379,9 +408,14 @@ library(reshape2)
   q + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
   
+  pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Estudo\\Seminario\\Seminário 02\\graphs\\selic_02.pdf")
+q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+dev.off()
+  
 # Both series together
   
-  selic <- data.frame(c(dados_list[[3]][13:172,1:2]), dados_list_an[[3]][,2]) 
+  selic <- data.frame(c(dados_list[[3]][13:172,1:2]), dados_list_an[[3]][13:172,2]) 
   melt_selic <- melt(selic, id = "X1")
   
   p3 <- ggplot(melt_selic, aes(x=X1, y=value, colour=variable, group=variable))+
@@ -423,6 +457,11 @@ library(reshape2)
   q + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1))   
   
+  pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Estudo\\Seminario\\Seminário 02\\graphs\\exrate_01.pdf")
+q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+dev.off()
+  
 ## Annual variation
   
     q <- ggplot(dados_list_an[[4]], aes(dados_list_an[[4]][,1], dados_list_an[[4]][,2]))+
@@ -437,9 +476,14 @@ library(reshape2)
   q + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
   
+  pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Estudo\\Seminario\\Seminário 02\\graphs\\exrate_02.pdf")
+q + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+dev.off()
+  
 # Both series together
   
-  exr <- data.frame(c(dados_list[[4]][13:172,1:2]), dados_list_an[[4]][,2]) 
+  exr <- data.frame(c(dados_list[[4]][13:172,1:2]), dados_list_an[[4]][13:172,2]) 
   melt_exr <- melt(exr, id = "X1")
   
   p4 <- ggplot(melt_exr, aes(x=X1, y=value, colour=variable, group=variable))+
@@ -519,7 +563,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 library("knitr")
 library(stargazer, quietly = TRUE)
 
-stargazer(data.frame(dados_list[[1]][13:172,2], dados_list_an[[1]][,2], dados_list[[2]][13:172,2], dados_list_an[[2]][,2], dados_list[[3]][13:172,2], dados_list_an[[3]][,2], dados_list[[4]][13:172,2], dados_list_an[[4]][,2]), header=FALSE, type='html', digits = 2, covariate.labels = c("IBC-Br", "IBC-Br (12mo var)", "IPCA","IPCA (12mo var)", "SELIC", "SELIC (12mo var)", "Ex rate", "Ex rate (12mo var)"))
+stargazer(data.frame(dados_list[[1]][13:172,2], dados_list_an[[1]][,2], dados_list[[2]][13:172,2], dados_list_an[[2]][,2], dados_list[[3]][13:172,2], dados_list_an[[3]][13:172,2], dados_list[[4]][13:172,2], dados_list_an[[4]][13:172,2]), header=FALSE, type='latex', digits = 2, covariate.labels = c("IBC-Br", "IBC-Br (12mo var)", "IPCA","IPCA (12mo var)", "SELIC", "SELIC (12mo var)", "Ex rate", "Ex rate (12mo var)"))
 
 ```
 
@@ -531,29 +575,38 @@ library(tseries)
 library(forecast)
 library(ggplot2)
 
-dados_artigo <- read.csv("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final.csv", sep = ",", header = TRUE, dec = ".")
+dados_artigo <- read.csv("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final2.csv", sep = ",", header = TRUE, dec = ".")
 
 for (i in 2:ncol(dados_artigo)) {
   dados_artigo[,i]<-ts(dados_artigo[,i], start = c(2004,1), frequency = 12) 
 }
 
 ggtsdisplay(dados_artigo$IBCraw, main = "IBC-Br - Raw data (base = 01/2003)")
+pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Estudo\\Seminario\\Seminário 02\\graphs\\ibcbr_02.pdf")
+ggtsdisplay(dados_artigo$IBCvar, main = "IBC-Br - Variation (12mo)")
+dev.off()
 ggtsdisplay(dados_artigo$IBCvar, main = "IBC-Br - Variation (12mo)")
 adf.test(dados_artigo$IBCraw, alternative = "stationary")
 adf.test(dados_artigo$IBCvar, alternative = "stationary")
 
 ggtsdisplay(dados_artigo$IPCAraw, main = "IPCA - Raw data (base = 01/2003)")
+pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Estudo\\Seminario\\Seminário 02\\graphs\\ipca_02.pdf")
 ggtsdisplay(dados_artigo$IPCAvar, main = "IPCA - Variation (12mo)")
+dev.off()
 adf.test(dados_artigo$IPCAraw, alternative = "stationary")
 adf.test(dados_artigo$IPCAvar, alternative = "stationary")
 
 ggtsdisplay(dados_artigo$SELICraw, main = "SELIC - Raw data (base = 01/2003)")
+pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Estudo\\Seminario\\Seminário 02\\graphs\\selic_02.pdf")
 ggtsdisplay(dados_artigo$SELICvar, main = "SELIC - Variation (12mo)")
+dev.off()
 adf.test(dados_artigo$SELICraw, alternative = "stationary")
 adf.test(dados_artigo$SELICvar, alternative = "stationary")
 
 ggtsdisplay(dados_artigo$EXRTraw, main = "Exchange Rate - Raw data (base = 01/2003)")
+pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Estudo\\Seminario\\Seminário 02\\graphs\\exrate_02.pdf")
 ggtsdisplay(dados_artigo$EXRTvar, main = "Exchange Rate - Variation (12mo)")
+dev.off()
 adf.test(dados_artigo$EXRTraw, alternative = "stationary")
 adf.test(dados_artigo$EXRTvar, alternative = "stationary")
 ```
@@ -578,7 +631,7 @@ for (i in 1:ncol(dados_artigo)-1) {
 }
 
 df <- data.frame(cbind(Variable, round(Dickey_Fuller,2), Lag_Order, round(p_value,4), Conclusion))
-colnames(df) <- c("Variable", "Dickey Fuller", "Lar Order", "p-value", "")
+colnames(df) <- c("Variable", "Dickey Fuller", "Lag Order", "p-value", "")
 
 stargazer(df, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
 ```

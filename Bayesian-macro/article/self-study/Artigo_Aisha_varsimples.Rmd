@@ -27,7 +27,7 @@ More about the data can be found [here](https://htmlpreview.github.io/?https://g
 ```{r}
 library(tseries)
 
-dados <- read.csv("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final.csv", sep = ",", header = TRUE, dec = ".")
+dados <- read.csv("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final2.csv", sep = ",", header = TRUE, dec = ".")
 
 for (i in 2:ncol(dados)) {
   dados[,i]<-ts(dados[,i], start = c(2004,1), frequency = 12) 
