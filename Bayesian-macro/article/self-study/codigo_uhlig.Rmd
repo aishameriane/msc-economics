@@ -1,0 +1,1595 @@
+---
+title: "Uhlig's BVAR with SV"
+author: "Aishameriane Schmidt"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+   - \usepackage{calrsfs}
+date: "08 de junho de 2017"
+output: html_document
+---
+
+# Introduction
+
+This file contains the R code necessary for performing the calculations for _"Bayesian Vector-Autoregressions with Stochastic Volatility"_ <span style="color:red">(by Harald Uhlig, *Econometrica*, Jan 1997)</span>.
+
+The code itself is based on Prof. Uhlig's Matlab Code made for his draft back in 1993. The original code was written in 6 different parts for computational reasons.
+
+This is part of the Bayesian Econometrics Course and the code will be used to run some results for my final assignment. Since this is intended to be a study work, I decided to separate the codes in three parts: <span style="color:red">the descriptives</span>, where the data transformations are made; <span style="color:red">the simple BVAR model</span>, based on Gary Koops code and <span style="color:red">this file</span> for the BVAR with Stochastic Volatility, based on prof Uhlig code. For the sake of documentation, all three documents are written in R Markdown, but the code only files are also available to just run and get results.
+
+## Aknowledgements
+
+I would like to thank Prof. Harald Uhlig himself for providing me his work from 20 years ago and Todd Clark from Cleveland's Federal Reserve for his <span style="color:red">RATS code</span> for this application which provided usefull insights. Both of them responded my e-mails very kindly and I am grateful for their attention.
+
+*Disclaimer:* Obviously all code problems here are entirely my responsability. If you find something strange, fell free to write me: _aishameriane at gmail dot com_.
+
+# Bayesian Vector-Autoregressions with Stochastic Volatility
+
+I'm following Prof. Uhlig's code structure, so this file have 6 major parts (<span style="color:red">the description is copied from his Readme file</span>)
+
+1. Reading of the data.  Calculation of the extended Kalman Filter, thus parameterizing the posterior.  Storage of results.
+
+2. Maximization of the concentrated posterior (i.e. after integrating over the Wishart distribution for the precision Matrix H(T+1)). Calculation of the second derivative matrix of the concentrated posterior at the maximum.
+
+3. Calculation of one-dimensional slices of the posterior and the importance sampling density.  The results of part3 are not needed again until part6 and can be skipped entirely if desired.
+
+4. Generation of a sample from the posterior, using importance sampling. I.e. a sample from a t-distribution at the maximum of the posterior with the appropriate second derivative matrix is generated and the appropriate weights are calculated.
+
+5. Generation of forecasts and impulse response functions and their distribution, using the posterior.
+
+6. Graphical output routines (numerical output can be obtained here as well if desired, by modifying these routines).
+
+I changed the parameters names to compatibilize this with Koop's code, but I'll try to make reference for Uhlig's notation.
+
+## Part 1
+
+This block reads the data series from a file and organize to be used. The series must be in columns in a csv file.
+
+In my example, I'm using the data generated in <span style="color:red">Artigo Aisha Descritivo</span>, so I have 4 variables measured montly. Their transformations are well described in the other file. The parameters obtained from the data are:
+
+* $m$, the number of original time series (in my application, $m=4$);
+* $T$, the total number of time periods, i.e. the number of lines in the archive (in my application, <span style="color:red">$T=160$<\span> because I lost 12 observations calculating the annual variation of $IBC-Br$). Uhlig's refered to this as `datsize` and I'm calling `Traw` for the original series and later when I have all lags I'll call `Tesao` because it sounds really funny in portuguese :-)
+
+The parameters that are <span style="color:red">user imputed</span> are:
+
+* $k$, the number of lags (I'm using $p$, instead);
+* $exog$, the number of deterministic (exogenous) regressors (I'm using $constant$):
+    - $constant = 0$ - no constant or time trend;
+    - $constant = 1$ - only the constant;
+    - $constant = 2$ - constant and time trend.
+* $\zeta_1$, the overall tightness of the prior (<span style="color:red">I think this refers to $a_1$ in the Minnesota Prior, but need to investigate further<\span>). The article recommendation is $\zeta_1 = 5$;
+* $\zeta_2$, the increase of tightness in the prior for higher lags. The article recommendation is $\zeta_2 = 2$;
+* $\zeta_3$, the tightness on the exogenous regressors (if any). The article recommendation is $\zeta_3 = 8$;
+* $\nu$, corresponding to the "degrees of freedom" for the evolution of the stochastic volatility (treated as hyperparameter) - <span style="color:red">Guilherme said something about exponential smoothness, I need to remember to get this on my notes later</span>. Parameter values are $\nu = 20$ for quarterly data and $\nu = 60$ for monthly data;
+* $\lambda$, the "decay" for the evolution of the stochastic volatility (treated as hyperparameter). Uhlig's suggestion is to use $\lambda = \frac{\nu}{\nu+1}$. This implies a simplification in the $\frac{\lambda}{\nu}$ fraction used in (6) and in other equations along the article:
+
+\begin{align*}
+\frac{\lambda}{\nu} &= \\
+&= \frac{\frac{\nu}{(\nu+1)}}{\nu} \\
+&= \frac{\nu}{(\nu+1)}\frac{1}{\nu} \\
+&= \frac{1}{(\nu+1)}\\
+&= \frac{1+\nu-\nu}{(\nu+1)}\\
+&= \frac{\nu + 1}{\nu + 1} - \frac{\nu}{(\nu+1)}\\
+&= 1 - \frac{\nu}{(\nu+1)}\\
+&= 1-\nu
+\end{align*}
+
+### Getting data
+
+```{r, eval = FALSE, echo = FALSE, message = FALSE, warning = FALSE}
+library(tseries)
+library(lubridate)
+
+dados <- read.csv("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final2.csv", sep = ",", header = TRUE, dec = ".")
+
+for (i in 2:ncol(dados)) {
+  dados[,i]<-ts(dados[,i], start = c(2004,1), frequency = 12) 
+}
+
+dados[,1] <- ymd(dados[,1])
+
+head(dados)
+columns<-c(3,5,7,9)
+Yraw <- dados[,columns]
+head(Yraw)
+Yraw <- t(Yraw)
+```
+
+I'm using Uhlig's data while testing the routines.
+
+```{r, message = FALSE, warning = FALSE}
+# Using Ulig's US data
+library(R.matlab)
+
+# Readind Uhlig's data
+Yraw <- data.frame(readMat("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\PROJ57.DIR\\dados.mat"))
+```
+
+
+### Getting information from data
+
+```{r}
+Traw <- ncol(Yraw) # This is datsize in Uhlig's code
+M    <- nrow(Yraw) # This is m in Uhlig's code
+```
+
+### User-declared parameters
+
+```{r}
+# Constant =0 for no intercept and time trend, =1 for intercept and =2 for intercept and time trend
+constant = 2
+
+# Number of lags on dependent variables
+p = 5
+
+# Tightness on the prior
+zeta_1 <- 5
+zeta_2 <- 2
+zeta_3 <- 8
+
+# Hyperparameters
+nu     <- 20 # quartely data
+#nu      <- 60 # monthly data
+lambda  <- nu/(nu+1)
+```
+
+Uhlig also have another parameter that he doesn't specify what for, but it seems important. I'll let this be for now. It's available inside PARAM1.m file in PART1.
+
+```{r, eval=FALSE}
+n0choice <- 1 # This is used to build the n0 matrix, but in the paper only one construction is made. The other possibility (in code) is to use lambda dividing the terms.
+```
+
+*Obs:* I think I found out. This variable is used inside the `PRIOR.m` file. If it equals to $1$, then the routine calculates the same $N_0$ matrix described in appendix C. Else, it computes a variation, that divides the quantities by $1-\lambda$. Since this is not mentioned in the article, I didn't included in this code. I'll wait to see if I need this variable later in other parts, if not, I will remove from the final code.
+
+Now we can calculate the total number of regressors in each equation:
+
+```{r}
+l <- constant + p*M
+```
+
+
+There are also some variables declared in advance for computational reasons. I'll let them here for now (empty) to avoid forget about them later and go nuts trying to figure out what's going on (will even skip declarying it as R code).
+
+```{}
+# Incremental variables from the for loops
+t <- 0
+i <- 0
+j <- 0
+
+# I think these ones are going to be used inside for loops as well - the vectors' dimensions I invented myself because R needed
+ytlag1    <- as.vector(seq(0, 5))
+et        <- as.vector(seq(0, 5))
+faclg     <- 0
+gtlg      <- 0
+exreg     <- as.vector(seq(0, 5))
+state     <- as.vector(seq(0, 5))
+```
+
+Now I'm ready to write the prior. Since Uhlig's code is a little different, I'll follow his steps and later on (when I have time) I'll adapt to unify notation with my simple var code from Koop's site.
+
+```{r, message = FALSE, warning = FALSE}
+# Now I'm looking at PRIOR.m in the first directory
+
+g0 <- 1
+
+if (constant >=1){
+  b0bar <- matrix(rep(0, M*constant),  ncol=constant)
+  b0bar <- cbind(b0bar, diag(M))
+} else {
+  b0bar <- diag(M)
+}
+if (p >= 2) {
+  for (i in 2:p) {
+    b0bar <- cbind(b0bar, matrix(rep(0, M*M), ncol = M))
+  }
+}
+
+lagweights <- (1:p)^zeta_2
+
+# Uhlig made an if() for n0choice == 1 or else, but since I don't know what this variable does, I'll eliminate the else part.
+
+n0diag <- as.vector(matrix(rep(zeta_1 * (Yraw[,1])^2,p), ncol=p) %*% diag(lagweights))
+n0 <- diag(n0diag)
+
+if (constant >= 1) { 
+  n0 <- rbind(cbind(matrix(rep(0, constant*constant), ncol = constant), matrix(rep(0, constant*p*M), nrow = constant)), cbind(matrix(rep(0, constant*p*M), ncol = constant), n0))
+  n0[1,1] <- zeta_3
+  if (constant >= 2) { # Also, I'm having trouble to understand why this happens only when constant == 2, it's not clear from appendix C
+    n0[1,2] <- -(zeta_3^2)/2
+    n0[2,1] <- -(zeta_3^2)/2
+    n0[2,2] <- (zeta_3^3)/3
+     if (constant >= 3) {
+        sprintf("ERROR in PRIOR - You can't use exog >= 3!")
+    }
+  }
+}
+
+n0inv <- diag(1/n0diag)
+
+if (constant >= 1) {
+  n0inv <-  rbind(cbind(solve(n0[1:constant, 1:constant]), matrix(rep(0, constant*p*M), nrow = constant)), cbind(matrix(rep(0, constant*p*M), ncol = constant), n0inv))
+}
+
+# Building S0 fitting an AR(1)
+
+s0 <- matrix(rep(0, M*M), ncol = M)
+y  <- Yraw[1, 2:Traw]
+x  <- Yraw[1, 1:(Traw-1)]
+
+for (i in 1:M) {
+  y <- as.matrix(Yraw[i, 2:Traw])
+  x <- as.matrix(Yraw[i, 1:(Traw-1)])
+  s0[i,i] <- (y %*% t(y) - (y %*% t(x))^2/(x %*% t(x)))/Traw
+}
+
+# End of PRIOR.m file
+```
+
+The next file being called is `STEPSTOR.m`, used for the filtering part. In Uhlig's words: _One pass through step 2 of the general method, storing the matrices_ `nt`, `btbar` _and_ `st` _after each "step", so that_ `gt(b)` _can be quickly recomputed	using the resulting store-matrices_  `ntstore`, `btstore` _and_ `ststore`.  _These matrices are of size_  `entries x T` , _where_ `entries = row * column` _for each,_ `nt`, `btbar` _and_ `st`.  _These matrices are stored columnwise, using_ `nt(:)`, _etc._
+
+This file calls `BUILDX.m`, so I'm including this inside this block.
+
+
+```{r}
+# STEPSTOR.m
+
+nt      <- n0
+ntstore <- matrix(rep(0, l^2 * (Traw - p)), ncol = l)
+ntindex <- seq(from = 0, to = l*(Traw-p)-1, by=l)
+ntinv   <- n0inv
+
+btbar   <- b0bar
+b       <- b0bar
+btstore <- matrix(rep(0, M*l*(Traw - p)), ncol = l)
+btindex <- seq(from = 0, to = M*(Traw-p)-1, by=M)
+
+st      <- s0
+ststore <- matrix(rep(0, M^2 * (Traw - p)), ncol = M)
+stindex <- seq(from = 0, to = M*(Traw-p)-1, by=M)
+
+gt      <- g0 # Uhlig: If g0 is to be a function, create a g0.m-file which evaluates g0(b) at the current b
+gtlg    <- log(g0)
+
+tezinho       <- p+1
+
+# BUILDX.m
+# Uhlig: BUILDX builds vectors yt and xt at time t for general constand and Traw.
+# Notation: tezinho is time index.  data is m times tmax - array.
+# Inclusion of constant and time trend and k lags;
+
+
+yt <- Yraw[,tezinho]
+xt <- vector()
+
+for (j in 1:constant) {
+    xt <- c(xt, tezinho^(j-1))
+}
+
+for (j in 1:p) {
+  xt <- c(xt, Yraw[,tezinho-j])
+}
+
+# end of BUILDX.m
+# Back to STEPSTOR.m
+
+state    <- xt
+ydetcomp <- btbar %*% state
+
+fit      <- matrix(rep(0, M*(Traw-p+1)), nrow = M)
+fit[,1]  <- ydetcomp
+
+# Uhlig: fit eventually contains the extrapolation of the initial data vector only, using the updated coefficient matrix at each step.  It answers the question: given the past extrapolation and given the updated knowledge about the coefficient matrix, how would one update one more step?  This extremely heuristic procedure yields a remarkably nice looking smoother for a given time series ... why?
+  
+facstore <- matrix(rep(0, Traw - p), nrow = 1)
+
+for (tezinho in ((p+1):Traw)) {
+  # STEP.m: STEP computes step 2 at date t of the general method.
+  # Notation: t is time index.  data is m timex tmax-array.
+  # Inclusion of constant and time trend;
+  
+  ytlag1 <- yt
+  xt <- vector()
+  
+  # BUILDX.m
+  
+  yt <- Yraw[,tezinho]
+  for (j in 1:constant) {
+      xt <- c(xt, tezinho^(j-1))
+  }
+
+  for (j in 1:p) {
+    xt <- c(xt, Yraw[,tezinho-j])
+  }
+  
+  # End of BUILDX.m
+  
+  # Back to STEP.m
+  
+  et <- yt - btbar %*% xt # Uhlig: one step ahead prediction error at "peak"
+
+  if (tezinho == p+1) {
+    firstdiff  <- yt-ytlag1
+    prederrors <- et
+  } else {
+    firstdiff  <- cbind(firstdiff, yt-ytlag1)
+    prederrors <- cbind(prederrors, et)
+  }
+  
+  ntinv <- (ntinv - ntinv %*% as.matrix(xt) %*% t(as.matrix(xt)) %*% ntinv/as.numeric((t(as.matrix(xt)) %*% ntinv %*% as.matrix(xt) + lambda)))/lambda
+  btbar <- (lambda * btbar %*% nt + as.matrix(yt) %*% t(as.matrix(xt))) %*% ntinv
+  nt    <- lambda * nt + as.matrix(xt) %*% t(as.matrix(xt))
+  st    <- lambda * st + lambda/nu * et %*% (1-t(as.matrix(xt)) %*% ntinv %*% as.matrix(xt)) %*% t(et)
+  faclg <- log((det((b-btbar) %*% nt %*% t(b-btbar) + nu/lambda * st ))^(-0.5))
+  
+  
+  if (tezinho == 1) {
+    gtlg <- faclg
+  } else {
+    gtlg <- gtlg + faclg
+  }
+  
+  if (constant >= 1){
+    exreg <- as.vector(1)
+    if (constant >= 2){
+      exreg <- as.vector(cbind(1, state[2]+1))
+      if (constant >= 3){
+        sprintf("Error in STEP.M: - You can't use exog >= 3!")
+      }
+    }
+  }
+  
+  state    <- as.vector(c(exreg, ydetcomp, state[(constant+1):(l-M)]))
+  ydetcomp <- btbar %*% state
+  
+  # End of STEP.m
+  # Back to STEPSTOR.m
+  fit[, (tezinho-p+1)]  <- ydetcomp
+  
+  facstore[(tezinho-p)] <- faclg
+  
+  ntstore[(ntindex[tezinho-p]+1):(ntindex[tezinho-p]+l),] <- nt
+  
+  btstore[(btindex[tezinho-p]+1):(btindex[tezinho-p]+M),] <- btbar
+  
+  ststore[(stindex[tezinho-p]+1):(stindex[tezinho-p]+M),] <- st
+}
+
+# End of STEPSTOR.m
+# End of MAIN1.m
+```
+
+## Part 2
+
+Uhlig: _The purpose of part2 is to maximize the posterior and to calculate the second derivative at the maximum. The output takes the form of two matlab files, called "bstardat.mat", which stores the maximum of the posterior and "scderdat.mat", which stores the second derivative of the posterior at the maximum.  bstardat.mat is needed for part3 (calculating slices of the posterior).  Bstardat.mat and scderdat.mat are needed for part4 (generating monte carlo draws). These programs may take a long time.  Should they be interrupted, set freshstart = 0 in param2.m.  The program will then read in the file bcurrdat.mat to restart maxpost.  At present, there is no provision for interrupting the program samplcov.m, used to calculate the second derivative matrix._
+
+This part will take the results from the previous part and calculate the maximum of the posterior and the second deriative of the posterior at the maximum.
+
+### Parameters
+
+Uhlig's code have a lot of strategies to avoid loosing work in case the computer crashes and I'm skipping them (hopefully my 2013 notebook will handle some 1993's stuff well =] ). So, will not use `freshstart`.
+
+```{r}
+# User imput parameters
+
+itermax  <- 20  # number of iterations to find maximum
+slowdown <- 1.0 # faxtor <= 1 to prevent overshooting (Aisha: don't know what this means). Rarely < 1 needed.
+```
+
+Now the biggest part is in the `MAXPOST.m` file. It calculates the maximum of the posterior via a modified Newton-Raphson algorithm (the difference is that the second derivative is "pre-calculated"). It assumes that it is the concentrated posterior (after integrating out the precision matrix H), which is maximized, as suggested in the original paper (part 4).
+
+```{r}
+# MAXPOST.m
+
+h     <- solve(st)
+bcurr <- btbar
+
+logpost2  <- 0
+logpost1  <- 0
+logpost0  <- 0
+
+posttrail <- vector()
+conctrail <- vector()
+
+jstar <- matrix(rep(0, (M*l)^2), ncol = M*l)
+
+
+for (tezinho in (p+1):(Traw-1)){
+  
+  # EXTRACT.m
+  ne    <- ntstore[(ntindex[tezinho-p]+1):(ntindex[tezinho-p]+l),]
+  bebar <- btstore[(btindex[tezinho-p]+1):(btindex[tezinho-p]+M),]
+  se    <- ststore[(stindex[tezinho-p]+1):(stindex[tezinho-p]+M),]
+  # End of EXTRACT.m
+  
+  jstar <- jstar - kronecker(ne, solve(as.matrix(nu/lambda * se)))
+}
+
+tezinho <- Traw
+
+  # EXTRACT.m
+  ne    <- ntstore[(ntindex[tezinho-p]+1):(ntindex[tezinho-p]+l),]
+  bebar <- btstore[(btindex[tezinho-p]+1):(btindex[tezinho-p]+M),]
+  se    <- ststore[(stindex[tezinho-p]+1):(stindex[tezinho-p]+M),]
+  # End of EXTRACT.m
+
+jstar <- jstar - (nu + l + 1) * kronecker(ne, solve(as.matrix(nu/lambda * se)))
+
+iterstart <- 1
+
+for (i in iterstart:itermax){
+  # Begin MAXSTEP.m
+  # MAXSTEP performs one step of the modified Newton-Raphson algorithm. It is assumed that g0 = 1
+  
+  lngth   <- l * M
+  gradvec <- matrix(rep(0, lngth), ncol = 1)
+  e00     <- matrix(rep(0, l*M), ncol = l)
+  eij     <- e00
+  ekl     <- e00
+  for (tezinho in (p+1):Traw) {
+    # Begin EXTRACT.m
+    ne    <- ntstore[(ntindex[tezinho-p]+1):(ntindex[tezinho-p]+l),]
+    bebar <- btstore[(btindex[tezinho-p]+1):(btindex[tezinho-p]+M),]
+    se    <- ststore[(stindex[tezinho-p]+1):(stindex[tezinho-p]+M),]
+    # End of EXTRACT.m
+    ae    <- t(solve((bcurr - bebar) %*% ne %*% t(bcurr - bebar) + nu/lambda * se))
+    aevec <- t(as.vector(ae))
+    for (vari in 1:M){
+      
+      for (varj in 1:l){
+        
+        entryij <- (varj -1)*M + vari
+        eij     <- e00
+        
+        eij[vari, varj] <- 1
+        
+        cij <- eij %*% ne %*% t(bcurr - bebar) + (bcurr - bebar) %*% ne %*% t(eij)
+        
+        if (tezinho == Traw) {
+          gradvec[entryij] <- gradvec[entryij] - 0.5 * (nu + l + 1) * aevec %*% as.vector(cij)
+        } else {
+          gradvec[entryij] <- gradvec[entryij] - 0.5 * aevec %*% as.vector(cij)
+        }
+      }
+    }
+  }
+  bdir <- solve(jstar, gradvec) # Solve the linear system
+  bdir <- matrix(bdir, nrow = M, ncol = l)
+  # END OF MAXSTEP.m
+  
+  bcurr <- bcurr - slowdown * bdir
+  b     <- bcurr
+  
+  # Begin of CALCG.m
+  # CALCG calculates gtlg = log(gt), assuming that stepstor has produced the matrices ntstore, btstore and ststore
+  
+  gtlg  <- log(g0)
+  nwlg  <- 0
+  implg <- 0 # Uhlig: The correction due to the importance sampling density
+  
+  for (tezinho in (p+1): Traw) {
+    
+    # Begin EXTRACT.m
+    ne    <- ntstore[(ntindex[tezinho-p]+1):(ntindex[tezinho-p]+l),]
+    bebar <- btstore[(btindex[tezinho-p]+1):(btindex[tezinho-p]+M),]
+    se    <- ststore[(stindex[tezinho-p]+1):(stindex[tezinho-p]+M),]
+    # End of EXTRACT.m
+    
+    faclg <- (-0.5)*log(det((b-bebar) %*% ne %*% t(b-bebar) + nu/lambda * se))
+    gtlg  <- gtlg + faclg
+  }
+  
+  nwlg <- (-0.5) * sum(diag(((b-btbar) * lambda) %*% nt %*% t(b-btbar) %*% h)) #sum(diag()) is a way to compute the trace
+  ttlg <- (nu + l) * faclg
+  # Uhlig: exp(gtlg + nwlg) is proportional to the posterior density and exp(gtlg + ttlg) is proportional to the concentrated posterior with the precision matrix concentrated out.
+  # End of CALCG.m
+  
+  logpost0    <- gtlg + nwlg
+  logpostconc <- gtlg + ttlg
+  
+  if (i == iterstart){
+    posttrail <- logpost0
+    conctrail <- logpostconc
+  } else {
+    posttrail <- cbind(posttrail, logpost0)
+    conctrail <- cbind(conctrail, logpostconc)
+  }
+  
+  logpost2 <- logpost1
+  logpost1 <- logpostconc
+}
+
+bstar <- bcurr
+# END OF MAXPOST.m
+```
+
+Now, `MAIN2.m` calls the `SAMPLCOV.m` routine:
+
+```{r}
+# Begin of SAMPLCOV.m
+# Uhlig: SAMPLCOV calculates the minus the second derivative matrix of the concentrated posterior at its maximum for the purpose of generating draws from a multivariate t-distribution with this second derivative matrix (i.e. samplcov computes the right covariance matrix for creating samples from the posterior).
+
+lngth <- l * M
+
+secderiv <- matrix(rep(0, lngth^2), nrow = lngth)
+
+e00 <- matrix(rep(0, l*M), nrow = M)
+eij <- e00
+ekl <- e00
+
+htransvec <- t(h)
+htransvec <- as.vector(h)
+
+for (tezinho in (p+1):Traw){
+  if (tezinho == Traw) {
+    powerfactor <- (nu + l + 1.0)/2
+  } else {
+    powerfactor <- 0.5
+  }
+  
+  # Begin EXTRACT.m
+    ne    <- ntstore[(ntindex[tezinho-p]+1):(ntindex[tezinho-p]+l),]
+    bebar <- btstore[(btindex[tezinho-p]+1):(btindex[tezinho-p]+M),]
+    se    <- ststore[(stindex[tezinho-p]+1):(stindex[tezinho-p]+M),]
+  # End of EXTRACT.m
+    
+  ae    <- t(solve((bstar - bebar) %*% ne %*% t(bstar - bebar) + nu/lambda * se))
+  aevec <- t(as.vector(ae))
+  
+  for (vari in 1:M){
+    for (varj in 1:l){
+      entryij <- (varj - 1)*M + vari
+      eij     <- e00
+      
+      eij[vari, varj] <- 1
+      
+      cij <- eij %*% ne %*% t(bstar - bebar) + (bstar - bebar) %*% ne %*% t(eij)
+      
+      aca <- ae %*% cij %*% ae
+      acavec <- as.vector(aca)
+      
+      for (vark in 1:M){
+        for (varl in 1:l){
+          entrykl <- (varl - 1)*M + vark
+          
+          if (entrykl >= entryij) {
+            ekl <- e00
+            
+            ekl[vark, varl] <- 1
+            
+            ckl <- ekl %*% ne %*% t(bstar - bebar) + (bstar - bebar) %*% ne %*% t(ekl)
+            
+            eneijkl <- eij %*% ne %*% t(ekl) + ekl %*% ne %*% t(eij)
+            
+            secderiv[entryij, entrykl] <- secderiv[entryij, entrykl] + powerfactor * aevec %*% as.vector(eneijkl) - powerfactor * acavec %*% as.vector(ckl)
+            
+            secderiv[entrykl, entryij] <- secderiv[entryij, entrykl]
+          }
+        }
+      }
+    }
+  }
+}
+
+bstar_reserva <- bstar # I'm doing this because in part 4 he overwrite bstar by btbar and in part 5 he used bstar from part 2
+# End of SAMPLCOV.m
+# End of MAIN2.m
+```
+
+## Part 3
+
+Part 3 calculates the slices of the posterior to plot it in part 6. But I'm getting an error, so I'll skip this part.
+
+## Part 4
+
+This part performs Monte-Carlo draws from the posterior, using importance sampling.
+
+The first file, `DECLARE4.m` is the declaration of variables. Since I don't have to worry about performance now, I'll skip this.
+
+The `PARAM4.m` file contains user imput parameters for the number of draws to be generated for the monte-carlo analysis of the posterior.
+
+`ndraws` is the number of draws stored. Uhlig's adive is to not choose too high due to memory issues, but nowadays this is no longer a problem. In the original code it says "`Ndraws` $< 100$ _should usually work fine_".
+
+`repetitions` should not be more than 20, since the Matlab code createad a different file for each repetition.
+
+`approx` is binary, either $0$ or $1$. If $0$, the exact weights are calculated. If $1$, no weights are calculated and inference is performed considering the concentrated posterior as following a t-distribution centered in bstar. Since it appears the approximation is only due to performance, I'll use only the code considering `approx = 0`. Also, I'm leaving `freshstart` away for the same reason.
+
+```{r}
+# Beginning of Main4.m
+# PARAM4.m
+
+ndraws      <- 200
+repetitions <- 20
+nuimpfact   <- 0.98 # Have no idea what's this for, Uhlig's code says it should be smaller than 1.
+```
+
+Now, `MAIN4.m`calls `INIT4.m`.
+
+```{r}
+# INIT4.m
+
+basegtlg  <- gtlg
+bcurr     <- btbar
+bstar     <- btbar # WHYYY?
+
+nuimp <- nuimpfact * (Traw - p + nu + l - M * l)
+nuimp <- floor(nuimp)  # Here Uhlig resorted to a for() loop to make sure nuimp was an integer, I'll just use a pre built function for this.
+nuimp <- max(nuimp, 3) # Avoiding nuimp being too small
+
+nutilda <- nu + l # Degrees of freedom for Wishart conditional on B
+betta   <- 1.0
+
+# End of INIT4.m
+```
+
+Back to `MAIN4.m`, not its time to call `POSTDIST.m`.
+
+From the file:
+
+`POSTDIST` _is a script-file, which generates	and stores_ `ndraws` _draws from the posterior together with their weights, thus creating the posterior distribution, by generating_ `gendraws` _draws and storing them in_ `ndraws` _draws-chunks to the harddisk. The script assumes, that the data has been read in and the parameters (like_ `zeta1`, `zeta2`, `zeta3`, `nu`, `lambda`, `ndraws`) _have been set.  It furthermore assumes, that the peak_ `bstar` _for the coefficient matrix of the posterior has been calculated: the method will work for other choices of_ `bstar` _as well but extremely unlikely to yield good results except for enormous numbers of draws. It also assumes that the second derivative of the log-posterior at_ `bstar` _has been calculated (see_ `samplcov.m`) _and uses this to create draws from the importance sampling density._
+
+_If the matrix_ `h` _has_ $m^2$ _entries and_ `b` _has_ $m \times l$ _entries, the script produces the three matrices_ `hmat` _(size_ $m^2 \times ndraws$ _),_ `bmat` _(size_ $m*l \times ndraws$ _) and_ `wmat` _(size_ $1 \times ndraws$ _), where the n-th column corresponds to the n-th random draw.  In particular,_ `hmat(:,n)` _and_ `bmat(:,n)` _are the columnwise vectorizations of_ `h` _and_ `b` _, so that_ `h = reshape(hmat(:,n),m,m)` and `b = reshape(bmat(:,n),m,l)` _should return the original matrices._ <span style= "color:red"> Colocar como fica no R </span>
+
+I'm going to need some functions before from the `POSTDRAW.m` file.
+
+Uhlig: `DRAWPREC(upprcfac, degrfreed)` draws from a multivariate t-distribution with `degrfreed` degrees of freedom and $S = upprcfac' * upprcfac$ as precision matrix. It proceeds by drawing first from a standard normal distribution, then reshaping it to have precision matrix `prcsnmat`. It then draws from a chi-squared distribution to reduce to a t-draw.
+
+Thus, the normal density has the term $\exp \{\frac{-X'SX}{2} \}$ and we need to find $X$, given that we can only draw from a density $\exp \{\frac{-z'z}{2} \}$. The solution is to draw $z$ and set $X$ to be the solution of $z = upprcfac\ \times X$. <span style = "color:red">It is then easy to see that</span>
+$\mathbb{E}[XX'] = E[U^{-1}\ zz' \ U^{-1}'] = U^{-1}\ U^{-1}' = (U'U)^{-1} = S{-1}$, where $U$ is the `upprcfac` for the normal distribution part.
+
+```{r}
+# Begin DRAWPREC.m
+drawprec <- function(upprcfac, degrfreed) {
+  rowsize <- nrow(upprcfac)
+  z <- as.vector(rnorm(n = rowsize))
+  x <- solve(upprcfac,z) # This is the solution to upprcfac * x = z
+  x <- sqrt(degrfreed / rchisq(n = 1, df = degrfreed)) * x # Uhlig have drachi2() function, I'll use R function do simplify
+  x
+}
+# End of DRAWPREC.m
+```
+
+Uhlig: `DRAWNORM(s)` draws a normally distributed random vector with covariance matrix `s`.
+
+```{r}
+# Begin of DRAWNORM.m
+drawnorm <- function(s) {
+  r  <- chol(s)
+  sz <- nrow(as.matrix(s))
+  b  <- t(r) %*% as.vector(rnorm(n = sz))
+  b
+}
+# End of DRAWNORM.m
+```
+
+Uhlig: `DRAWIDEN(mm, nu)` draws a $mm \times mm$ matrix $h$ from a Wishart distribution with $\nu$ degrees of freedom and the identity matrix times $\nu$ as expectation. RESTRICTION: For the moment, only integer $\nu \geq dim(s)$ are allowed. <span style = "color: red"> Então não tem a Wishart e a Beta singulares do artigo... </span>.
+
+```{r}
+# Begin DRAWIDEN.m
+drawiden <- function(mm, nu) {
+  if (mm == 1) { # Draw from a chi-squared(nu) distribution.
+    #h <- rchisq(n = 1, df = nu)
+    hvect <- as.vector(rnorm(n = nu))
+    h    <- t(hvect) %*% hvect
+  } else {
+    h22   <- drawiden(mm-1, nu)
+    h12   <- drawnorm(h22)
+    h11o2 <- drawiden(1, nu-mm+1)
+    h11   <- h11o2 + t(h12) %*% solve(h22) %*% h12
+    h     <- rbind(cbind(h11, t(h12)), cbind(h12, h22)) # Using theorem 3.2.10 in Muirhead, 1982
+    h
+  }
+}
+# For future Aisha: compare with my own code
+# End of DRAWIDEN.m
+```
+
+Uhlig: `DRAWWISH(nu,s)` draws a matrix $h$ from a Wishart distribution with $\nu$ degrees of freedom and mean $s^{-1}$, where $s$ is a positive definite matrix and $\nu > dim(s)-1$. In other words, $h \sim Wishart(\nu,\omega)$, where $\omega = s^{-1}/\nu$. Hence, given $\omega$, choose $s = \omega^{-1}/\nu$ and call this routine. For a Normal-Wishart, $s$ is just the thing that shows up as parameter.
+*RESTRICTION:* For the moment, only integer $\nu \geq dim(s)$ are allowed.
+
+```{r, mesage = FALSE}
+
+# Begin DRAWWISH.m
+drawwish <- function(nu,s) {
+  r  <- chol(solve(s))
+  mm <- nrow(s)
+  h  <- drawiden(mm, nu)
+  h  <- t(r) %*% h %*% r / nu
+  h
+}
+# End DRAWWISH.m
+```
+
+
+```{r}
+repstart <- 1 
+gendraws <- ndraws * repetitions
+
+# Begin POSTDIST.m
+
+nhalfdraws <- floor(0.5 * ndraws)
+
+upprcfac   <- chol(secderiv)
+upprcfac   <- upprcfac * (nuimp/(nuimp+M*l))^(0.5)
+
+ndraws <- 2 * nhalfdraws
+
+# Aisha: There is a piece of code that I don't understand:
+# rand('normal');   % Switching to normally distributed random numbers
+# Forget, now I got it: Matlab from the past required to user inform in advance what type of random generator to use. I need to go back to the matlab code to make sure I didn't screwed up anything.
+
+b <- bstar
+h <- solve(st)
+
+# Aisha: Now the original code has an if() that switches if approx = 1 or 0, since I'm calculating the exact weights, I'll use just the second if part.
+
+# Begin CALCG4
+
+  # Begin of CALCG.m
+  # CALCG calculates gtlg = log(gt), assuming that stepstor has produced the matrices ntstore, btstore and ststore
+  
+  gtlg  <- log(g0)
+  nwlg  <- 0
+  implg <- 0 # Uhlig: The correction due to the importance sampling density
+  
+  for (tezinho in (p+1): Traw) {
+    
+    # Begin EXTRACT.m
+    ne    <- ntstore[(ntindex[tezinho-p]+1):(ntindex[tezinho-p]+l),]
+    bebar <- btstore[(btindex[tezinho-p]+1):(btindex[tezinho-p]+M),]
+    se    <- ststore[(stindex[tezinho-p]+1):(stindex[tezinho-p]+M),]
+    # End of EXTRACT.m
+    
+    faclg <- (-0.5)*log(det((b-bebar) %*% ne %*% t(b-bebar) + nu/lambda * se))
+    gtlg  <- gtlg + faclg
+  }
+  
+  nwlg <- (-0.5) * sum(diag(((b-btbar) * lambda) %*% nt %*% t(b-btbar) %*% h)) #sum(diag()) is a way to compute the trace
+  ttlg <- (nu + l) * faclg
+  # Uhlig: exp(gtlg + nwlg) is proportional to the posterior density and exp(gtlg + ttlg) is proportional to the concentrated posterior with the precision matrix concentrated out.
+  # End of CALCG.m
+  
+bdiff    <- b-bstar
+bdiffvec <- as.vector(bdiff)
+
+precimplg  <- 0.5* (nuimp + M*l) * log(1+t(bdiffvec) %*% secderiv %*% bdiffvec/(nuimp + M*l))
+thisweight <- gtlg + ttlg + precimplg
+
+# Uhlig: % exp(gtlg + ttlg + precimplg) are weights, if the second derivative secderiv at bstar is used as precision matrix, bstar as location and nuimp as degrees of freedom for a multivariate t-distribution.
+
+# End of CALCG4
+
+# Back to POSTDiST.m
+
+wstar  <- thisweight
+ptstar <- gtlg + nwlg
+pcstar <- gtlg + ttlg
+
+bmat     <- matrix(rep(0, M*l*nhalfdraws), ncol = nhalfdraws)
+hmat     <- matrix(rep(0, M*M*ndraws), ncol = ndraws)
+wlogmat  <- matrix(rep(0, ndraws), ncol = ndraws)
+ptlogmat <- matrix(rep(0, ndraws), ncol = ndraws)
+pclogmat <- matrix(rep(0, ndraws), ncol = ndraws)
+
+wallmat   <- matrix(rep(0, gendraws), ncol = gendraws)
+ptallmat  <- matrix(rep(0, gendraws), ncol = gendraws)
+pcallmat  <- matrix(rep(0, gendraws), ncol = gendraws)
+
+draws <- list()
+
+for (rep in repstart:repetitions){
+  for (draw in 1:nhalfdraws){
+    # Begin of POSTDRAW
+    bdraw    <- drawprec(upprcfac, nuimp)
+    normdist <- sqrt((t(bdraw) %*% secderiv %*% bdraw) * (nuimp-2)/(M*l*(nuimp+M*l)))
+    
+    b <- bstar + matrix(bdraw, nrow = M, ncol = l)
+    
+    omegainvnu <- (((b-btbar) * lambda) %*% nt %*% t(b-btbar) + nu * st)/nu
+    
+    h  <- drawwish(nutilda, omegainvnu)
+    b1 <- b
+    h1 <- h
+    
+    b  <- 2* bstar - b # Because of the simmetry of t-distribution
+    
+    omegainvnu <- (((b-btbar) * lambda) %*% nt %*% t(b-btbar) + nu * st)/nu
+  
+    h  <- drawwish(nutilda, omegainvnu)
+    b2 <- b
+    h2 <- h
+    
+    # Begin of CALCDATA.m
+    b <- b1
+    h <- h1
+    
+    # Aisha: Again, there was an if for the approx, I'm using only the part for approx == 0
+    
+    # Begin CALCG4
+
+      # Begin of CALCG.m
+      # CALCG calculates gtlg = log(gt), assuming that stepstor has produced the matrices ntstore, btstore and ststore
+  
+      gtlg  <- log(g0)
+      nwlg  <- 0
+      implg <- 0 # Uhlig: The correction due to the importance sampling density
+  
+    for (tezinho in (p+1): Traw) {
+    
+      # Begin EXTRACT.m
+    ne    <- ntstore[(ntindex[tezinho-p]+1):(ntindex[tezinho-p]+l),]
+    bebar <- btstore[(btindex[tezinho-p]+1):(btindex[tezinho-p]+M),]
+    se    <- ststore[(stindex[tezinho-p]+1):(stindex[tezinho-p]+M),]
+    # End of EXTRACT.m
+    
+    faclg <- (-0.5)*log(det((b-bebar) %*% ne %*% t(b-bebar) + nu/lambda * se))
+    gtlg  <- gtlg + faclg
+  }
+  
+  nwlg <- (-0.5) * sum(diag(((b-btbar) * lambda) %*% nt %*% t(b-btbar) %*% h)) #sum(diag()) is a way to compute the trace
+  ttlg <- (nu + l) * faclg
+  # Uhlig: exp(gtlg + nwlg) is proportional to the posterior density and exp(gtlg + ttlg) is proportional to the concentrated posterior with the precision matrix concentrated out.
+  # End of CALCG.m
+  
+  bdiff    <- b-bstar
+  bdiffvec <- as.vector(bdiff)
+
+  precimplg  <- 0.5* (nuimp + M*l) * log(1+t(bdiffvec) %*% secderiv %*% bdiffvec/(nuimp + M*l))
+  thisweight <- gtlg + ttlg + precimplg
+
+  # Uhlig: % exp(gtlg + ttlg + precimplg) are weights, if the second derivative secderiv at bstar is used as precision matrix, bstar as location and nuimp as degrees of freedom for a multivariate t-distribution.
+
+  # End of CALCG4
+  
+  w1  <- thisweight - wstar     # Uhlig: Storing the logarithm of the weight
+  pt1 <- gtlg + nwlg - ptstar   # Uhlig: And the height of the posterior
+  pc1 <- gtlg + ttlg - pcstar   # Uhlig: the concentrated posterior
+  
+  gtlg1   <- gtlg
+  ttlg1   <- ttlg
+  preclg1 <- precimplg
+  
+  b <- b2
+  h <- h2
+  
+      # Aisha: Again, there was an if for the approx, I'm using only the part for approx == 0
+    
+    # Begin CALCG4
+
+      # Begin of CALCG.m
+      # Uhlig: CALCG calculates gtlg = log(gt), assuming that stepstor has produced the matrices ntstore, btstore and ststore
+  
+      gtlg  <- log(g0)
+      nwlg  <- 0
+      implg <- 0 # Uhlig: The correction due to the importance sampling density
+  
+    for (tezinho in (p+1): Traw) {
+    
+      # Begin EXTRACT.m
+    ne    <- ntstore[(ntindex[tezinho-p]+1):(ntindex[tezinho-p]+l),]
+    bebar <- btstore[(btindex[tezinho-p]+1):(btindex[tezinho-p]+M),]
+    se    <- ststore[(stindex[tezinho-p]+1):(stindex[tezinho-p]+M),]
+    # End of EXTRACT.m
+    
+    faclg <- (-0.5)*log(det((b-bebar) %*% ne %*% t(b-bebar) + nu/lambda * se))
+    gtlg  <- gtlg + faclg
+  }
+  
+  nwlg <- (-0.5) * sum(diag(((b-btbar) * lambda) %*% nt %*% t(b-btbar) %*% h)) #Aisha: sum(diag()) is a way to compute the trace in R
+  ttlg <- (nu + l) * faclg
+  # Uhlig: exp(gtlg + nwlg) is proportional to the posterior density and exp(gtlg + ttlg) is proportional to the concentrated posterior with the precision matrix concentrated out.
+  # End of CALCG.m
+  
+  bdiff    <- b-bstar
+  bdiffvec <- as.vector(bdiff)
+
+  precimplg  <- 0.5* (nuimp + M*l) * log(1+t(bdiffvec) %*% secderiv %*% bdiffvec/(nuimp + M*l))
+  thisweight <- gtlg + ttlg + precimplg
+
+  # Uhlig: % exp(gtlg + ttlg + precimplg) are weights, if the second derivative secderiv at bstar is used as precision matrix, bstar as location and nuimp as degrees of freedom for a multivariate t-distribution.
+
+  # End of CALCG4
+  
+  w2  <- thisweight - wstar     # Uhlig: Storing the logarithm of the weight
+  pt2 <- gtlg + nwlg - ptstar   # Uhlig: And the height of the posterior
+  pc2 <- gtlg + ttlg - pcstar   # Uhlig: the concentrated posterior
+  
+  gtlg2   <- gtlg
+  ttlg2   <- ttlg
+  preclg2 <- precimplg
+  
+  # End of CALCDATA.m
+  # End of POSTDRAW
+  
+  # Back to POSTDIST.m line 75
+  
+  bmat[, draw]          <- b1 # Aisha: There is a warning, but I didn't understand
+  
+  hmat[, 2*draw-1]      <- h1
+  hmat[, 2*draw]        <- h
+  
+  wlogmat[, 2*draw-1]   <- w1
+  wlogmat[, 2*draw]     <- w2
+  
+  ptlogmat[, 2*draw-1]  <- pt1 # Uhlig: Stores height of posterior at draw
+  ptlogmat[, 2*draw]    <- pt2
+  
+  pclogmat[, 2*draw-1]  <- pc1 # Uhlig: Stores height of concentrated posterior
+  pclogmat[, 2*draw]    <- pc2
+  
+  wallmat[, (rep-1)*ndraws + 2*draw -1]  <- w1
+  wallmat[, (rep-1)*ndraws + 2*draw]     <- w2
+  
+  ptallmat[, (rep-1)*ndraws + 2*draw -1] <- pt1
+  ptallmat[, (rep-1)*ndraws + 2*draw]    <- pt2
+  
+  pcallmat[, (rep-1)*ndraws + 2*draw -1] <- pc1
+  pcallmat[, (rep-1)*ndraws + 2*draw]    <- pc2
+  }
+  
+  wlogmax <- max(wlogmat)
+  
+  wmat <- exp(wlogmat - wlogmax) # Uhlig: Renormalization of weights by common factor. Normalization valid only for this bath (i.e. given "rep")
+  
+  draws <- c(draws, list(list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat))) # This works but I think it's a little messy to deal with
+                                                                          # But it's usefull if someday I need to go beyond 20 repetitions
+  
+  # Doing manually
+  
+#  if (rep == 1) {
+#    draws1 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 2) {
+#   draws2 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 3) {
+#   draws3 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 4) {
+#   draws4 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 5) {
+#   draws5 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 6) {
+#   draws6 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 7) {
+#   draws7 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 8) {
+#   draws8 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 9) {
+#   draws9 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 10) {
+#   draws10 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 11) {
+#   draws11 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 12) {
+#   draws12 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 13) {
+#   draws13 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 14) {
+#   draws14 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 15) {
+#   draws15 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 16) {
+#   draws16 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 17) {
+#   draws17 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 18) {
+#   draws18 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if (rep == 19) {
+#   draws19 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# } else if  (rep == 20) {
+#   draws20 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
+# }
+  
+} # End of POSTDIST.m
+# End of MAIN4.m
+```
+
+## Part 5
+
+Uhlig: `Main.5` calculates the distribution of forecasts. It takes as input the data from parts 2 and 4 to produce forecasts, impulse response functions and their distributions. 
+
+
+### User imput parameters
+
+`approx5`, when set to $0$ gives the exact posterior distribution. If `approx5 = 1`, the t-distribution is used to create inference from the posterior. Again, I'm not using any approximation.
+
+`debugmode` is for debugging purposes (information in `reshuffl.m` is printed). Since I'm debugging from Uhlig's code, I'm not using this either.
+
+`numberofpaths` is the number of paths for future random shocks for each draw from the posterior. Drawing future random shocks is needed to calculate the distribution of the forecasts.
+
+When `doforecasts = 0`, no forecasts should be made. Same for `doimpulseresp`, for impulse response functions. I'm going to do both, but will mantains Uhlig's original if's for this part.
+
+`reorder` is a matrix to identify impulses and must be an orthogonal matrix, i.e. $reorder' \times redorder = I$. For example, suppose the variables are orderes in the data vector as $[x\ y\ z]'$, but one wants to consider the ordering $[z \ x \ y]'$ instead. In that case, redorder is the permutation matrix given by
+
+\[
+reorder = 
+\begin{bmatrix}
+0 & 0 & 1 \\
+1 & 0 & 0 \\
+0 & 1 & 0
+\end{bmatrix}
+\]
+
+So that $reorder \times [x\ y\ z]'$ results in the desired ordering $[z\ x\ y]'$. The impulse response functions are then calculated using a Cholesky decomposition for this new ordering.
+
+```{r}
+# Begin of MAIN5.m
+# Begin of PARAM5.m
+approx5 <- 0
+
+numberofpaths <- 1
+
+quantlow  <- .2
+quanthigh <- .8
+horizon   <- 20
+
+doforecasts   <- 1
+doimpulseresp <- 0
+
+reorder <- diag(M)
+
+bstar <- bstar_reserva # see the end of main2.m
+
+# End of PARAM5.m
+
+gendraws <- ndraws * repetitions
+wmax     <- max(wallmat)
+walllev  <- exp(wallmat - wmax) # Uhlig: level of all weights, normalized so that the maximal weight equals 1
+
+newmat       <- walllev
+weightsum    <- sum(walllev)
+newweightsum <- weightsum
+
+#sortmat <- matrix()   # For FORCALC.m, I need them inside a for() loop so R needs in advance
+#indices <- matrix()
+```
+
+`RESHUFFL.m` reorganizes the draws in such a way that each has approximately the same weight by creating multiple realizations of the same draw if it has a particularly high weight.
+
+```{r}
+# Begin of RESHUFFL.m
+newwlev <- matrix(rep(1, gendraws), ncol = gendraws)/gendraws
+newweightsum <- sum(newwlev)
+
+findmat  <- seq(from =1, to = gendraws, by =1)
+randmat  <- as.vector(runif(n=gendraws))/gendraws
+wequal   <- .999 * sum(walllev)/gendraws # Aisha: Not sure what's this for
+
+sumsofar   <- 0
+entrysofar <- 1
+
+for (index in 1:gendraws) {
+  while (sumsofar <= wequal * (index-1) + randmat[index]) {
+    sumsofar   <- sumsofar + walllev[entrysofar]
+    entrysofar <- entrysofar + 1
+  }
+  entrysofar <- entrysofar - 1
+  sumsofar   <- sumsofar - walllev[entrysofar]
+  
+  findmat[index] <- entrysofar
+}
+# End of RESHUFFL.m
+```
+
+Now, to make forecasts, we use `FORCALC.m` to calculate the forecast distributions in a manner avoiding the storage of many large matrices.
+
+There are several routines called:
+
+* `FUTURE.m` calculates forecasts for all variables, given matrices $b$ and $h$ keeping future innovations at zero, given date $t$ (which is equal to `Traw`, usually). Constant and time-trend hard-wired for speed! Result: `forecast[j,:]` is the forecast for variable $j$, starting at $y_T$. `growth[j,:]` is just the growth for variable $j$, i.e. `forecast[j,2:(horizon+1)] - forecast[j,1:horizon]`;
+
+Since `drawbeta.m` is called, I'm writing it here. Uhlig: `DRAWBETA` produces one draw from a multivariate $\mathcal{Beta}_{mm}(pp/2,1/2)$-density, exploiting its definition in terms of Wishart distributions, see my statistics - paper.
+Note that $pp$ here is twice the $p$ used in my mathematica-routines.
+
+```{r}
+# Begin of DRAWBETA.m
+drawbeta <- function(mm,pp) {
+  a <- drawiden(mm,pp)
+  y <- as.vector(rnorm(n=mm))
+  b <- y %*% t(y)
+  tezinho <- chol(a + b)
+  tezinho <- solve(tezinho)
+  bb<- t(tezinho) %*% a %*% tezinho
+  bb
+}
+# End of DRAWBETA.m
+```
+
+
+```{r}
+if (doforecasts == 1) {
+  usedraws     <- gendraws * numberofpaths
+  useweightsum <- numberofpaths * newweightsum
+  nextwmat     <- newwlev
+  usewmat      <- kronecker(newwlev, matrix(rep(1, numberofpaths), ncol = numberofpaths))
+  
+  # Begin of FORCALC.m
+  forchigh <- vector()
+  forclow <- vector()
+  forcmed <- vector()
+  forcmean <- vector()
+  forcpeak <- vector()
+  forcnwpeak <- vector()
+  
+  for (varj in 1:M) {
+
+    b <- btbar
+    h <- solve(st)
+    tezinho <- Traw
+    
+    # Begin of FUTURE.m
+    
+    # Begin of BUILDX.m
+    # Uhlig: BUILDX builds vectors yt and xt at time t for general constand and Traw.
+    # Notation: t is time index.  data is m times tmax - array.
+    # Inclusion of constant and time trend and k lags;
+
+    yt <- Yraw[,tezinho]
+    xt <- vector()
+
+    for (j in 1:constant) {
+        xt <- c(xt, tezinho^(j-1))
+    }
+
+    for (j in 1:p) {
+      xt <- c(xt, Yraw[,tezinho-j])
+    }
+    # End of BUILDX.m
+    
+    # Back to FUTURE.m (heh)
+    
+    state    <- xt
+    y        <- yt
+    forecast <- y
+    
+    for (tt in (Traw+1):(Traw+horizon)) {
+      sprintf("tt: %s",tt)
+      exreg    <- vector()
+      for (j in 1:constant) {
+          exreg <- rbind(exreg, tt^(j - 1))
+      }
+      state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+      y <- b %*% state
+      forecast <- cbind(forecast, y)
+    }
+    growth <- forecast[, 2:(horizon+1)] - forecast[, 1:horizon]
+    
+    # End of FUTURE.m
+  
+    forcnwpeak <- rbind(forcnwpeak, forecast[varj,]) 
+    b <- bstar
+    
+    # Begin of FUTURE.m
+    
+    # Begin of BUILDX.m
+    # Uhlig: BUILDX builds vectors yt and xt at time t for general constand and Traw.
+    # Notation: t is time index.  data is m times tmax - array.
+    # Inclusion of constant and time trend and k lags;
+
+    yt <- Yraw[,tezinho]
+    xt <- vector()
+
+    for (j in 1:constant) {
+        xt <- c(xt, tezinho^(j-1))
+    }
+
+    for (j in 1:p) {
+      xt <- c(xt, Yraw[,tezinho-j])
+    }
+    # End of BUILDX.m
+    
+    # Back to FUTURE.m (heh)
+    
+    state    <- xt
+    y        <- yt
+    forecast <- y
+    
+    
+    for (tt in (Traw+1):(Traw+horizon)) {
+      sprintf("tt: %s",tt)
+      exreg    <- vector()
+      for (j in 1:constant) {
+          exreg <- rbind(exreg, tt^(j - 1))
+      }
+      state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+      y <- b %*% state
+      forecast <- cbind(forecast, y)
+    }
+    growth <- forecast[, 2:(horizon+1)] - forecast[, 1:horizon]
+    
+    # End of FUTURE.m
+    
+    forcpeak <- rbind(forcpeak, forecast[varj,])
+    
+    forcmat <- vector()
+    currtot <- 0
+    ###########################################################
+    ####### Debug: Until this point is OK and working for varj == 1
+    ####### 
+    ###########################################################
+    
+    for (rep in 1: repetitions) {
+      sprintf("rep: %s",rep)
+      # Begin of REPLOAD.m # Well, I skipped repload and made something a little different
+      # bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat
+      bmat     <- draws[[rep]][[1]] # Debug: SIZE OK
+      hmat     <- draws[[rep]][[2]] # Debug: SIZE OK
+      wlogmat  <- draws[[rep]][[3]] # Debug: SIZE OK
+      wlogmax  <- draws[[rep]][[4]] # Debug: SIZE OK
+      wmat     <- draws[[rep]][[5]] # Debug: SIZE OK
+      ptlogmat <- draws[[rep]][[6]] # Debug: SIZE OK
+      pclogmat <- draws[[rep]][[7]] # Debug: SIZE OK
+      # End of REPLOAD.m
+      for (entry in 1:gendraws) { # OK
+        sprintf("entry: %s",entry)
+        draw <- findmat[entry] - (rep-1)*ndraws
+        if (((draw > 0) && (draw <= ndraws)) == TRUE) { # OK
+          currtot <- currtot + 1
+          nextwmat[currtot] <- newwlev[entry]
+          # Begin of SELECT.m
+          h    <- matrix(hmat[, draw], ncol=M, nrow = M)
+          bdrw <- round(draw/2 + .2) # Uhlig: add .2 to make sure that we get the right entry. Thus, draw =5 and draw =6 both result in bdrw = 3
+                                    # Aisha: I'm not following, but someday I hope do understand.
+          b    <- matrix(bmat[, bdrw], nrow =M, ncol =l)
+          if ((2 * bdrw - .2) < draw) {
+            b = 2 * bstar - b
+          }
+          # End of SELECT.m
+          # Back to FORCALC.m
+          tezinho <- Traw # OK
+          for (pnumber in 1:numberofpaths){
+            # Begin of FUTURAND.m
+            # Uhlig: FUTURAND calculates forecasts for all variables, given matrices b and h drawing random future innovations, given date t (=datsize, usually).
+            # Begin of BUILDX.m
+            # Uhlig: BUILDX builds vectors yt and xt at time t for general constand and Traw.
+            # Notation: t is time index.  data is m times tmax - array.
+            # Inclusion of constant and time trend and k lags;
+
+            yt <- Yraw[,tezinho]
+            xt <- vector()
+
+            for (j in 1:constant) {
+                xt <- c(xt, tezinho^(j-1))
+            }
+
+            for (j in 1:p) {
+            xt <- c(xt, Yraw[,tezinho-j])
+            }
+            # End of BUILDX.m
+            state    <- xt
+            y        <- yt
+            forecast <- y
+            
+            
+            for (tt in (Traw+1):(Traw+horizon)) {
+              sprintf("tt: %s",tt)
+              exreg    <- vector()
+              for (j in 1:constant) {
+                  exreg <- rbind(exreg, tt^(j - 1))
+              }
+              state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+              epsil <- drawnorm(solve(h))
+              y     <- b %*% state + epsil
+              h     <- t(chol(h)) %*% drawbeta(M, nu+1) %*% chol(h)/lambda
+              
+              forecast <- cbind(forecast, y)
+            
+            }
+            growth <- forecast[, 2:(horizon+1)] - forecast[, 1:horizon]
+            # End of FUTURAND.m
+            # Back to FORCALC.m
+            forcmat <- rbind(forcmat, forecast[varj, ])
+          } # OK
+        }
+      }
+    }
+   usewmat <- kronecker(nextwmat, matrix(rep(1, numberofpaths), ncol = numberofpaths))
+   sortmat <- apply(forcmat, 2, sort) #sort(forcmat)
+   indices <- apply(forcmat, 2, order)
+   #for (i in 1:length(forcmat)) { # Uhlig's code uses only sort() from Matlab, I'm doing manually since I didn't found the same function in R
+   #   indices[i] <- match(sortmat[i], forcmat)
+   #}
+   # Begin of CALCDIST.m
+   calchigh <- vector() # Just realized that before I could have used this instead a non pratical if. Maybe some day I have the time to correct
+   calclow  <- vector()
+   calcmed  <- vector()
+   calcmean <- vector()
+   
+   if (is.null(nrow(sortmat))) {
+     rows <- 0
+   } else {
+     rows <- nrow(sortmat)
+   }
+   
+   if (is.null(ncol(sortmat))) {
+     columns <- 0
+   } else {
+     columns <- ncol(sortmat)
+   }
+   
+   #rows     <- nrow(sortmat)
+   #columns  <- ncol(sortmat)
+   
+   weightlow <- quantlow * useweightsum
+   weightmed <- 0.5 * useweightsum
+   weighthigh <- quanthigh * useweightsum
+   
+   if ((columns != 0)== TRUE) {
+      for (coluna in 1:columns) { ## Maybe I need to change the name of col
+        
+        weightcount <- 0
+        flaglow     <- 1
+        flagmed     <- 1
+        flaghigh    <- 1
+        thismean    <- 0
+        for (sortdraw in 1:usedraws){
+          thismean <- thismean + sortmat[sortdraw, coluna] * usewmat[indices[sortdraw, coluna]]
+          weightcount <- weightcount + usewmat[indices[sortdraw,coluna]]
+          if ((flaglow * (weightcount >= weightlow) ) == 1) {
+            flaglow <- 0
+            calclow <- cbind(calclow, sortmat[sortdraw, coluna])
+          }
+          if ((flagmed * (weightcount >= weightmed) ) == 1) {
+            flagmed <- 0
+            calcmed <- cbind(calcmed, sortmat[sortdraw, coluna])
+          }
+          if ((flaghigh * (weightcount >= weighthigh) ) == 1) {
+            flaghigh <- 0
+            calchigh <- cbind(calchigh, sortmat[sortdraw, coluna])
+          }
+        }
+          calcmean <- cbind(calcmean, (thismean/useweightsum))
+      }
+   }
+   # End of CALCDIST.m
+   # Back to FORCALC.m
+   forchigh <- rbind(forchigh, calchigh) # Maybe this will result in error, so later I'll come back and verify the dimensions
+   forclow  <- rbind(forclow, calclow)  ############ STOPPED HERE
+   forcmed  <- rbind(forcmed, calcmed)
+   forcmean <- rbind(forcmean, calcmean)
+  }
+  
+ # End of FORCALC.m
+ # Back to MAIN5.m
+ ###################
+ # FORCALC Appears to be OK
+ ###################
+ 
+ # Begin of GROWCALC.m
+ # Calculating the forecast distributions in a manner avoiding the storage of many large matrices
+    
+    growhigh   <- vector()
+    growlow    <- vector()
+    growmed    <- vector()
+    growmean   <- vector()
+    growpeak   <- vector()
+    grownwpeak <- vector()
+    
+    for (varj in 1:M) {
+      
+      b <- btbar
+      h <- solve(st)
+      tezinho <- Traw
+      # Begin of FUTURE.m
+          
+      # Begin of BUILDX.m
+      # Uhlig: BUILDX builds vectors yt and xt at time t for general constand and Traw.
+      # Notation: t is time index.  data is m times tmax - array.
+      # Inclusion of constant and time trend and k lags;
+
+      yt <- Yraw[,tezinho]
+      xt <- vector()
+
+      for (j in 1:constant) {
+          xt <- c(xt, tezinho^(j-1))
+      }
+
+      for (j in 1:p) {
+        xt <- c(xt, Yraw[,tezinho-j])
+      }
+      # End of BUILDX.m
+    
+      # Back to FUTURE.m (heh)
+    
+      state    <- xt
+      y        <- yt
+      forecast <- y
+    
+      for (tt in (Traw+1):(Traw+horizon)) {
+        sprintf("tt: %s",tt)
+        exreg <- vector()
+        for (j in 1:constant) {
+            exreg <- rbind(exreg, tt^(j - 1))
+        }
+        state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+        y <- b %*% state
+        forecast <- cbind(forecast, y)
+      }
+      growth <- forecast[, 2:(horizon+1)] - forecast[, 1:horizon]
+    
+      # End of FUTURE.m
+      # Back to GROWCALC.m
+      grownwpeak <- rbind(grownwpeak, growth[varj,])
+      b <- bstar
+      # Begin of FUTURE.m
+          
+      # Begin of BUILDX.m
+      # Uhlig: BUILDX builds vectors yt and xt at time t for general constand and Traw.
+      # Notation: t is time index.  data is m times tmax - array.
+      # Inclusion of constant and time trend and k lags;
+
+      yt <- Yraw[,tezinho]
+      xt <- vector()
+
+      for (j in 1:constant) {
+          xt <- c(xt, tezinho^(j-1))
+      }
+
+      for (j in 1:p) {
+        xt <- c(xt, Yraw[,tezinho-j])
+      }
+      # End of BUILDX.m
+    
+      # Back to FUTURE.m (heh)
+    
+      state    <- xt
+      y        <- yt
+      forecast <- y
+    
+      for (tt in (Traw+1):(Traw+horizon)) {
+        sprintf("tt: %s",tt)
+        exreg <- vector()
+        for (j in 1:constant) {
+            exreg <- rbind(exreg, tt^(j - 1))
+        }
+        state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+        y <- b %*% state
+        forecast <- cbind(forecast, y)
+      }
+      growth <- forecast[, 2:(horizon+1)] - forecast[, 1:horizon]
+    
+      # End of FUTURE.m
+      # Back to GROWCALC.m
+      growpeak <- rbind(growpeak, growth[varj, ])
+      growmat  <- vector()
+      currtot  <- 0
+      for (rep in 1: repetitions){
+        sprintf("rep: %s",rep)
+        # Begin of REPLOAD.m # Well, I skipped repload and made something a little different
+        # bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat
+        bmat     <- draws[[rep]][[1]]
+        hmat     <- draws[[rep]][[2]]
+        wlogmat  <- draws[[rep]][[3]]
+        wlogmax  <- draws[[rep]][[4]]
+        wmat     <- draws[[rep]][[5]]
+        ptlogmat <- draws[[rep]][[6]]
+        pclogmat <- draws[[rep]][[7]]
+        # End of REPLOAD.m
+        for (entry in 1:gendraws) {
+          sprintf("entry: %s",entry)
+          draw <- findmat[entry] - (rep-1)*ndraws
+          if ((draw > 0) && (draw <= ndraws)) {
+            currtot <- currtot + 1
+            nextwmat[currtot] <- newwlev[entry]
+            # Begin of SELECT.m
+            h    <- matrix(hmat[, draw], ncol=M, nrow = M)
+            bdrw <- round(draw/2 + .2) # Uhlig: add .2 to make sure that we get the right entry. Thus, draw =5 and draw =6 both result in bdrw = 3
+                                    # Aisha: I'm not following, but someday I hope do understand.
+            b    <- matrix(bmat[, bdrw], nrow =M, ncol =l)
+              if ((2 * bdrw - .2) < draw) {
+              b = 2 * bstar - b
+            }
+          # End of SELECT.m
+          # Back to GROWCALC.
+          tezinho <- Traw
+          for (pnumber in 1:numberofpaths){
+            # Begin of FUTURAND.m
+            # Uhlig: FUTURAND calculates forecasts for all variables, given matrices b and h drawing random future innovations, given date t (=datsize, usually).
+            # Begin of BUILDX.m
+            # Uhlig: BUILDX builds vectors yt and xt at time t for general constand and Traw.
+            # Notation: t is time index.  data is m times tmax - array.
+            # Inclusion of constant and time trend and k lags;
+
+            yt <- Yraw[,tezinho]
+            xt <- vector()
+
+            for (j in 1:constant) {
+                xt <- c(xt, tezinho^(j-1))
+            }
+
+            for (j in 1:p) {
+            xt <- c(xt, Yraw[,tezinho-j])
+            }
+            # End of BUILDX.m
+            state    <- xt
+            y        <- yt
+            forecast <- y
+            
+            for (tt in (Traw+1):(Traw+horizon)) {
+              exreg <- vector()
+              for (j in 1:constant) {
+                  exreg <- rbind(exreg, tt^(j - 1))
+              }
+              state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+              epsil <- drawnorm(solve(h))
+              y     <- b %*%  state + epsil
+              h     <- t(chol(h)) %*% drawbeta(M, nu+1) %*% chol(h)/lambda
+              
+              forecast <- cbind(forecast, y)
+            }
+            growth <- forecast[, 2:(horizon+1)] - forecast[, 1:horizon]
+            # End of FUTURAND.m
+            growmat <- rbind(growmat, growth[varj,])
+          }
+        }
+      }
+      } 
+      usewmat <- kronecker(nextwmat, matrix(rep(1, numberofpaths), ncol = numberofpaths))
+    
+      sortmat <- apply(growmat, 2, sort) #sort(forcmat)
+      indices <- apply(growmat, 2, order)
+      
+      #for (i in 1:length(growmat)) {
+      #  indices[i] <- match(sortmat[i], growmat)
+      #}
+      # Begin of CALCDIST.m
+      calchigh <- vector() # Just realized that before I could have used this instead a non pratical if. Maybe some day I have the time to correct
+      calclow  <- vector()
+      calcmed  <- vector()
+      calcmean <- vector()
+      
+      if (is.null(nrow(sortmat))) {
+        rows <- 0
+      } else {
+        rows <- nrow(sortmat)
+      }
+   
+      if (is.null(ncol(sortmat))) {
+        columns <- 0
+      } else {
+        columns <- ncol(sortmat)
+      }
+   
+      weightlow <- quantlow * useweightsum
+      weightmed <- 0.5 * useweightsum
+      weighthigh <- quanthigh * useweightsum
+      if (columns != 0) {   
+        for (coluna in 1:columns) {
+          
+          weightcount <- 0
+          flaglow     <- 1
+          flagmed     <- 1
+          flaghigh    <- 1
+          thismean    <- 0
+          for (sortdraw in 1:usedraws){
+            thismean <- thismean + sortmat[sortdraw, coluna] * usewmat[indices[sortdraw, coluna]]
+            weightcount <- weightcount + usewmat[indices[sortdraw,coluna]]
+            if ((flaglow * (weightcount >= weightlow) ) == 1) {
+              flaglow <- 0
+              calclow <- cbind(calclow, sortmat[sortdraw, coluna])
+            }
+            if ((flagmed * (weightcount >= weightmed) ) == 1) {
+              flagmed <- 0
+              calcmed <- cbind(calcmed, sortmat[sortdraw, coluna])
+            }
+            if ((flaghigh * (weightcount >= weighthigh) ) == 1) {
+              flaghigh <- 0
+              calchigh <- cbind(calchigh, sortmat[sortdraw, coluna])
+            }
+          }
+          calcmean <- cbind(calcmean, (thismean/useweightsum))
+        }
+      }
+   # End of CALCDIST.m
+   growhigh <- rbind(growhigh, calchigh) # Maybe this will result in error, so later I'll come back and verify the dimensions
+   growlow <- rbind(growlow, calclow)
+   growmed <- rbind(growmed, calcmed)
+   growmean <- rbind(growmean, calcmean)
+   # End of CALCDIST.m
+ # End of GROWCALC.m
+    }
+} # End of the if (doforecasts == 1)
+
+forcmean
+growmean
+```
+
+- I'm gonna write the article before doing impulse response functions...
