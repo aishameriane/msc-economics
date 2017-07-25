@@ -1029,8 +1029,8 @@ newmat       &lt;- walllev
 weightsum    &lt;- sum(walllev)
 newweightsum &lt;- weightsum
 
-sortmat &lt;- vector()   # For FORCALC.m, I need them inside a for() loop so R needs in advance
-indices &lt;- vector()</code></pre>
+#sortmat &lt;- matrix()   # For FORCALC.m, I need them inside a for() loop so R needs in advance
+#indices &lt;- matrix()</code></pre>
 <p><code>RESHUFFL.m</code> reorganizes the draws in such a way that each has approximately the same weight by creating multiple realizations of the same draw if it has a particularly high weight.</p>
 <pre class="r"><code># Begin of RESHUFFL.m
 newwlev &lt;- matrix(rep(1, gendraws), ncol = gendraws)/gendraws
@@ -1086,7 +1086,7 @@ drawbeta &lt;- function(mm,pp) {
   forcnwpeak &lt;- vector()
   
   for (varj in 1:M) {
-    sprintf(&quot;Varj: %s&quot;,varj)
+
     b &lt;- btbar
     h &lt;- solve(st)
     tezinho &lt;- Traw
@@ -1179,7 +1179,7 @@ drawbeta &lt;- function(mm,pp) {
     currtot &lt;- 0
     ###########################################################
     ####### Debug: Until this point is OK and working for varj == 1
-    ####### forcpeak, forcnwpeak, growpeak, grownwpeak all work
+    ####### 
     ###########################################################
     
     for (rep in 1: repetitions) {
@@ -1194,10 +1194,10 @@ drawbeta &lt;- function(mm,pp) {
       ptlogmat &lt;- draws[[rep]][[6]] # Debug: SIZE OK
       pclogmat &lt;- draws[[rep]][[7]] # Debug: SIZE OK
       # End of REPLOAD.m
-      for (entry in 1:gendraws) {
+      for (entry in 1:gendraws) { # OK
         sprintf(&quot;entry: %s&quot;,entry)
         draw &lt;- findmat[entry] - (rep-1)*ndraws
-        if (((draw &gt; 0) &amp;&amp; (draw &lt;= ndraws)) == TRUE) {
+        if (((draw &gt; 0) &amp;&amp; (draw &lt;= ndraws)) == TRUE) { # OK
           currtot &lt;- currtot + 1
           nextwmat[currtot] &lt;- newwlev[entry]
           # Begin of SELECT.m
@@ -1210,7 +1210,7 @@ drawbeta &lt;- function(mm,pp) {
           }
           # End of SELECT.m
           # Back to FORCALC.m
-          tezinho &lt;- Traw
+          tezinho &lt;- Traw # OK
           for (pnumber in 1:numberofpaths){
             # Begin of FUTURAND.m
             # Uhlig: FUTURAND calculates forecasts for all variables, given matrices b and h drawing random future innovations, given date t (=datsize, usually).
@@ -1252,15 +1252,17 @@ drawbeta &lt;- function(mm,pp) {
             growth &lt;- forecast[, 2:(horizon+1)] - forecast[, 1:horizon]
             # End of FUTURAND.m
             # Back to FORCALC.m
-              forcmat &lt;- rbind(forcmat, forecast[varj, ])
-          }
+            forcmat &lt;- rbind(forcmat, forecast[varj, ])
+          } # OK
+        }
       }
     }
    usewmat &lt;- kronecker(nextwmat, matrix(rep(1, numberofpaths), ncol = numberofpaths))
-   sortmat &lt;- sort(forcmat)
-   for (i in 1:length(forcmat)) { # Uhlig's code uses only sort() from Matlab, I'm doing manually since I didn't found the same function in R
-      indices[i] &lt;- match(sortmat[i], forcmat)
-   }
+   sortmat &lt;- apply(forcmat, 2, sort) #sort(forcmat)
+   indices &lt;- apply(forcmat, 2, order)
+   #for (i in 1:length(forcmat)) { # Uhlig's code uses only sort() from Matlab, I'm doing manually since I didn't found the same function in R
+   #   indices[i] &lt;- match(sortmat[i], forcmat)
+   #}
    # Begin of CALCDIST.m
    calchigh &lt;- vector() # Just realized that before I could have used this instead a non pratical if. Maybe some day I have the time to correct
    calclow  &lt;- vector()
@@ -1270,13 +1272,13 @@ drawbeta &lt;- function(mm,pp) {
    if (is.null(nrow(sortmat))) {
      rows &lt;- 0
    } else {
-     nrow(sortmat)
+     rows &lt;- nrow(sortmat)
    }
    
    if (is.null(ncol(sortmat))) {
      columns &lt;- 0
    } else {
-     ncol(sortmat)
+     columns &lt;- ncol(sortmat)
    }
    
    #rows     &lt;- nrow(sortmat)
@@ -1288,7 +1290,7 @@ drawbeta &lt;- function(mm,pp) {
    
    if ((columns != 0)== TRUE) {
       for (coluna in 1:columns) { ## Maybe I need to change the name of col
-        sprintf(&quot;col: %s&quot;,col)
+        
         weightcount &lt;- 0
         flaglow     &lt;- 1
         flagmed     &lt;- 1
@@ -1307,7 +1309,7 @@ drawbeta &lt;- function(mm,pp) {
           }
           if ((flaghigh * (weightcount &gt;= weighthigh) ) == 1) {
             flaghigh &lt;- 0
-            calchigh &lt;- cbind(calchigh, sortmat[sortdraw, col])
+            calchigh &lt;- cbind(calchigh, sortmat[sortdraw, coluna])
           }
         }
           calcmean &lt;- cbind(calcmean, (thismean/useweightsum))
@@ -1320,9 +1322,12 @@ drawbeta &lt;- function(mm,pp) {
    forcmed  &lt;- rbind(forcmed, calcmed)
    forcmean &lt;- rbind(forcmean, calcmean)
   }
- }
+  
  # End of FORCALC.m
  # Back to MAIN5.m
+ ###################
+ # FORCALC Appears to be OK
+ ###################
  
  # Begin of GROWCALC.m
  # Calculating the forecast distributions in a manner avoiding the storage of many large matrices
@@ -1335,7 +1340,7 @@ drawbeta &lt;- function(mm,pp) {
     grownwpeak &lt;- vector()
     
     for (varj in 1:M) {
-      sprintf(&quot;Varj: %s&quot;,varj)
+      
       b &lt;- btbar
       h &lt;- solve(st)
       tezinho &lt;- Traw
@@ -1494,10 +1499,13 @@ drawbeta &lt;- function(mm,pp) {
       }
       } 
       usewmat &lt;- kronecker(nextwmat, matrix(rep(1, numberofpaths), ncol = numberofpaths))
-      sortmat &lt;- sort(growmat)
-      for (i in 1:length(growmat)) {
-        indices[i] &lt;- match(sortmat[i], growmat)
-      }
+    
+      sortmat &lt;- apply(growmat, 2, sort) #sort(forcmat)
+      indices &lt;- apply(growmat, 2, order)
+      
+      #for (i in 1:length(growmat)) {
+      #  indices[i] &lt;- match(sortmat[i], growmat)
+      #}
       # Begin of CALCDIST.m
       calchigh &lt;- vector() # Just realized that before I could have used this instead a non pratical if. Maybe some day I have the time to correct
       calclow  &lt;- vector()
@@ -1507,13 +1515,13 @@ drawbeta &lt;- function(mm,pp) {
       if (is.null(nrow(sortmat))) {
         rows &lt;- 0
       } else {
-        nrow(sortmat)
+        rows &lt;- nrow(sortmat)
       }
    
       if (is.null(ncol(sortmat))) {
         columns &lt;- 0
       } else {
-        ncol(sortmat)
+        columns &lt;- ncol(sortmat)
       }
    
       weightlow &lt;- quantlow * useweightsum
@@ -1521,7 +1529,7 @@ drawbeta &lt;- function(mm,pp) {
       weighthigh &lt;- quanthigh * useweightsum
       if (columns != 0) {   
         for (coluna in 1:columns) {
-          sprintf(&quot;col: %s&quot;,col)
+          
           weightcount &lt;- 0
           flaglow     &lt;- 1
           flagmed     &lt;- 1
@@ -1551,10 +1559,51 @@ drawbeta &lt;- function(mm,pp) {
    growlow &lt;- rbind(growlow, calclow)
    growmed &lt;- rbind(growmed, calcmed)
    growmean &lt;- rbind(growmean, calcmean)
-      # End of CALCDIST.m
+   # End of CALCDIST.m
  # End of GROWCALC.m
     }
-} # End of the if (doforecasts == 1)</code></pre>
+} # End of the if (doforecasts == 1)
+
+forcmean</code></pre>
+<pre><code>##              [,1]     [,2]     [,3]     [,4]     [,5]     [,6]     [,7]
+## forecast 6.038984 6.054944 6.064744 6.072327 6.080293 6.083925 6.092453
+## forecast 5.643333 5.971431 6.364669 6.710844 7.024712 7.284274 7.534710
+## forecast 8.329200 8.333850 8.339057 8.342383 8.344746 8.346206 8.347275
+## forecast 4.765587 4.772412 4.779786 4.788484 4.798110 4.808331 4.818781
+##              [,8]     [,9]    [,10]    [,11]    [,12]    [,13]    [,14]
+## forecast 6.102065 6.113671 6.125364 6.141908 6.160948 6.182161 6.205280
+## forecast 7.756636 7.904859 8.051395 8.204518 8.311846 8.425728 8.495385
+## forecast 8.348141 8.348750 8.349115 8.349271 8.349215 8.349071 8.348593
+## forecast 4.829490 4.840150 4.851053 4.862116 4.873218 4.884285 4.895484
+##             [,15]    [,16]    [,17]    [,18]    [,19]    [,20]    [,21]
+## forecast 6.232346 6.260267 6.291151 6.325684 6.361466 6.404829 6.452235
+## forecast 8.529403 8.566090 8.624956 8.664853 8.715782 8.765541 8.813804
+## forecast 8.348164 8.347574 8.347000 8.346603 8.346001 8.345433 8.344949
+## forecast 4.906775 4.918217 4.929798 4.941389 4.953167 4.965179 4.977275</code></pre>
+<pre class="r"><code>growmean</code></pre>
+<pre><code>##         [,1]        [,2]        [,3]        [,4]        [,5]       [,6]
+##  0.015557184 0.011350845 0.008412853 0.008226371 0.006280813 0.00766987
+##  0.346746393 0.395886564 0.329760587 0.307459695 0.276138423 0.22390460
+##  0.004507745 0.005000983 0.003446620 0.002565595 0.001679841 0.00117678
+##  0.006931116 0.007389945 0.008725283 0.009398080 0.010097614 0.01040789
+##          [,7]         [,8]         [,9]        [,10]         [,11]
+##  0.0092327079 0.0126470621 0.0141025519 1.683686e-02  1.789265e-02
+##  0.1816135476 0.1895326337 0.1357201590 1.069806e-01  1.099110e-01
+##  0.0007867493 0.0004481445 0.0001316427 8.473723e-05 -2.412928e-05
+##  0.0105388852 0.0105800333 0.0106720946 1.079565e-02  1.100493e-02
+##          [,12]         [,13]         [,14]         [,15]         [,16]
+##   0.0207029452  0.0237493286  0.0264607148  0.0271926299  0.0316726248
+##   0.0993531556  0.0476391719  0.0566158438  0.0687143743  0.0925098346
+##  -0.0001769242 -0.0003738537 -0.0004192282 -0.0003976287 -0.0004818325
+##   0.0111073988  0.0112497991  0.0112155053  0.0114687856  0.0115668377
+##          [,17]         [,18]         [,19]         [,20]
+##   0.0339631401  0.0371118048  0.0403418455  0.0457661948
+##   0.0737190253  0.0845331240  0.0453823167  0.0428818206
+##  -0.0005433037 -0.0004375355 -0.0004718961 -0.0006390974
+##   0.0115812132  0.0117427463  0.0119021340  0.0120593678</code></pre>
+<ul>
+<li>I’m gonna write the article before doing impulse response functions…</li>
+</ul>
 </div>
 </div>
 </div>
