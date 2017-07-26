@@ -181,12 +181,50 @@ $(document).ready(function () {
 \end{align*}\]</span>
 <div id="getting-data" class="section level3">
 <h3>Getting data</h3>
-<p>I’m using Uhlig’s data while testing the routines.</p>
-<pre class="r"><code># Using Ulig's US data
-library(R.matlab)
+<pre class="r"><code># Installing dependences
+list.of.packages &lt;- c(&quot;tseries&quot;, &quot;lubridate&quot;)
+new.packages &lt;- list.of.packages[!(list.of.packages %in% installed.packages()[,&quot;Package&quot;])]
+if(length(new.packages)) install.packages(new.packages)
 
-# Readind Uhlig's data
-Yraw &lt;- data.frame(readMat(&quot;C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\PROJ57.DIR\\dados.mat&quot;))</code></pre>
+library(tseries)
+library(lubridate)
+
+# Reading data
+dados &lt;- read.csv(&quot;C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final2.csv&quot;, sep = &quot;,&quot;, header = TRUE, dec = &quot;.&quot;)
+
+for (i in 2:ncol(dados)) {
+  dados[,i]&lt;-ts(dados[,i], start = c(2004,1), frequency = 12) 
+}
+
+dados[,1] &lt;- ymd(dados[,1])
+
+head(dados)</code></pre>
+<pre><code>##         Data   IBCraw    IBCvar  IPCAraw  IPCAvar SELICraw SELICvar
+## 1 2004-01-01 102.5377 2.5377015 107.7073 7.707318 1.267551    16.32
+## 2 2004-02-01 103.4321 0.7905138 108.3642 6.688916 1.084394    13.82
+## 3 2004-03-01 116.4639 8.2873997 108.8734 5.887647 1.379123    17.86
+## 4 2004-04-01 111.6589 5.0592034 109.2761 5.258418 1.181850    15.14
+## 5 2004-05-01 110.2756 5.7128614 109.8332 5.153546 1.227805    15.77
+## 6 2004-06-01 111.2845 8.5412863 110.6128 6.059129 1.229889    15.80
+##   EXRTraw EXRTvar
+## 1  2.8510  2.8510
+## 2  2.9295  2.9295
+## 3  2.9047  2.9047
+## 4  2.9052  2.9052
+## 5  3.0996  3.0996
+## 6  3.1283  3.1283</code></pre>
+<pre class="r"><code>columns&lt;-c(3,5,7,9)
+Yraw &lt;- dados[,columns]
+head(Yraw)</code></pre>
+<pre><code>##      IBCvar  IPCAvar SELICvar EXRTvar
+## 1 2.5377015 7.707318    16.32  2.8510
+## 2 0.7905138 6.688916    13.82  2.9295
+## 3 8.2873997 5.887647    17.86  2.9047
+## 4 5.0592034 5.258418    15.14  2.9052
+## 5 5.7128614 5.153546    15.77  3.0996
+## 6 8.5412863 6.059129    15.80  3.1283</code></pre>
+<pre class="r"><code>Yraw &lt;- data.frame(matrix(t(Yraw), nrow = 4))</code></pre>
+<p>I’m using Uhlig’s data while testing the routines.</p>
 </div>
 <div id="getting-information-from-data" class="section level3">
 <h3>Getting information from data</h3>
@@ -196,10 +234,11 @@ M    &lt;- nrow(Yraw) # This is m in Uhlig's code</code></pre>
 <div id="user-declared-parameters" class="section level3">
 <h3>User-declared parameters</h3>
 <pre class="r"><code># Constant =0 for no intercept and time trend, =1 for intercept and =2 for intercept and time trend
-constant = 2
+# Since Koop's code does not have time trend, I'll mantain it
+constant = 1
 
 # Number of lags on dependent variables
-p = 5
+p = 1
 
 # Tightness on the prior
 zeta_1 &lt;- 5
@@ -233,12 +272,18 @@ state     &lt;- as.vector(seq(0, 5))</code></pre>
 
 g0 &lt;- 1
 
-if (constant &gt;=1){
+#if (constant &gt;=1){
+#  b0bar &lt;- matrix(rep(0, M*constant),  ncol=constant)
+#  b0bar &lt;- cbind(b0bar, diag(M))
+#} else {
+#  b0bar &lt;- diag(M)
+#}
+
+if (constant &gt;= 1){
   b0bar &lt;- matrix(rep(0, M*constant),  ncol=constant)
-  b0bar &lt;- cbind(b0bar, diag(M))
-} else {
-  b0bar &lt;- diag(M)
 }
+b0bar &lt;- cbind(b0bar, diag(M))
+
 if (p &gt;= 2) {
   for (i in 2:p) {
     b0bar &lt;- cbind(b0bar, matrix(rep(0, M*M), ncol = M))
@@ -393,7 +438,11 @@ for (tezinho in ((p+1):Traw)) {
     }
   }
   
-  state    &lt;- as.vector(c(exreg, ydetcomp, state[(constant+1):(l-M)]))
+  if ((constant+1) &gt; (l-M)) {
+    state    &lt;- as.vector(c(exreg, ydetcomp))
+  } else {
+    state    &lt;- as.vector(c(exreg, ydetcomp, state[(constant+1):(l-M)]))
+  }
   ydetcomp &lt;- btbar %*% state
   
   # End of STEP.m
@@ -933,52 +982,7 @@ for (rep in repstart:repetitions){
   
   wmat &lt;- exp(wlogmat - wlogmax) # Uhlig: Renormalization of weights by common factor. Normalization valid only for this bath (i.e. given &quot;rep&quot;)
   
-  draws &lt;- c(draws, list(list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat))) # This works but I think it's a little messy to deal with
-                                                                          # But it's usefull if someday I need to go beyond 20 repetitions
-  
-  # Doing manually
-  
-#  if (rep == 1) {
-#    draws1 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 2) {
-#   draws2 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 3) {
-#   draws3 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 4) {
-#   draws4 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 5) {
-#   draws5 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 6) {
-#   draws6 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 7) {
-#   draws7 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 8) {
-#   draws8 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 9) {
-#   draws9 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 10) {
-#   draws10 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 11) {
-#   draws11 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 12) {
-#   draws12 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 13) {
-#   draws13 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 14) {
-#   draws14 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 15) {
-#   draws15 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 16) {
-#   draws16 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 17) {
-#   draws17 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 18) {
-#   draws18 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 19) {
-#   draws19 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if  (rep == 20) {
-#   draws20 &lt;- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# }
+  draws &lt;- c(draws, list(list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat))) # Aisha: Little different from Uhlig's approach, it's simpler to deal in R
   
 } # End of POSTDIST.m
 # End of MAIN4.m</code></pre>
@@ -1006,11 +1010,11 @@ reorder =
 # Begin of PARAM5.m
 approx5 &lt;- 0
 
-numberofpaths &lt;- 1
+numberofpaths &lt;- 1 # Aisha: Dunno what's this for
 
 quantlow  &lt;- .2
 quanthigh &lt;- .8
-horizon   &lt;- 20
+horizon   &lt;- 2
 
 doforecasts   &lt;- 1
 doimpulseresp &lt;- 0
@@ -1027,10 +1031,7 @@ walllev  &lt;- exp(wallmat - wmax) # Uhlig: level of all weights, normalized so 
 
 newmat       &lt;- walllev
 weightsum    &lt;- sum(walllev)
-newweightsum &lt;- weightsum
-
-#sortmat &lt;- matrix()   # For FORCALC.m, I need them inside a for() loop so R needs in advance
-#indices &lt;- matrix()</code></pre>
+newweightsum &lt;- weightsum</code></pre>
 <p><code>RESHUFFL.m</code> reorganizes the draws in such a way that each has approximately the same weight by creating multiple realizations of the same draw if it has a particularly high weight.</p>
 <pre class="r"><code># Begin of RESHUFFL.m
 newwlev &lt;- matrix(rep(1, gendraws), ncol = gendraws)/gendraws
@@ -1122,7 +1123,13 @@ drawbeta &lt;- function(mm,pp) {
       for (j in 1:constant) {
           exreg &lt;- rbind(exreg, tt^(j - 1))
       }
-      state &lt;- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+      
+      if ((constant+1) &gt; (l-M)) {
+        state &lt;- as.vector(c(exreg, y))
+      } else {
+        state &lt;- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+      }
+      
       y &lt;- b %*% state
       forecast &lt;- cbind(forecast, y)
     }
@@ -1165,7 +1172,13 @@ drawbeta &lt;- function(mm,pp) {
       for (j in 1:constant) {
           exreg &lt;- rbind(exreg, tt^(j - 1))
       }
-      state &lt;- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+      
+       if ((constant+1) &gt; (l-M)) {
+        state &lt;- as.vector(c(exreg, y))
+      } else {
+        state &lt;- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+      }
+      
       y &lt;- b %*% state
       forecast &lt;- cbind(forecast, y)
     }
@@ -1241,7 +1254,13 @@ drawbeta &lt;- function(mm,pp) {
               for (j in 1:constant) {
                   exreg &lt;- rbind(exreg, tt^(j - 1))
               }
-              state &lt;- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+              
+               if ((constant+1) &gt; (l-M)) {
+                  state &lt;- as.vector(c(exreg, y))
+               } else {
+                  state &lt;- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+               }
+              
               epsil &lt;- drawnorm(solve(h))
               y     &lt;- b %*% state + epsil
               h     &lt;- t(chol(h)) %*% drawbeta(M, nu+1) %*% chol(h)/lambda
@@ -1375,7 +1394,13 @@ drawbeta &lt;- function(mm,pp) {
         for (j in 1:constant) {
             exreg &lt;- rbind(exreg, tt^(j - 1))
         }
-        state &lt;- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+        
+        if ((constant+1) &gt; (l-M)) {
+          state &lt;- as.vector(c(exreg, y))
+        } else {
+          state &lt;- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+        }
+
         y &lt;- b %*% state
         forecast &lt;- cbind(forecast, y)
       }
@@ -1416,7 +1441,13 @@ drawbeta &lt;- function(mm,pp) {
         for (j in 1:constant) {
             exreg &lt;- rbind(exreg, tt^(j - 1))
         }
-        state &lt;- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+        
+        if ((constant+1) &gt; (l-M)) {
+          state &lt;- as.vector(c(exreg, y))
+        } else {
+          state &lt;- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+        }
+
         y &lt;- b %*% state
         forecast &lt;- cbind(forecast, y)
       }
@@ -1424,7 +1455,10 @@ drawbeta &lt;- function(mm,pp) {
     
       # End of FUTURE.m
       # Back to GROWCALC.m
+      
       growpeak &lt;- rbind(growpeak, growth[varj, ])
+
+      
       growmat  &lt;- vector()
       currtot  &lt;- 0
       for (rep in 1: repetitions){
@@ -1484,7 +1518,13 @@ drawbeta &lt;- function(mm,pp) {
               for (j in 1:constant) {
                   exreg &lt;- rbind(exreg, tt^(j - 1))
               }
-              state &lt;- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+              
+               if ((constant+1) &gt; (l-M)) {
+                  state &lt;- as.vector(c(exreg, y))
+               } else {
+                  state &lt;- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+               }
+              
               epsil &lt;- drawnorm(solve(h))
               y     &lt;- b %*%  state + epsil
               h     &lt;- t(chol(h)) %*% drawbeta(M, nu+1) %*% chol(h)/lambda
@@ -1565,42 +1605,17 @@ drawbeta &lt;- function(mm,pp) {
 } # End of the if (doforecasts == 1)
 
 forcmean</code></pre>
-<pre><code>##              [,1]     [,2]     [,3]     [,4]     [,5]     [,6]     [,7]
-## forecast 6.038984 6.054944 6.064744 6.072327 6.080293 6.083925 6.092453
-## forecast 5.643333 5.971431 6.364669 6.710844 7.024712 7.284274 7.534710
-## forecast 8.329200 8.333850 8.339057 8.342383 8.344746 8.346206 8.347275
-## forecast 4.765587 4.772412 4.779786 4.788484 4.798110 4.808331 4.818781
-##              [,8]     [,9]    [,10]    [,11]    [,12]    [,13]    [,14]
-## forecast 6.102065 6.113671 6.125364 6.141908 6.160948 6.182161 6.205280
-## forecast 7.756636 7.904859 8.051395 8.204518 8.311846 8.425728 8.495385
-## forecast 8.348141 8.348750 8.349115 8.349271 8.349215 8.349071 8.348593
-## forecast 4.829490 4.840150 4.851053 4.862116 4.873218 4.884285 4.895484
-##             [,15]    [,16]    [,17]    [,18]    [,19]    [,20]    [,21]
-## forecast 6.232346 6.260267 6.291151 6.325684 6.361466 6.404829 6.452235
-## forecast 8.529403 8.566090 8.624956 8.664853 8.715782 8.765541 8.813804
-## forecast 8.348164 8.347574 8.347000 8.346603 8.346001 8.345433 8.344949
-## forecast 4.906775 4.918217 4.929798 4.941389 4.953167 4.965179 4.977275</code></pre>
+<pre><code>##               [,1]      [,2]      [,3]
+## forecast -1.745175 -2.612223 -4.388394
+## forecast  4.082517  4.319726  4.469677
+## forecast  9.860000  8.797329  7.014448
+## forecast  3.135572  3.132678  3.118723</code></pre>
 <pre class="r"><code>growmean</code></pre>
-<pre><code>##         [,1]        [,2]        [,3]        [,4]        [,5]       [,6]
-##  0.015557184 0.011350845 0.008412853 0.008226371 0.006280813 0.00766987
-##  0.346746393 0.395886564 0.329760587 0.307459695 0.276138423 0.22390460
-##  0.004507745 0.005000983 0.003446620 0.002565595 0.001679841 0.00117678
-##  0.006931116 0.007389945 0.008725283 0.009398080 0.010097614 0.01040789
-##          [,7]         [,8]         [,9]        [,10]         [,11]
-##  0.0092327079 0.0126470621 0.0141025519 1.683686e-02  1.789265e-02
-##  0.1816135476 0.1895326337 0.1357201590 1.069806e-01  1.099110e-01
-##  0.0007867493 0.0004481445 0.0001316427 8.473723e-05 -2.412928e-05
-##  0.0105388852 0.0105800333 0.0106720946 1.079565e-02  1.100493e-02
-##          [,12]         [,13]         [,14]         [,15]         [,16]
-##   0.0207029452  0.0237493286  0.0264607148  0.0271926299  0.0316726248
-##   0.0993531556  0.0476391719  0.0566158438  0.0687143743  0.0925098346
-##  -0.0001769242 -0.0003738537 -0.0004192282 -0.0003976287 -0.0004818325
-##   0.0111073988  0.0112497991  0.0112155053  0.0114687856  0.0115668377
-##          [,17]         [,18]         [,19]         [,20]
-##   0.0339631401  0.0371118048  0.0403418455  0.0457661948
-##   0.0737190253  0.0845331240  0.0453823167  0.0428818206
-##  -0.0005433037 -0.0004375355 -0.0004718961 -0.0006390974
-##   0.0115812132  0.0117427463  0.0119021340  0.0120593678</code></pre>
+<pre><code>##          [,1]        [,2]
+##  -0.839240132 -1.76922441
+##   0.230298715  0.15236031
+##  -0.997232023 -1.77571025
+##  -0.005529343 -0.01531807</code></pre>
 <ul>
 <li>I’m gonna write the article before doing impulse response functions…</li>
 </ul>
