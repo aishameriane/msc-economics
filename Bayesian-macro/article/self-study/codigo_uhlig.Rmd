@@ -79,9 +79,15 @@ The parameters that are <span style="color:red">user imputed</span> are:
 ### Getting data
 
 ```{r, eval = FALSE, echo = FALSE, message = FALSE, warning = FALSE}
+# Installing dependences
+list.of.packages <- c("tseries", "lubridate")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
 library(tseries)
 library(lubridate)
 
+# Reading data
 dados <- read.csv("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\dados_final2.csv", sep = ",", header = TRUE, dec = ".")
 
 for (i in 2:ncol(dados)) {
@@ -94,13 +100,18 @@ head(dados)
 columns<-c(3,5,7,9)
 Yraw <- dados[,columns]
 head(Yraw)
-Yraw <- t(Yraw)
+#Yraw <- data.frame(matrix(t(Yraw), nrow = 3))
 ```
 
 I'm using Uhlig's data while testing the routines.
 
 ```{r, message = FALSE, warning = FALSE}
 # Using Ulig's US data
+# Installing dependences
+list.of.packages <- c("R.matlab")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
 library(R.matlab)
 
 # Readind Uhlig's data
@@ -119,10 +130,10 @@ M    <- nrow(Yraw) # This is m in Uhlig's code
 
 ```{r}
 # Constant =0 for no intercept and time trend, =1 for intercept and =2 for intercept and time trend
-constant = 2
+constant = 1
 
 # Number of lags on dependent variables
-p = 5
+p = 1
 
 # Tightness on the prior
 zeta_1 <- 5
@@ -174,12 +185,18 @@ Now I'm ready to write the prior. Since Uhlig's code is a little different, I'll
 
 g0 <- 1
 
-if (constant >=1){
+#if (constant >=1){
+#  b0bar <- matrix(rep(0, M*constant),  ncol=constant)
+#  b0bar <- cbind(b0bar, diag(M))
+#} else {
+#  b0bar <- diag(M)
+#}
+
+if (constant >= 1){
   b0bar <- matrix(rep(0, M*constant),  ncol=constant)
-  b0bar <- cbind(b0bar, diag(M))
-} else {
-  b0bar <- diag(M)
 }
+b0bar <- cbind(b0bar, diag(M))
+
 if (p >= 2) {
   for (i in 2:p) {
     b0bar <- cbind(b0bar, matrix(rep(0, M*M), ncol = M))
@@ -340,7 +357,11 @@ for (tezinho in ((p+1):Traw)) {
     }
   }
   
-  state    <- as.vector(c(exreg, ydetcomp, state[(constant+1):(l-M)]))
+  if ((constant+1) > (l-M)) {
+    state    <- as.vector(c(exreg, ydetcomp))
+  } else {
+    state    <- as.vector(c(exreg, ydetcomp, state[(constant+1):(l-M)]))
+  }
   ydetcomp <- btbar %*% state
   
   # End of STEP.m
@@ -576,6 +597,18 @@ bstar_reserva <- bstar # I'm doing this because in part 4 he overwrite bstar by 
 # End of SAMPLCOV.m
 # End of MAIN2.m
 ```
+
+```{r}
+#library(Matrix)
+symmetrise <- function(mat){   
+               rowscols <- which(lower.tri(mat), arr.ind=TRUE)   
+               matriz <- sparseMatrix(i=rowscols[,1], j=rowscols[,2], x=mat[lower.tri(mat)], symmetric=TRUE, dims=c(nrow(mat),ncol(mat)) ) 
+               diag(matriz) <- diag(mat)
+               matriz
+               }
+
+```
+
 
 ## Part 3
 
@@ -1020,7 +1053,7 @@ numberofpaths <- 1
 
 quantlow  <- .2
 quanthigh <- .8
-horizon   <- 20
+horizon   <- 5
 
 doforecasts   <- 1
 doimpulseresp <- 0
@@ -1146,7 +1179,13 @@ if (doforecasts == 1) {
       for (j in 1:constant) {
           exreg <- rbind(exreg, tt^(j - 1))
       }
-      state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+      
+      if ((constant+1) > (l-M)) {
+        state <- as.vector(c(exreg, y))
+      } else {
+        state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+      }
+      
       y <- b %*% state
       forecast <- cbind(forecast, y)
     }
@@ -1189,7 +1228,13 @@ if (doforecasts == 1) {
       for (j in 1:constant) {
           exreg <- rbind(exreg, tt^(j - 1))
       }
-      state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+      
+       if ((constant+1) > (l-M)) {
+        state <- as.vector(c(exreg, y))
+      } else {
+        state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+      }
+      
       y <- b %*% state
       forecast <- cbind(forecast, y)
     }
@@ -1265,7 +1310,13 @@ if (doforecasts == 1) {
               for (j in 1:constant) {
                   exreg <- rbind(exreg, tt^(j - 1))
               }
-              state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+              
+               if ((constant+1) > (l-M)) {
+                  state <- as.vector(c(exreg, y))
+               } else {
+                  state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+               }
+              
               epsil <- drawnorm(solve(h))
               y     <- b %*% state + epsil
               h     <- t(chol(h)) %*% drawbeta(M, nu+1) %*% chol(h)/lambda
@@ -1399,7 +1450,13 @@ if (doforecasts == 1) {
         for (j in 1:constant) {
             exreg <- rbind(exreg, tt^(j - 1))
         }
-        state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+        
+        if ((constant+1) > (l-M)) {
+          state <- as.vector(c(exreg, y))
+        } else {
+          state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+        }
+
         y <- b %*% state
         forecast <- cbind(forecast, y)
       }
@@ -1440,7 +1497,13 @@ if (doforecasts == 1) {
         for (j in 1:constant) {
             exreg <- rbind(exreg, tt^(j - 1))
         }
-        state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+        
+        if ((constant+1) > (l-M)) {
+          state <- as.vector(c(exreg, y))
+        } else {
+          state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+        }
+
         y <- b %*% state
         forecast <- cbind(forecast, y)
       }
@@ -1508,7 +1571,13 @@ if (doforecasts == 1) {
               for (j in 1:constant) {
                   exreg <- rbind(exreg, tt^(j - 1))
               }
-              state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+              
+               if ((constant+1) > (l-M)) {
+                  state <- as.vector(c(exreg, y))
+               } else {
+                  state <- as.vector(c(exreg, y, state[(constant+1):(l-M)]))
+               }
+              
               epsil <- drawnorm(solve(h))
               y     <- b %*%  state + epsil
               h     <- t(chol(h)) %*% drawbeta(M, nu+1) %*% chol(h)/lambda
