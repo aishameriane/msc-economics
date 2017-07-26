@@ -100,7 +100,7 @@ head(dados)
 columns<-c(3,5,7,9)
 Yraw <- dados[,columns]
 head(Yraw)
-#Yraw <- data.frame(matrix(t(Yraw), nrow = 3))
+Yraw <- data.frame(matrix(t(Yraw), nrow = 4))
 ```
 
 I'm using Uhlig's data while testing the routines.
@@ -130,6 +130,7 @@ M    <- nrow(Yraw) # This is m in Uhlig's code
 
 ```{r}
 # Constant =0 for no intercept and time trend, =1 for intercept and =2 for intercept and time trend
+# Since Koop's code does not have time trend, I'll mantain it
 constant = 1
 
 # Number of lags on dependent variables
@@ -598,18 +599,6 @@ bstar_reserva <- bstar # I'm doing this because in part 4 he overwrite bstar by 
 # End of MAIN2.m
 ```
 
-```{r}
-#library(Matrix)
-symmetrise <- function(mat){   
-               rowscols <- which(lower.tri(mat), arr.ind=TRUE)   
-               matriz <- sparseMatrix(i=rowscols[,1], j=rowscols[,2], x=mat[lower.tri(mat)], symmetric=TRUE, dims=c(nrow(mat),ncol(mat)) ) 
-               diag(matriz) <- diag(mat)
-               matriz
-               }
-
-```
-
-
 ## Part 3
 
 Part 3 calculates the slices of the posterior to plot it in part 6. But I'm getting an error, so I'll skip this part.
@@ -965,52 +954,7 @@ for (rep in repstart:repetitions){
   
   wmat <- exp(wlogmat - wlogmax) # Uhlig: Renormalization of weights by common factor. Normalization valid only for this bath (i.e. given "rep")
   
-  draws <- c(draws, list(list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat))) # This works but I think it's a little messy to deal with
-                                                                          # But it's usefull if someday I need to go beyond 20 repetitions
-  
-  # Doing manually
-  
-#  if (rep == 1) {
-#    draws1 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 2) {
-#   draws2 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 3) {
-#   draws3 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 4) {
-#   draws4 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 5) {
-#   draws5 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 6) {
-#   draws6 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 7) {
-#   draws7 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 8) {
-#   draws8 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 9) {
-#   draws9 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 10) {
-#   draws10 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 11) {
-#   draws11 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 12) {
-#   draws12 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 13) {
-#   draws13 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 14) {
-#   draws14 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 15) {
-#   draws15 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 16) {
-#   draws16 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 17) {
-#   draws17 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 18) {
-#   draws18 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if (rep == 19) {
-#   draws19 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# } else if  (rep == 20) {
-#   draws20 <- list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat)
-# }
+  draws <- c(draws, list(list(bmat, hmat, wlogmat, wlogmax, wmat, ptlogmat, pclogmat))) # Aisha: Little different from Uhlig's approach, it's simpler to deal in R
   
 } # End of POSTDIST.m
 # End of MAIN4.m
@@ -1049,11 +993,11 @@ So that $reorder \times [x\ y\ z]'$ results in the desired ordering $[z\ x\ y]'$
 # Begin of PARAM5.m
 approx5 <- 0
 
-numberofpaths <- 1
+numberofpaths <- 1 # Aisha: Dunno what's this for
 
 quantlow  <- .2
 quanthigh <- .8
-horizon   <- 5
+horizon   <- 2
 
 doforecasts   <- 1
 doimpulseresp <- 0
@@ -1072,8 +1016,6 @@ newmat       <- walllev
 weightsum    <- sum(walllev)
 newweightsum <- weightsum
 
-#sortmat <- matrix()   # For FORCALC.m, I need them inside a for() loop so R needs in advance
-#indices <- matrix()
 ```
 
 `RESHUFFL.m` reorganizes the draws in such a way that each has approximately the same weight by creating multiple realizations of the same draw if it has a particularly high weight.
@@ -1511,7 +1453,10 @@ if (doforecasts == 1) {
     
       # End of FUTURE.m
       # Back to GROWCALC.m
+      
       growpeak <- rbind(growpeak, growth[varj, ])
+
+      
       growmat  <- vector()
       currtot  <- 0
       for (rep in 1: repetitions){
