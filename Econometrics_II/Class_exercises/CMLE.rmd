@@ -1,0 +1,179 @@
+---
+title: "Estimando um ARMA usando MV Condicional"
+author: "A. Schmidt"
+
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+   - \usepackage{calrsfs}
+   - \usepackage{mathrsfs}
+date: "24 de maio de 2017"
+output: 
+  html_document:
+    theme: cerulean
+    highlight: tango
+    df_print: paged
+---
+
+<style>
+
+table, td, th {
+  border: none;
+  padding-left: 1em;
+  padding-right: 1em;
+  min-width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+</style>
+
+## Obtenção da série
+
+```{r, warning=FALSE, error=FALSE, message=FALSE, echo=FALSE}
+library(ggfortify, quietly = TRUE)
+library(latex2exp, quietly = TRUE)
+library(fpp, quietly = TRUE)
+library(tseries, quietly = TRUE)
+library(forecast, quietly = TRUE)
+library(ggplot2, quietly = TRUE)
+library("dplyr", quietly = TRUE)
+library("stargazer", quietly = TRUE)
+```
+
+### ARMA(1,1)
+
+O modelo ARMA(1,1) é dado por:
+
+\begin{equation}
+y_t - \phi_1 y_{t-1} = \phi_0 + a_t - \theta_1 a_{t-1}
+\end{equation}
+
+
+```{r, warning = FALSE, message=FALSE}
+arma11 <- arima.sim(model=list(ar=c(.9),ma=c(-.7)),n=1000)
+head(arma11)
+class(arma11)
+ggtsdisplay(arma11, main = TeX("Gráfico de um MA$(1,1)$ com $\\phi_1 = 0.9$, $\\theta_1 = -0.7$"))
+```
+
+- Colocar autocorrelação e autocorrelação parcial
+
+#### Estimando um ARMA(1,1)
+
+Código retirado de [https://stats.stackexchange.com/questions/248276/maximum-likelihood-estimation-for-arma1-1-in-r].
+
+```{r, results='asis', warning = FALSE, message = FALSE}
+armacoeff1 <- function(x) {
+
+  l = length(x)
+  param=c(mu=0, phi=0, theta=0)
+
+  SSE <- function(param){
+    mu=param[1]
+    phi=param[2]
+    theta=param[3]
+
+    res = vector()
+    res[1] = 0
+    for(i in (2:l)){
+      res[i] = (x[i]-mu) - phi*(x[i-1]-mu) - theta*res[i-1]
+    }
+    return(sum(res*res))
+  }
+
+  bla =nlminb(objective=SSE, start= param)
+  return(bla)
+
+}
+
+auto <- arima(arma11, order=c(1,0,1))
+EMVC <- armacoeff1(arma11) 
+
+coef_auto <- round(auto[[1]],4)
+coef_EMVC <- c(round(EMVC$par[2],4), round(EMVC$par[3],4), round(EMVC$par[1],4))
+df <- data.frame(rbind(coef_EMVC, coef_auto, c(NA,.9, -.7)))
+df <- cbind(c("Verdadeiro", "EMVC", "arima()"), df)
+
+colnames(df) <- c("Método", "phi 1", "theta 1", "Intercepto")
+stargazer(df, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
+
+#arima(arma11, order=c(1,0,1), method="CSS")
+#armacoeff1(arma11)
+#auto.arima(arma11)
+```
+
+## Gerando um ARMA(2,2)
+
+O modelo ARMA(2,2) é dado por:
+
+\begin{equation}
+y_t - \phi_1 y_{t-1} - \phi_2 y_{t-2} = \phi_0 + a_t - \theta_1 a_{t-1} - \theta_2 a_{t-2}
+\end{equation}
+
+
+```{r, warning = FALSE, message=FALSE}
+arma22<-arima.sim(model=list(ar=c(.9,-.5),ma=c(-.9,.5)),n=1000)
+head(arma22)
+class(arma22)
+#autoplot(arma22, main = TeX("Gráfico de um MA$(2,2)$ com $\\phi_1 = 0.9$, $\\phi_2 = -0.5$, $\\theta_1 = -0.9$, $\\theta_2 = 0.5$"))
+ggtsdisplay(arma22, main = TeX("Gráfico de um MA$(2,2)$ com $\\phi_1 = 0.9$, $\\phi_2 = -0.5$, $\\theta_1 = -0.9$, $\\theta_2 = 0.5$"))
+```
+
+#### Estimando um ARMA(2,2)
+
+A máxima verossimilhança condicional é dada por:
+
+\begin{equation}
+ln L(\phi, \theta, \sigma^2_a) = -\frac{T}{2} ln 2\pi \sigma^2_a - \frac{\sum\limits_{t=1}^T (x_t - \mu_t)^2}{2\sigma^2_a}
+\end{equation}
+
+_Agradecimentos aos colegas Paulo Victor e Cássio_
+
+```{r, results='asis', warning = FALSE, message = FALSE}
+armacoeff2 <- function(x) {
+  param <- t(as.vector(c(.1,.1,.1,.1,.1)))
+  
+  like <- function(param){
+    l    <- length(x)
+    erro <- as.vector(rep(0, l))
+    yest <- as.vector(rep(0, l))
+    erro[c(1,2)] <- 0
+    for (i in 3:l) {
+      yest[i] <- param %*% c(1,yest[i-1], yest[i-2], erro[i-1], erro[i-2])
+      erro[i] <- x[i] - yest[i]
+    }
+    
+    logvero <- rep(0, l)
+    sigma2  <- (t(erro)%*%erro)/l
+    sigma   <- sqrt(sigma2)
+    
+    for (i in 1:l) {
+      logvero[i] <- 0.5*(2*log(sigma) + erro[i]^2/sigma2 + log(2*pi))
+    }
+    return(sum(logvero))
+  }
+  
+  bla <- nlminb(objective=like, start= param)
+  return(bla)
+}
+
+auto <- arima(arma22, order=c(2,0,2))
+EMVC <- armacoeff2(arma22) 
+
+coef_auto <- c(round(auto[[1]][5],4), round(auto[[1]][1],4), round(auto[[1]][2],4), round(auto[[1]][3],4), round(auto[[4]][5],4))
+coef_EMVC <- c(round(EMVC$par[1],4), round(EMVC$par[2],4), round(EMVC$par[3],4), round(EMVC$par[4],4), round(EMVC$par[5],4))
+df <- data.frame(rbind(coef_EMVC, coef_auto, c(NA, .9, -.5, -.9, .5)))
+df <- cbind(c("Verdadeiro", "EMVC", "arima()"), df)
+
+colnames(df) <- c("Método", "Intercepto", "phi 1", "phi 2", "theta 1", "theta 2")
+stargazer(df, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
+
+#arima(arma22, order=c(2,0,2), method="CSS")
+#armacoeff2(arma22)
+#auto.arima(arma22)
+```
