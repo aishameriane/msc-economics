@@ -32,6 +32,8 @@ table, td, th {
 
 </style>
 
+O objetivo é estimar, utilizando máxima verossimilhança condicional, um modelo ARMA(2,2).
+
 ## Obtenção da série
 
 ```{r, warning=FALSE, error=FALSE, message=FALSE, echo=FALSE}
@@ -43,6 +45,7 @@ library(forecast, quietly = TRUE)
 library(ggplot2, quietly = TRUE)
 library("dplyr", quietly = TRUE)
 library("stargazer", quietly = TRUE)
+library(reshape2, quietly = TRUE)
 ```
 
 ### ARMA(1,1)
@@ -101,10 +104,6 @@ df <- cbind(c("Verdadeiro", "EMVC", "arima()"), df)
 
 colnames(df) <- c("Método", "phi 1", "theta 1", "Intercepto")
 stargazer(df, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
-
-#arima(arma11, order=c(1,0,1), method="CSS")
-#armacoeff1(arma11)
-#auto.arima(arma11)
 ```
 
 ## Gerando um ARMA(2,2)
@@ -117,11 +116,15 @@ y_t - \phi_1 y_{t-1} - \phi_2 y_{t-2} = \phi_0 + a_t - \theta_1 a_{t-1} - \theta
 
 
 ```{r, warning = FALSE, message=FALSE}
+set.seed(1)
 arma22<-arima.sim(model=list(ar=c(.9,-.5),ma=c(-.9,.5)),n=1000)
 head(arma22)
 class(arma22)
 #autoplot(arma22, main = TeX("Gráfico de um MA$(2,2)$ com $\\phi_1 = 0.9$, $\\phi_2 = -0.5$, $\\theta_1 = -0.9$, $\\theta_2 = 0.5$"))
 ggtsdisplay(arma22, main = TeX("Gráfico de um MA$(2,2)$ com $\\phi_1 = 0.9$, $\\phi_2 = -0.5$, $\\theta_1 = -0.9$, $\\theta_2 = 0.5$"))
+
+write.csv(arma22, "C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Econometria II - 2017-2\\Trabalhinhos\\dados_simulados.csv", sep=";", dec = ".")
+
 ```
 
 #### Estimando um ARMA(2,2)
@@ -132,7 +135,13 @@ A máxima verossimilhança condicional é dada por:
 ln L(\phi, \theta, \sigma^2_a) = -\frac{T}{2} ln 2\pi \sigma^2_a - \frac{\sum\limits_{t=1}^T (x_t - \mu_t)^2}{2\sigma^2_a}
 \end{equation}
 
-_Agradecimentos aos colegas Paulo Victor e Cássio_
+Ou ainda,
+
+\begin{equation}
+ln L(\phi, \theta, \sigma^2_a) = -\frac{T}{2} ln 2\pi \sigma^2_a - \frac{\sum\limits^T_{t=1}a^2_t}{2\sigma^2_a}
+\end{equation}
+
+_Agradecimentos aos colegas Paulo Victor e Cássio pela ajuda com o código :D_
 
 ```{r, results='asis', warning = FALSE, message = FALSE}
 armacoeff2 <- function(x) {
@@ -172,10 +181,41 @@ df <- cbind(c("Verdadeiro", "EMVC", "arima()"), df)
 
 colnames(df) <- c("Método", "Intercepto", "phi 1", "phi 2", "theta 1", "theta 2")
 stargazer(df, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
+```
 
-#arima(arma22, order=c(2,0,2), method="CSS")
-#armacoeff2(arma22)
-#auto.arima(arma22)
+Plotando o gráfico da série real com a série estimada
 
+```{r}
+# Fazendo a série estimada
+
+inovacoes <- rnorm(n = 1000, mean = 0, sd = 1)
+serie_estimada <- rep(0, length(arma22))
+l <- length(arma22)
+
+for (i in 3:l) {
+  serie_estimada[i] <-  df[2,2] +
+    df[2,3]   * serie_estimada[i-1] + 
+    df[2,4]   * serie_estimada[i-2] +
+    df[2,5]   * inovacoes[i-1] +
+    df[2,6]   * inovacoes[i-2] +
+    inovacoes[i]
+}
+
+teste <- data.frame(seq(1,998,1), as.vector(arma22[3:length(arma22)]), serie_estimada[3:length(serie_estimada)]) 
+colnames(teste) <- c("Data","Simulada", "Estimada")
+melt_teste <- melt(teste, id="Data")
+tail(melt_teste)  
+
+p1 <- ggplot(melt_teste, aes(x=Data, y=value, colour=variable, group=variable))+
+    geom_line(size=0.5)+
+    scale_colour_manual(values=c("blue", "red")) +
+    xlab("")+
+    ylab("Série")+
+    ggtitle("Valores simulados x Gerados")+
+    theme(plot.title = element_text(lineheight = 0.5, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="") + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  p1
 ```
 
