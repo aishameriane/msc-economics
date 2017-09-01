@@ -183,7 +183,7 @@ colnames(df) <- c("Método", "Intercepto", "phi 1", "phi 2", "theta 1", "theta 2"
 stargazer(df, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
 ```
 
-Plotando o gráfico da série real com a série estimada
+Plotando o gráfico da série real com a série estimada manualmente.
 
 ```{r}
 # Fazendo a série estimada
@@ -219,3 +219,38 @@ p1 <- ggplot(melt_teste, aes(x=Data, y=value, colour=variable, group=variable))+
   p1
 ```
 
+Fazendo a mesma coisa porém para as estimativas do R:
+
+```{r}
+# Fazendo a série estimada
+
+inovacoes <- rnorm(n = 1000, mean = 0, sd = 1)
+serie_estimada <- rep(0, length(arma22))
+l <- length(arma22)
+
+for (i in 3:l) {
+  serie_estimada[i] <-  df[3,2] +
+    df[3,3]   * serie_estimada[i-1] + 
+    df[3,4]   * serie_estimada[i-2] +
+    df[3,5]   * inovacoes[i-1] +
+    df[3,6]   * inovacoes[i-2] +
+    inovacoes[i]
+}
+
+teste <- data.frame(seq(1,998,1), as.vector(arma22[3:length(arma22)]), serie_estimada[3:length(serie_estimada)]) 
+colnames(teste) <- c("Data","Simulada", "Estimada")
+melt_teste <- melt(teste, id="Data")
+tail(melt_teste)  
+
+p1 <- ggplot(melt_teste, aes(x=Data, y=value, colour=variable, group=variable))+
+    geom_line(size=0.5)+
+    scale_colour_manual(values=c("blue", "red")) +
+    xlab("")+
+    ylab("Série")+
+    ggtitle("Valores simulados x Gerados")+
+    theme(plot.title = element_text(lineheight = 0.5, face = "bold"))+
+    theme(legend.position = "bottom")+
+    labs(colour="") + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  p1
+```
