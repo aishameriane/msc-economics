@@ -117,8 +117,8 @@ readdf <- function() {
 }
 ```
 
-```{r, eval = FALSE}
-list.of.packages <- c("BatchGetSymbols","ggplot2","fGarch","gridExtra","forecast","DescTools", "moments")
+```{r, warning = FALSE, message = FALSE}
+list.of.packages <- c("BatchGetSymbols","ggplot2","fGarch","gridExtra","forecast","DescTools","moments")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 library(BatchGetSymbols)
@@ -129,22 +129,26 @@ library(forecast)
 library(DescTools)
 library(moments)
 options(scipen=999)
+```
 
-
+```{r}
 ARMAGARCH <- function(params,data,np,nq,nr,ns) {
-  like <- readlike()
+  #like <- readlike()
+  like <- 2
   Traw <- length(data)
   errors <- integer(Traw)
   sigma2 <- integer(Traw)
   m <- 1+max(np,nq,nr,ns)
   sigma2[1:m] <- var(data)
   
-  df <- readdf()
-  if (df == 1) {
-    df <- 6/(kurtosis(data)-3)+4
-  } else {
-    df <- 8
-  }
+  #df <- readdf()
+  #if (df == 1) {
+  #  df <- 6/(kurtosis(data)-3)+4
+  #} else {
+  #  df <- 8
+  #}
+  
+  df <- 6/(kurtosis(data)-3)+4
   
   for (t in m:Traw) {
     # AR recursion
@@ -197,9 +201,40 @@ ci <- c(0,0,0,-1)
 ARMAGARCH.optim <- function(params,data,np,nq,nr,ns) {
   ARMAGARCH(params,data,np,nq,nr,ns)$LLF
 }
-
-
 ```
+
+Testing the function:
+
+```{r}
+# Baixa últimos 1500 dados mais recentes
+my.ticker <- c('AAPL')
+first.date <- Sys.Date()-1500
+last.date <- Sys.Date()
+l.out <- BatchGetSymbols(tickers = my.ticker,first.date = first.date,last.date = last.date)
+returns <- data.frame(retornos=diff(log(l.out$df.tickers$price.adjusted))*100,datas=l.out$df.tickers$ref.date[2:l.out$df.control$total.obs])
+
+# Exibe parâmetros estimados
+resultados <- constrOptim(init.params,ARMAGARCH.optim,data=returns[,1],np=1,nq=1,nr=1,ns=1,grad=NULL,ui=ui,ci=ci)
+print(resultados$par)
+
+# Retorna variáveis e avalia qualidade do ajuste
+resultados.finais <- ARMAGARCH(resultados$par,data=returns[,1],np=1,nq=1,nr=1,ns=1)
+df <- data.frame(returns,sigma2=resultados.finais$sigma2,residuals=resultados.finais$residuals)
+
+# Faz gráfico 
+p1 <- ggplot(data = returns, aes(x = datas, y = retornos))
+p1 <- p1 + geom_line()
+p1 <- p1 + labs(x = 'Dates', y = 'Retornos')
+
+p2 <- ggplot(data = df, aes(x = datas, y = sqrt(sigma2)))
+p2 <- p2 + geom_line()
+p2 <- p2 + labs(x = 'Dates', y = 'Desvio padrão condicional')
+
+p3 <- ggAcf(df$residuals^2, main="ACF do quadrado dos resíduos padronizados")
+
+grid.arrange(p1, p2, p3, ncol=1)
+```
+
 
 Now, let's generate some artificial data and compare the estimates from R packages with the estimates made by our function.
 
@@ -220,3 +255,17 @@ To-do:
 
 - Using Python in R, webscrap IPEA's page looking for a series
 
+# References
+
+```{r}
+list.of.packages <- c("BatchGetSymbols","ggplot2","fGarch","gridExtra","forecast","DescTools")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+library(BatchGetSymbols)
+library(ggplot2)
+library(fGarch)
+library(gridExtra)
+library(forecast)
+library(DescTools)
+options(scipen=999)
+```
