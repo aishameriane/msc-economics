@@ -1,0 +1,222 @@
+---
+title: "ARMAGARCH"
+author: "Aishameriane Schmidt"
+date: "25 de setembro de 2017"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+   - \usepackage{cancel}
+output: html_document
+bibliography: references.bib
+---
+To-do:
+
+* Organize references bibliography: references.bib
+* Get the student's t likelihood
+* Get the wishart likelihood
+* Take a look at sheppard's material
+* Finish the webscrapping part
+* Find in Tsay about the student's t degrees of freedom
+
+# Intro
+
+This code was developed for the Econometrics II course at PPGECO-UFSC (2017/2).
+
+The goal is to construct a function that returns the parameter estimates for a ARMAGARCH() process, based on the likelihood estimator, using the normal, student's t and wishart densities.
+
+# Some theory
+
+## Normal likelihood
+
+In the case were the normality holds, the likelihood function is given by:
+
+\[
+\ln f\left( {r_1 , \ldots ,r_T ;\theta } \right) = \ln f\left( {r_1 ;\theta } \right) - \frac{1}{2}\sum\limits_{t = 2}^T {\left( {\ln \left( {2\pi } \right) + \ln \left( {\sigma _t^2 } \right) + \frac{{ - \left( {r_t  - \mu _t } \right)^2 }}{{2\sigma _t^2 }}} \right)}
+\]
+
+## Student's t likelihood
+
+The conditional distribution for the observable variables is:
+
+\begin{equation}
+L = \frac{\Gamma\left(\frac{1}{2}(\nu + 1)\right)}{\pi^{1/2}\Gamma \left(\frac{1}{2}\nu \right)}\left[(\nu -2) h^2_t \right]^{-frac{1}{2}} \left[1 + \frac{u_t^2}{(\nu-2)  h_t^2} \right]^{-\frac{1}{2}(\nu + 1)}
+\end{equation}
+
+So, the log likelihood will be given by:
+
+\begin{align}
+\log L &= \sum \log \Gamma \left(1/2(\nu+1)\right) - \frac{T}{2} \log (\pi) - \sum \log \Gamma \left(\frac{1}{2}\nu \right) - \frac{1}{2}\sum \log (\nu - 2)\\
+& \qquad - \sum \log h_t - \frac{1}{2}(\nu + 1) \sum \log \left[1+ \frac{u_t^2}{(\nu-2)h_t^2} \right]
+\end{align}
+
+The sample kurtosis is defined as:
+
+\begin{equation}
+\hat{K} = 3 + \frac{6}{\nu-4}
+\end{equation}
+
+Accordingly to [@mcguirk1993], we can manipulate the equation to obtain a estimator for the DF $\nu$ (since there is no ML estimator for it):
+
+\begin{align}
+\hat{K} = 3 + \frac{6}{\nu-4} \\
+\hat{K} - 3 = \frac{6}{\nu-4} \\
+\hat{\nu} - 4 = \frac{6}{\hat{K}-3} \\
+\hat{\nu} = \frac{6}{\hat{K}-3} + 4
+\end{align}
+
+### Observation
+
+[@mcguirk1993] uses a different form for the likelihood, given by:
+
+\begin{equation}
+L = \frac{\Gamma\left(\frac{1}{2}(\nu + p + 1)\right)}{\pi^{1/2}\Gamma \left(\frac{1}{2}\nu + p \right)}\left[\nu \sigma^2 h^2_t \right]^{-frac{1}{2}} \left[1 + \frac{u_t^2}{\nu \sigma^2 h_t^2} \right]^{-\frac{1}{2}(\nu + p + 1)}
+\end{equation}
+
+I wasn't able to work with this second one, due to the restricted time, but I think it is interesting to take another look at the problem.
+
+## Gamma likelihood
+
+# Code
+
+The code is based on prof. Portela's code, only adding the last two likelihoods.
+
+First part is defining a function that receives a vector containing the data as well the initial values for the parameters and the order for each component. It is defined as `ARMAGARCH(params, data, np, nq, nr, ns)` where:
+
+* `params` is a vector with size $(p+q+r+s) \times 1$ containing the initial values for the model's parameters - default is $0.1$ for all parameters;
+* `data` is a $t \times 1$ vector containing the data series - required argument;
+* `np` is an integer and represents the AR order - default is $1$;
+* `nq` is an integer and represents the MA order - default is $1$;
+* `nr` is an integer and represents the ARCH order - default is $1$;
+* `ns` is an integer and represents the GARCH order - default is $1$.
+
+This first function is just to ask the user the desired likelihood:
+
+```{r}
+# This function asks the user which likelihood to use
+readlike <- function() {
+  like <- like <- readline(prompt="Choose a density - (1) normal; (2) t; (3) wishart: ")
+  if(like %in% c(1,2,3) == FALSE) {
+    readlike()
+  }
+  return(as.integer(like))
+}
+```
+
+Now, a second function to ask which method should be used to determine the degrees of freedom from the t-distribution:
+
+```{r}
+# This function asks the user if the DF should be estimated or pre-determined
+readdf <- function() {
+  df <- readline(prompt="Choose how the DF should be calculated - (1) from the kurtosis; (2) pre-determined ")
+  if(df %in% c(1,2) == FALSE) {
+    readlike()
+  }
+  return(as.integer(df))
+}
+```
+
+```{r, eval = FALSE}
+list.of.packages <- c("BatchGetSymbols","ggplot2","fGarch","gridExtra","forecast","DescTools", "moments")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+library(BatchGetSymbols)
+library(ggplot2)
+library(fGarch)
+library(gridExtra)
+library(forecast)
+library(DescTools)
+library(moments)
+options(scipen=999)
+
+
+ARMAGARCH <- function(params,data,np,nq,nr,ns) {
+  like <- readlike()
+  Traw <- length(data)
+  errors <- integer(Traw)
+  sigma2 <- integer(Traw)
+  m <- 1+max(np,nq,nr,ns)
+  sigma2[1:m] <- var(data)
+  
+  df <- readdf()
+  if (df == 1) {
+    df <- 6/(kurtosis(data)-3)+4
+  } else {
+    df <- 8
+  }
+  
+  for (t in m:Traw) {
+    # AR recursion
+    errors[t] <- data[t]
+    for (i in 1:np) {
+      errors[t] <- errors[t] - params[i]*data[t-i]
+    }
+    
+    # MA recursion
+    for (i in 1:nq) {
+      errors[t] <- errors[t] - params[np+i]*errors[t-i]
+    }
+    errors[t] <- errors[t];
+    
+    # ARCH recursion
+    sigma2[t] <- params[np+nq+1]
+    
+    for (i in 1:nr) {
+      sigma2[t] <- sigma2[t] + params[np+nq+1+i]*errors[t-i]^2
+    }
+    
+    # GARCH recursion
+    for (i in 1:ns) {
+      sigma2[t] <- sigma2[t] + params[np+nq+nr+1+i]*sigma2[t-i]
+    }
+    sigma2[t] <- sigma2[t]
+  }
+
+if (like == 1) { # normal likelihood
+verossim <- 0.5*(sum(log(sigma2)) + sum((errors^2)/sigma2)  +  Traw*log(2*pi))
+
+} else if (like == 2){ # student's t likelihood
+  verossim <- sum(log(gamma(0.5*(df + 1)))) - Traw*0.5*log(pi) - sum(log(gamma(0.5*df))) - 0.5*sum(log(df - 2)) - sum(log(sigma2)) -         0.5*(df+1)*sum(log(1+(errors^2)/((df-2)*sigma2^2)))
+  
+} else if (like == 3) { # another likelihood
+  verossim <- 0.5*(sum(log(sigma2)) + sum((errors^2)/sigma2)  +  Traw*log(2*pi))
+}
+  
+  return(list(LLF=sum(verossim),sigma2=sigma2,residuals=errors/sqrt(sigma2)))
+}
+
+# Parâmetros iniciais da estimação
+init.params <- c(0.1,0.1,0.1,0.1,0.5)
+
+# Define restrições
+ui <- rbind(c(0,0,1,0,0),c(0,0,0,1,0),c(0,0,0,0,1),c(0,0,0,-1,-1))
+ci <- c(0,0,0,-1)
+
+# Helper para maximizar a função verossimilhança condicional
+ARMAGARCH.optim <- function(params,data,np,nq,nr,ns) {
+  ARMAGARCH(params,data,np,nq,nr,ns)$LLF
+}
+
+
+```
+
+Now, let's generate some artificial data and compare the estimates from R packages with the estimates made by our function.
+
+TO-DO:
+- Find a function that emulates an ARMAGARCH
+- Find a function to estimate this thing
+- Generate samples, estimate and compare
+- Bônus: estimate using the three likelihoods at once
+
+```{r, eval = FALSE}
+artdata <- 
+
+```
+
+# Getting data from IPEA using webscrapping
+
+To-do:
+
+- Using Python in R, webscrap IPEA's page looking for a series
+
