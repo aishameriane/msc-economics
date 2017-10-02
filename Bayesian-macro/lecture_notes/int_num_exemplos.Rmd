@@ -1,7 +1,7 @@
 ---
 title: "Exemplos Monte Carlo"
 author: "Aishameriane Schmidt"
-date: "Última atualização: 05 de maio de 2017"
+date: "Última atualização: 02 de outubro de 2017"
 output: html_document
 ---
 
@@ -81,8 +81,6 @@ desv_pad_num<-sqrt(sigma_chapeu)/(sqrt(length(indicadora)))
 
 Comparando o valor tabelado de `r pnorm(t,mean=0,sd=1)` com o valor aproximado de `r sum(indicadora)/length(indicadora)` obtemos uma diferença de `r pnorm(t,mean=0,sd=1) - sum(indicadora)/length(indicadora)` entre eles. O valor de $\hat{\sigma}_g^2$ é de `r round(sigma_chapeu,4)` e portanto o nosso desvio padrão numérico, dado por $\frac{\hat{\sigma}_g}{\sqrt{S}}$, é de `r round(sqrt(sigma_chapeu)/(sqrt(length(indicadora))),4)`. 
 
-<span style="color:red">Aisha: Aqui agora eu fiquei com dúvida: o desvio padrão numérico serve quando eu tenho apenas uma estimativa para $\hat{sigma}^2_g$ vinda de uma única $\hat{g}_S(\theta)$? Pq eu tenho um S de 200.000, se eu repetir esse processo várias vezes aí o que calcula não vai ser um desvio padrão como nos slides, ou vai? Daria para montar a curvinha normal, mas não é bem esse objetivo, certo?</span>
-
 Mas para efetivamente saber quão bom é este procedimento (afinal pode ser que tivemos "sorte"), precisamos amostrar várias vezes este valor.
 
 ```{r}
@@ -109,7 +107,7 @@ agregado[j]<-sum(indicadora)/length(indicadora)
 }
 ```
 
-A média das nossas estimativas foi de `r round(mean(agregado),4)` e o desvio padrão foi de `r round(sd(agregado),4)`. <span style="color:red">Aisha: Faz sentido calcular desvio padrão numérico aqui?</span>
+A média das nossas estimativas foi de `r round(mean(agregado),4)` e o desvio padrão foi de `r round(sd(agregado),4)`.
 
 Podemos ver na figura abaixo como de fato as diversas realizações de $\hat{g}_S(\theta)$ nos levam a um comportamento similar ao de uma distribuição normal centrada em $0.5$:
 
@@ -123,8 +121,9 @@ dados<-data.frame(x,y)
 
 p <- ggplot(dados, aes(x = y)) +
         geom_histogram(color = "black", fill="white", binwidth = .001)+
-        ylab(TeX("$\\hat{g}_S(\\theta)$")) +
-        ggtitle(TeX("Distribuição dos valores estimados para $g(\\theta)$")) +
+        ylab(TeX("$\\hat{\\Phi}_N(\\z)$")) +
+        xlab("") +
+        ggtitle(TeX("Estimated values for $P(Z \\leq 0)$")) +
         scale_colour_brewer(palette="Set1") +
         theme(axis.line = element_line(size=1, colour = "black"),
               panel.grid.major = element_blank(),
@@ -135,8 +134,12 @@ p <- ggplot(dados, aes(x = y)) +
               text=element_text(size = 16),
               axis.text.x=element_text(colour="black", size = 12),
               axis.text.y=element_text(colour="black", size = 12))
-p + geom_vline(aes(xintercept=pnorm(0,mean=0,sd=1)),
+p <- p + geom_vline(aes(xintercept=pnorm(0,mean=0,sd=1)),
             color="blue", linetype="dashed", size=1)
+
+#pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Imagens artigo\\fig-2_02.pdf")
+p
+#dev.off()
 ```
 
 Para $t$ menor que $-4.5$ precisaremos de muito mais observações ainda para conseguir uma estimativa acurada para esta probabilidade.
@@ -190,7 +193,7 @@ for (j in 1:length(agregado)){
 agregado[j]<-sum(indicadora)/length(indicadora)
 }
 ```
-A média das nossas estimativas foi de `r round(mean(agregado),4)` e o desvio padrão foi de `r round(sd(agregado),4)`, enquanto que o valor esperado seria de  $\mathbb{P}(X \leq -4.5) =$ `r pnorm(t,mean=0,sd=1)`. <span style="color:red">Aisha: Faz sentido calcular desvio padrão numérico aqui?</span>
+A média das nossas estimativas foi de `r round(mean(agregado),4)` e o desvio padrão foi de `r round(sd(agregado),4)`, enquanto que o valor esperado seria de  $\mathbb{P}(X \leq -4.5) =$ `r pnorm(t,mean=0,sd=1)`.
 
 Podemos novamente plotar o gráfico:
 
@@ -204,8 +207,9 @@ dados<-data.frame(x,y)
 
 p <- ggplot(dados, aes(x = y)) +
         geom_histogram(color = "black", fill="white", binwidth = .000001)+
-        ylab(TeX("$\\hat{g}_S(\\theta)$")) +
-        ggtitle(TeX("Distribuição dos valores estimados para $g(\\theta)$")) +
+        ylab(TeX("$\\hat{\\Phi}_N(z)$")) +
+        xlab("") +
+        ggtitle(TeX("Estimated values for $P(Z \\leq -4.5)$")) +
         scale_colour_brewer(palette="Set1") +
         theme(axis.line = element_line(size=1, colour = "black"),
               panel.grid.major = element_blank(),
@@ -216,8 +220,12 @@ p <- ggplot(dados, aes(x = y)) +
               text=element_text(size = 16),
               axis.text.x=element_text(colour="black", size = 12),
               axis.text.y=element_text(colour="black", size = 12))
-p + geom_vline(aes(xintercept=pnorm(-4.5,mean=0,sd=1)),
+p <- p + geom_vline(aes(xintercept=pnorm(-4.5,mean=0,sd=1)),
             color="blue", linetype="dashed", size=1)
+
+#pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Imagens artigo\\fig-2_03.pdf")
+p
+#dev.off()
 ```
 
 Pela figura observamos que de fato as estimativas ficaram muito concentradas em zero.
@@ -271,8 +279,9 @@ for (j in 1:length(estimativas)){
     aproximacao<- (1/length(vetor_v))*sum(numerador/denominador)
   estimativas[j]<-aproximacao
 }
-```
 
+mean(estimativas)
+```
 
 
 ```{r, echo=FALSE}
@@ -285,8 +294,9 @@ dados<-data.frame(x,y)
 
 p <- ggplot(dados, aes(x = y)) +
         geom_histogram(color = "black", fill="white", binwidth = .00000001)+
-        ylab(TeX("$\\hat{g}_S(\\theta)$")) +
-        ggtitle(TeX("Distribuição dos valores estimados para $g(\\theta)$ \n usando amostragem por importância")) +
+        ylab(TeX("$\\hat{\\Phi}_N(z)$")) +
+        xlab("") +
+        ggtitle(TeX("Estimating $P(Z \\leq)$ using importance sampling")) +
         scale_colour_brewer(palette="Set1") +
         theme(axis.line = element_line(size=1, colour = "black"),
               panel.grid.major = element_blank(),
@@ -298,6 +308,10 @@ p <- ggplot(dados, aes(x = y)) +
               axis.text.x=element_text(colour="black", size = 12),
               axis.text.y=element_text(colour="black", size = 12))
 
-p + geom_vline(aes(xintercept=pnorm(-4.5,mean=0,sd=1)),
+p <- p + geom_vline(aes(xintercept=pnorm(-4.5,mean=0,sd=1)),
             color="red", linetype="dashed", size=1)
+
+#pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Imagens artigo\\fig-2_04.pdf")
+p
+#dev.off()
 ```
