@@ -1,0 +1,288 @@
+---
+title: "Exemplo - MNRL"
+author: "A. Schmidt"
+date: "02 de outubro de 2017"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+   - \usepackage{cancel}
+   - \usepackage{stackengine}
+   
+output: html_document
+bibliography: references.bib
+---
+
+# 3.9 Exemplo Empírico de [@koop_2010]
+
+Para ilustrar a inferência bayesiana no modelo de regressão múltipla, foi utilizado um banco de dados contendo o preço de venda de $N=546$ casas vendidas em Windsor, Canada, em 1987. Mais detalhes sobre este banco de dados podem ser encontrados no trabalho de [@anglin_genkay1996]. O interesse está em encontrar os fatores que afetam os preços das casas, de maneira que o preço de venda é a variável dependente no modelo. São utilizadas quatro variáveis explicativas: tamanho do terreno, número de quartos, número de banheiros e número de andares. Logo, tem-se:
+
+* $y_i$ - preço da $i$-ésima casa, em dólares canadenses;
+* $x_{i2}$ - tamanho do terreno da $i$-ésima casa, medido em pés quadrados;
+* $x_{i3}$ - número de quartos da $i$-ésima casa;
+* $x_{i4}$ - número de banheiros da $i$-ésima casa;
+* $x_{i5}$ - número de andares da $i$-ésima casa;
+
+Possivelmente o pesquisador conduzindo o trabalho com estes dados teria conhecimento do mercado de imóveis em Windsor e poderia fazer uso deste conhecimento para chegar a uma priori informativa. Ou ainda, o pesquisador poderia perguntar a um corretor de imóveis local para auxiliar provendo estas informações. Por exemplo, o pesquisador poderia perguntar ao corretor questões do tipo: _"Quanto você esperaria que uma casa com terreno de 4000 pés quadrados, com dois quartos, um banheiro e um andar custe?"_; _Quanto você esperaria que uma casa em um terreno de 6000 pés quadrados, com três quartos, dois banheiros e dois andares custe?_, etc. Uma vez que existem 5 regressores desconhecidos, as respostas para cinco questões desta forma dariam ao pesquisador cinco equações e cinco incógnitas, de maneira que a solução deste sistema leva ao palpite implícito do corretor sobre o valor dos coeficientes da regressão e pode ser utilizado como priori para $\beta$.
+
+
+Para fins ilustrativos, aqui usaremos uma priori informativa definida de maneira mais grosseira. As casas em Windsor no ano de 1987 mostraram uma grande variação nos preços, mas a maior parte das casas foi vendida dentro de uma faixa de \$50.000 - \$150.000 dólares. Um modelo de regressão que tenha um bom ajuste teria erros com uma ordem de magnitude de algums milhares de dólares, no máximo \$10.000. Isso sugere que $\sigma$ pode ser aproximadamente $5000$. Isto é, uma vez que os erros são normalmente distribuídos com média zero, então se $\sigma = 5000$, então $95\%$ dos erros serão menores do que $1.96 \times 5000 = \$9.800$ em valor absoluto. Uma vez que $h = \frac{1}{\sigma^2}$, isso sugere que um palpite razoável a priori para a precisão $h$ é de $\frac{1}{5000^2}=$ `r round(1/5000^2,8)`. Então, será utilizado $.s^{-2} = $ `r round(1/5000^2,8)`. Entretanto, este é um chute bem grosseiro e, então, é desejável que ele tenha pouco peso (que é obtido imputando um baixo valor para $.\nu$, ou seja, $.\nu$ será menor do que $N$). Uma vez que o tamanho da amostra é 546, utilizar $.\nu = 5$ é bastante não informativo. De maneira informal, isso significa que estamos afirmando que priori a respeito de $h$ deve ter em torno de $1\%$ do peso do tamanho da amostra (isto é, $\frac{.\nu}{N} \approx$ `r round(5/546,3)`). Observação: como não consegui usar o pacote accents no markdown, coloquei um pontinho antes da letra para indicar parâmetros a priori.
+
+Para os coeficientes da regressão, define-se:
+
+\[
+.\beta =
+\begin{bmatrix}
+   0.0 \\
+   10 \\
+   5.000 \\
+   10.000 \\
+   10.000
+\end{bmatrix}
+\]
+
+Os coeficientes da regressão podem ser interpretados da seguinte forma: _"se há um aumento de uma unidade na $j$-ésima variável explicativa enquanto que as outras são mantidas constantes, o preço da casa tende a aumentar em $\beta_j$ dólares"_. Então, a média a priori implica afirmações do tipo _"se comparássemos duas casas que são idênticas exceto pelo fato da primeira ter um quarto a mais que a segunda, então esperaríamos que a primeira casa tivesse um preço \$5.000 superior que a segunda"_ ou _"se o número de banheiros aumenta em um enquanto as demais características se mantém, espera-se que o preço da casa suba em \$10.000"_, etc.
+
+Todos estes palpites a respeito dos coeficientes da regressão são pouco precisos, então faz sentido associar uma variância relativamente alta a cada um deles. Por exemplo, suponha que a informação a priori a respeitod o intercepto seja vaga. Neste caso, é possível querer fixar $Var[\beta_1] = 10.000^2$ (isto é, um desvio padrão de 10.000, o que, assumindo normalidade, levaria a um intervalo com $95\%$ dos valores igual a $[-20.000,20.000]$, que é bastante amplo). Se pensarmos que é muito provável que o efeito do tamanho do terreno esteja entre $0$ e $20$, pode-se escolher $Var[\beta_2] = 25$ (isto é, uma priori com desvio padrão igual a 5). Para os demais regressores, escolhemos $Var[\beta_3] = 2500^2$ e $Var[\beta_4] = Var[\beta_5]=5000^2$. Esses valores dos hiperparâmetros nos dizem que o melhor palpite para $\beta_4$ é $10.000$ e achamos que é muito provável que ele esteja no intervalo $[0, 20.000]$.
+
+Dadas estas escolhas, pode-se montar a matriz de covariâncias. As propriedades da distribuição Normal-Gama implicam que a matriz de covariância a priori dos $\beta$'s tem a forma:
+
+\begin{equation}
+Var[\beta] = \frac{.\nu.s^2}{.\nu-2}.V
+\end{equation}
+
+Uma vez que $\frac{.\nu.s^2}{.\nu-2}=\frac{5*5000^2}{5-2}\approx$ `r round((5*5000^2)/(5-2),2)`, as escolhas para $Var[\beta_j] \ j \in \{1, \ldots, 5 \}$ implicam:
+
+\[
+.V =
+\begin{bmatrix}
+2.40 & 0 & 0 & 0 & 0 \\
+0 & 6 \times 10^{-7} & 0 & 0 & 0 \\
+0 & 0 & 0.15 & 0 & 0 \\
+0 & 0 & 0 & 0.60 & 0 \\
+0 & 0 & 0 & 0 & 0.60
+\end{bmatrix}
+\]
+
+Observe que todas as covariâncias ficaram iguais a zero. Isso é usualmente feito, uma vez que é muito difícil fazer um palpite adequado sobre quais seriam seus valores. Isso implica que a informação a priori sobre quais os possíveis valores de $\beta_j$ é não correlacionada com $\beta_i$, para $i \neq j$. Isto completa a especificação de uma priori conjugada natural para os parâmetros deste modelo.
+
+Este procedimento demonstra como a elucidação das informações a priori pode ser feita na prática. Como pode ser observado, isto é complicado e envolve uma quantidade grande de palpites. Entretanto, é um exercício interessante de ser conduzido, uma vez que força o pesquisador ou pesquisadora a pensar com cuidado a respeito do modelo e como seus parâmetros são interpretados. Para um pesquisador que não tem informação a priori (ou não deseja usá-la), é possível fazer uso de uma priori não informativa.
+
+# Código
+
+## Preparação dos dados
+
+```{r}
+# Utiliza a notação decimal
+options(scipen=9999)
+# Leitura dos dados
+dados <- read.delim("C:\\Users\\Aishameriane\\Dropbox\\TCC Aisha\\Texto TCC\\TCC\\Códigos - R\\Script cap 3 do Koop em R\\HPRICE.txt", sep = "\t", header = F)
+
+# Adiciona os rótulos nas colunas
+colnames(dados)<- c("Preço", "Tam. Terreno", "Quartos", "Banheiros", "stor", "drive", "recroom", "bment", "gas", "aircond", "gar", "desireloc")
+
+summary(dados)       # Faz a descritiva dos dados
+N <- nrow(dados)     # Determina o tamanho da amostra
+k <- 5               # Número de regressores
+
+X     <- matrix(nrow = N, ncol = 5) # Cria a matriz de variáveis exógenas
+X[,1] <- rep(1,N)
+for (i in 2:5) {
+  X[,i] <- dados[,i]
+}
+head(X)
+```
+
+## Priori conjugada natural informativa
+
+```{r}
+# Matriz com as características perguntadas ao corretor
+#corretor   <- rbind(c(1, 4000, 2, 1, 1), c(1, 5000, 2, 2, 1), c(1, 3800, 1, 1, 1),
+#                  c(1, 3000, 1, 1, 1), c(1, 6000, 2, 2, 2))
+# Palpites de preços do corretor
+#precos_cor <- c(65000, 82000, 60000, 50000, 110000)
+
+# Resolve o sistema AX = B para encontrar as médias a priori
+#b0_ni  <- solve(corretor, precos_cor) # Priori Não Informativa
+
+# Seta uma priori informativa
+b0_in   <- c(0,10, 5000, 10000, 10000) # Priori Informativa
+
+s02   <- 5000^2  # Desvio padrão dos erros a priori
+nu0   <- 5       # Graus de liberdade a priori
+h0    <- 1/s02   # Priori para h
+stdh0 <- 2/(s02*nu0)
+
+# Para encontrar os elementos da matriz V, utilizamos a fórmula do texto
+cons    <- (nu0 * s02)/(nu0-2)
+varbeta <- c(10000^2, 25, 2500^2, 5000^2, 5000^2)
+V0      <- diag(5)*(varbeta/cons) # Matriz de escala da priori
+
+#Xestrela <- c(1,5000,2,2,1)
+#Y <- dados[,1]
+```
+
+## Cálculos a posteriori
+
+```{r}
+conjugada_natural <- function(Y, X, nu0, s20, B0, V0, varargin = NULL) {
+  
+  # Cálculo das quantidades de MQO
+  N      <- nrow(X)    # Tamanho da amostra a partir da matriz X
+  k      <- ncol(X)    # Número de regressores
+  nu     <- N-k        # Graus de liberdade
+  XX     <- t(matrix(X, ncol = 5)) %*% matrix(X, ncol=5)  
+  iXX    <- solve(XX)
+  BMQO   <- iXX %*% (t(X) %*%Y)                           # Beta de MQO
+  s2     <- (t(Y-X %*% BMQO) %*% (Y-X %*% BMQO))/nu       # Estimativa não viesada da var dos erros
+  CovMQO <- as.numeric(s2) * iXX                          # Matriz de covariância do beta de MQO
+  stdMQO <- sqrt(diag(CovMQO))                            # Desvio padrão das estimativas de MQO
+  
+  # Parâmetros da posteriori
+  
+  nu1 <- nu0 + N # Graus de liberdade
+  if (det(V0) == Inf){
+    iV0 <- 0
+  } else {
+    iV0 <- solve(V0) # Precisão a posteriori
+  }
+  
+  iV1   <- iV0 + XX    # Inverso da escala a posteriori
+  V1    <- solve(iV1)  # Escala a posteriori
+  B1    <- V1 %*% (iV0 %*% B0 + XX %*% BMQO)
+  nus21 <- nu0 * s20 + nu * s2
+  
+  if (det(iV0) > 0) {
+    nus21 <- nus21 + t(BMQO - B0) %*% solve(V0 + iXX) %*% (BMQO - B0) # SQR a posteriori
+  }
+  
+  s21 <- nus21/nu1 
+  
+  # Parâmetros da distribuição posterior marginal beta
+  
+  CovB <- V1 * as.numeric(nus21/(nu1-2))  # Variância da distribuição t
+  stdB <- sqrt(diag(CovB))    # Desvio padrão da posteriori marginal de beta
+  
+  # Calcula os intervalos de maior densidade a posteriori de 95% e 99%
+  
+  lim95   <- qt(0.975, nu1) # Valor da t para o quantil 97.5
+  lim99   <- qt(0.995, nu1) # Valor da t para o quantil 99.5
+  
+  HPDI95  <- round(cbind(B1 - lim95*stdB, B1 + lim95*stdB),4)
+  HPDI99  <- round(cbind(B1 - lim99*stdB, B1 + lim99*stdB),4)
+  
+  # Para o futuro - Calcula a probabilidade de que cada beta é positivo
+  
+  #probpos=vector()
+
+  #for (i in 1:k){
+  #  tnorm = -B1[i,1]/sqrt(s21*V1[i,i])
+  #  probpos[i] = 1 - dt(tnorm,nu1)
+#}
+  
+  # Parâmetros da distribuição posterior marginal de h
+  
+  h1    <- 1/s21            # Média da distribuição gama que determina h
+  h1var <- 2/(s21*nus21)    # Variância da distribuição a posteriori marginal de h
+  
+  # Logaritmo da função de verossimilhança marginal
+  
+  lmlik <- vector()
+  if (det(iV0 > 0)) {
+    c <- lgamma(0.5*nu1) + 
+      0.5*nu0*log(nu0*s20)-lgamma(0.5*nu0)-0.5*N*log(pi) # constante de integração
+    lmlik <- c+0.5*log(det(V1)/det(V0)) -0.5*nu1*log(nus21)  # log da veross. marginal
+  }
+  
+  # Faz previsão de X* é passado como argumento para a função
+  if (is.null(varargin) == FALSE) {
+    Xestrela   <- varargin
+    Yestrela   <- Xestrela %*% B1                          # Previsão Y*
+    VYestrela  <- (1+t(Xestrela) %*% V1 %*% Xestrela)*as.numeric(s21)  # Matriz de escala da previsão
+    Varestrela <- VYestrela * nu1/(nu1 - 2)                # Variância da previsão
+  }
+  
+  return(list(B1=B1, V1=V1, nu1=nu1, s21=s21, CovB=CovB, h1=h1, h1var=h1var, lmlik = lmlik, HPDI95 = HPDI95, HPDI99 = HPDI99, previsao = Yestrela, varprev = Varestrela, escalaprev = VYestrela, BMQO = BMQO, stdMQO = stdMQO))
+  
+}
+```
+
+Faz os cálculos baseado nos valores a priori e previsão para o vetor $X^* = (1 \ 5000 \ 2 \ 2 \ 1)'$:
+
+```{r, results='asis', warning = FALSE, message = FALSE}
+list.of.packages <- c("knitr", "stargazer")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+library(knitr, quietly = T)
+library(stargazer, quietly = T)
+
+novos_dados <- c(1, 5000, 2, 2, 1)
+resultados_in  <- conjugada_natural(dados[,1], X, nu0, s02, b0_in, V0, novos_dados)
+beta='\u03b2'
+
+#############################################################
+# Monta a tabela de médias a priori e posteriori dos betas  #
+#############################################################
+
+medias_betas     <- matrix(0, ncol = 3, nrow = 10)
+medias_betas[,1] <- c(paste0(beta,"_1"), paste0("sd[",beta,"_1","]"), 
+                paste0(beta,"_2"), paste0("sd[",beta,"_2","]"),
+                paste0(beta,"_3"), paste0("sd[",beta,"_3","]"),
+                paste0(beta,"_4"), paste0("sd[",beta,"_4","]"),
+                paste0(beta,"_5"), paste0("sd[",beta,"_5","]"))
+
+colnames(medias_betas) <- c("Parâmetro", "Priori Inf.", "Posteriori")
+
+for (i in 1:5){
+  medias_betas[(2*i)-1,2]   <- b0_in[i]
+  medias_betas[(2*i),2]     <- round(sqrt(varbeta[i]), 4)
+  medias_betas[(2*i)-1,3]   <- round(resultados_in$B1[i],2)
+  medias_betas[(2*i),3]     <- round(sqrt(diag(resultados_in$CovB)[i]), 4)
+}
+
+medias_betas <- as.data.frame(medias_betas)
+
+#########################################################
+# Monta a tabela de médias a priori e posteriori de h   #
+#########################################################
+
+descr_h           <- matrix(0, ncol = 3, nrow = 2)
+colnames(descr_h) <- c("Medida", "Priori Inf.", "Posteriori")
+
+descr_h[,1] <- c("Média", "Desv. Padrão")
+
+descr_h[1,2] <- formatC(h0)
+descr_h[2,2] <- formatC(stdh0)
+descr_h[1,3] <- formatC(resultados_in$h1)
+descr_h[2,3] <- formatC(resultados_in$h1var)
+
+descr_h <- as.data.frame(descr_h)
+
+########################################################
+# Monta a tabela com os intervalos de credibilidade    #
+########################################################
+
+HPDI <- matrix(0, ncol = 3, nrow = 5)
+
+HPDI[,1] <- c(paste0(beta,"_1"), 
+                paste0(beta,"_2"),
+                paste0(beta,"_3"),
+                paste0(beta,"_4"),
+                paste0(beta,"_5"))
+
+for (i in 1:5){
+  HPDI[i,2] <- paste0("[",round(resultados_in$HPDI95[i,1],2),", ",round(resultados_in$HPDI95[i,2],2),"]")
+  HPDI[i,3] <- paste0("[",round(resultados_in$HPDI99[i,1],2),", ",round(resultados_in$HPDI99[i,2],2),"]")
+}
+
+colnames(HPDI) <- c("Parâmetro", "95% HPDI", "99% HPDI")
+
+HPDI <- as.data.frame(HPDI)
+
+stargazer(medias_betas, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
+stargazer(descr_h, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
+stargazer(HPDI, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
+```
+
+# Referências
