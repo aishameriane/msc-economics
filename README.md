@@ -5,6 +5,8 @@
   
 Materials developed by me (based on class materials, books or original stuff) during the courses taken during the Master Course in Economics at UFSC (2017-201?). Most of the material is not intended for publishing, so most parts are not completely revised and can contain errors.
 
+Feel free to write me at aishameriane at gmail dot com if you find something strange or have any doubt.
+
 All errors are entirely my responsability.
 
 Cartoon credits: [Saturday Morning Cereal](http://www.smbc-comics.com/?id=3117) and [xkcd](https://what-if.xkcd.com/111/)
