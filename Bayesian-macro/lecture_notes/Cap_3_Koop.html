@@ -226,7 +226,7 @@ head(X)</code></pre>
 #precos_cor &lt;- c(65000, 82000, 60000, 50000, 110000)
 
 # Resolve o sistema AX = B para encontrar as médias a priori
-#b0_ni  &lt;- solve(corretor, precos_cor) # Priori Não Informativa
+#bo_ni  &lt;- solve(corretor, precos_cor) # Priori Não Informativa
 
 # Seta uma priori informativa
 b0_in   &lt;- c(0,10, 5000, 10000, 10000) # Priori Informativa
@@ -259,6 +259,8 @@ V0      &lt;- diag(5)*(varbeta/cons) # Matriz de escala da priori
   CovMQO &lt;- as.numeric(s2) * iXX                          # Matriz de covariância do beta de MQO
   stdMQO &lt;- sqrt(diag(CovMQO))                            # Desvio padrão das estimativas de MQO
   
+  ########## DEBUG: Até aqui bate com o do Guilherme
+  
   # Parâmetros da posteriori
   
   nu1 &lt;- nu0 + N # Graus de liberdade
@@ -267,22 +269,28 @@ V0      &lt;- diag(5)*(varbeta/cons) # Matriz de escala da priori
   } else {
     iV0 &lt;- solve(V0) # Precisão a posteriori
   }
+  ############ DEBUG: Até aqui, depois de corrigir V0 do Guilherme, funcionou
   
   iV1   &lt;- iV0 + XX    # Inverso da escala a posteriori
   V1    &lt;- solve(iV1)  # Escala a posteriori
   B1    &lt;- V1 %*% (iV0 %*% B0 + XX %*% BMQO)
   nus21 &lt;- nu0 * s20 + nu * s2
   
+  ############ DEBUG: Até aqui, funcionou
+  
   if (det(iV0) &gt; 0) {
     nus21 &lt;- nus21 + t(BMQO - B0) %*% solve(V0 + iXX) %*% (BMQO - B0) # SQR a posteriori
   }
   
   s21 &lt;- nus21/nu1 
+  ############ DEBUG: Até aqui, funcionou
   
   # Parâmetros da distribuição posterior marginal beta
   
   CovB &lt;- V1 * as.numeric(nus21/(nu1-2))  # Variância da distribuição t
   stdB &lt;- sqrt(diag(CovB))    # Desvio padrão da posteriori marginal de beta
+  
+  ############ DEBUG: Até aqui, funcionou
   
   # Calcula os intervalos de maior densidade a posteriori de 95% e 99%
   
@@ -294,17 +302,19 @@ V0      &lt;- diag(5)*(varbeta/cons) # Matriz de escala da priori
   
   # Para o futuro - Calcula a probabilidade de que cada beta é positivo
   
-  #probpos=vector()
+  probpos=vector()
 
-  #for (i in 1:k){
-  #  tnorm = -B1[i,1]/sqrt(s21*V1[i,i])
-  #  probpos[i] = 1 - dt(tnorm,nu1)
-#}
+  for (i in 1:k){
+    tnorm = -B1[i,1]/sqrt(s21*V1[i,i])
+    probpos[i] = 1 - pt(tnorm,nu1)
+  }
   
   # Parâmetros da distribuição posterior marginal de h
   
   h1    &lt;- 1/s21            # Média da distribuição gama que determina h
-  h1var &lt;- 2/(s21*nus21)    # Variância da distribuição a posteriori marginal de h
+  h1var &lt;- 2/(nus21)    # Variância da distribuição a posteriori marginal de h
+  
+  ############ DEBUG: Até aqui, funcionou
   
   # Logaritmo da função de verossimilhança marginal
   
@@ -323,7 +333,7 @@ V0      &lt;- diag(5)*(varbeta/cons) # Matriz de escala da priori
     Varestrela &lt;- VYestrela * nu1/(nu1 - 2)                # Variância da previsão
   }
   
-  return(list(B1=B1, V1=V1, nu1=nu1, s21=s21, CovB=CovB, h1=h1, h1var=h1var, lmlik = lmlik, HPDI95 = HPDI95, HPDI99 = HPDI99, previsao = Yestrela, varprev = Varestrela, escalaprev = VYestrela, BMQO = BMQO, stdMQO = stdMQO))
+  return(list(B1=B1, V1=V1, nu1=nu1, s21=s21, CovB=CovB, h1=h1, h1var=h1var, lmlik = lmlik, HPDI95 = HPDI95, HPDI99 = HPDI99, previsao = Yestrela, varprev = Varestrela, escalaprev = VYestrela, BMQO = BMQO, stdMQO = stdMQO, probpos = probpos))
   
 }</code></pre>
 <p>Faz os cálculos baseado nos valores a priori e previsão para o vetor <span class="math inline">\(X^* = (1 \ 5000 \ 2 \ 2 \ 1)'\)</span>:</p>
@@ -379,7 +389,7 @@ descr_h &lt;- as.data.frame(descr_h)
 # Monta a tabela com os intervalos de credibilidade    #
 ########################################################
 
-HPDI &lt;- matrix(0, ncol = 3, nrow = 5)
+HPDI &lt;- matrix(0, ncol = 4, nrow = 5)
 
 HPDI[,1] &lt;- c(paste0(beta,&quot;_1&quot;), 
                 paste0(beta,&quot;_2&quot;),
@@ -388,11 +398,12 @@ HPDI[,1] &lt;- c(paste0(beta,&quot;_1&quot;),
                 paste0(beta,&quot;_5&quot;))
 
 for (i in 1:5){
-  HPDI[i,2] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI95[i,1],2),&quot;, &quot;,round(resultados_in$HPDI95[i,2],2),&quot;]&quot;)
-  HPDI[i,3] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI99[i,1],2),&quot;, &quot;,round(resultados_in$HPDI99[i,2],2),&quot;]&quot;)
+  HPDI[i,2] &lt;- paste0(round(resultados_in$probpos[i],2))
+  HPDI[i,3] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI95[i,1],2),&quot;, &quot;,round(resultados_in$HPDI95[i,2],2),&quot;]&quot;)
+  HPDI[i,4] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI99[i,1],2),&quot;, &quot;,round(resultados_in$HPDI99[i,2],2),&quot;]&quot;)
 }
 
-colnames(HPDI) &lt;- c(&quot;Parâmetro&quot;, &quot;95% HPDI&quot;, &quot;99% HPDI&quot;)
+colnames(HPDI) &lt;- c(&quot;Parâmetro&quot;, &quot;p(beta_j&gt;0|y)&quot;, &quot;95% HPDI&quot;, &quot;99% HPDI&quot;)
 
 HPDI &lt;- as.data.frame(HPDI)
 
@@ -572,7 +583,7 @@ Desv. Padrão
 1.6e-08
 </td>
 <td>
-3.372e-20
+1.106e-11
 </td>
 </tr>
 <tr>
@@ -583,12 +594,15 @@ Desv. Padrão
 <pre class="r"><code>stargazer(HPDI, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')</code></pre>
 <table style="text-align:center">
 <tr>
-<td colspan="3" style="border-bottom: 1px solid black">
+<td colspan="4" style="border-bottom: 1px solid black">
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 Parâmetro
+</td>
+<td>
+p(beta_j&gt; 0| y)
 </td>
 <td>
 95% HPDI
@@ -598,12 +612,15 @@ Parâmetro
 </td>
 </tr>
 <tr>
-<td colspan="3" style="border-bottom: 1px solid black">
+<td colspan="4" style="border-bottom: 1px solid black">
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 ß_1
+</td>
+<td>
+0.13
 </td>
 <td>
 [-10969.27, 2899.17]
@@ -617,6 +634,9 @@ Parâmetro
 ß_2
 </td>
 <td>
+1
+</td>
+<td>
 [4.71, 6.15]
 </td>
 <td>
@@ -626,6 +646,9 @@ Parâmetro
 <tr>
 <td style="text-align:left">
 ß_3
+</td>
+<td>
+0.99
 </td>
 <td>
 [559.29, 5214.34]
@@ -639,6 +662,9 @@ Parâmetro
 ß_4
 </td>
 <td>
+1
+</td>
+<td>
 [13610.2, 20320.27]
 </td>
 <td>
@@ -650,6 +676,9 @@ Parâmetro
 ß_5
 </td>
 <td>
+1
+</td>
+<td>
 [5682.82, 9599.65]
 </td>
 <td>
@@ -657,7 +686,7 @@ Parâmetro
 </td>
 </tr>
 <tr>
-<td colspan="3" style="border-bottom: 1px solid black">
+<td colspan="4" style="border-bottom: 1px solid black">
 </td>
 </tr>
 </table>

@@ -104,7 +104,7 @@ head(X)
 #precos_cor <- c(65000, 82000, 60000, 50000, 110000)
 
 # Resolve o sistema AX = B para encontrar as médias a priori
-#b0_ni  <- solve(corretor, precos_cor) # Priori Não Informativa
+#bo_ni  <- solve(corretor, precos_cor) # Priori Não Informativa
 
 # Seta uma priori informativa
 b0_in   <- c(0,10, 5000, 10000, 10000) # Priori Informativa
@@ -139,6 +139,8 @@ conjugada_natural <- function(Y, X, nu0, s20, B0, V0, varargin = NULL) {
   CovMQO <- as.numeric(s2) * iXX                          # Matriz de covariância do beta de MQO
   stdMQO <- sqrt(diag(CovMQO))                            # Desvio padrão das estimativas de MQO
   
+  ########## DEBUG: Até aqui bate com o do Guilherme
+  
   # Parâmetros da posteriori
   
   nu1 <- nu0 + N # Graus de liberdade
@@ -147,22 +149,28 @@ conjugada_natural <- function(Y, X, nu0, s20, B0, V0, varargin = NULL) {
   } else {
     iV0 <- solve(V0) # Precisão a posteriori
   }
+  ############ DEBUG: Até aqui, depois de corrigir V0 do Guilherme, funcionou
   
   iV1   <- iV0 + XX    # Inverso da escala a posteriori
   V1    <- solve(iV1)  # Escala a posteriori
   B1    <- V1 %*% (iV0 %*% B0 + XX %*% BMQO)
   nus21 <- nu0 * s20 + nu * s2
   
+  ############ DEBUG: Até aqui, funcionou
+  
   if (det(iV0) > 0) {
     nus21 <- nus21 + t(BMQO - B0) %*% solve(V0 + iXX) %*% (BMQO - B0) # SQR a posteriori
   }
   
   s21 <- nus21/nu1 
+  ############ DEBUG: Até aqui, funcionou
   
   # Parâmetros da distribuição posterior marginal beta
   
   CovB <- V1 * as.numeric(nus21/(nu1-2))  # Variância da distribuição t
   stdB <- sqrt(diag(CovB))    # Desvio padrão da posteriori marginal de beta
+  
+  ############ DEBUG: Até aqui, funcionou
   
   # Calcula os intervalos de maior densidade a posteriori de 95% e 99%
   
@@ -174,17 +182,19 @@ conjugada_natural <- function(Y, X, nu0, s20, B0, V0, varargin = NULL) {
   
   # Para o futuro - Calcula a probabilidade de que cada beta é positivo
   
-  #probpos=vector()
+  probpos=vector()
 
-  #for (i in 1:k){
-  #  tnorm = -B1[i,1]/sqrt(s21*V1[i,i])
-  #  probpos[i] = 1 - dt(tnorm,nu1)
-#}
+  for (i in 1:k){
+    tnorm = -B1[i,1]/sqrt(s21*V1[i,i])
+    probpos[i] = 1 - pt(tnorm,nu1)
+  }
   
   # Parâmetros da distribuição posterior marginal de h
   
   h1    <- 1/s21            # Média da distribuição gama que determina h
-  h1var <- 2/(s21*nus21)    # Variância da distribuição a posteriori marginal de h
+  h1var <- 2/(nus21)    # Variância da distribuição a posteriori marginal de h
+  
+  ############ DEBUG: Até aqui, funcionou
   
   # Logaritmo da função de verossimilhança marginal
   
@@ -203,7 +213,7 @@ conjugada_natural <- function(Y, X, nu0, s20, B0, V0, varargin = NULL) {
     Varestrela <- VYestrela * nu1/(nu1 - 2)                # Variância da previsão
   }
   
-  return(list(B1=B1, V1=V1, nu1=nu1, s21=s21, CovB=CovB, h1=h1, h1var=h1var, lmlik = lmlik, HPDI95 = HPDI95, HPDI99 = HPDI99, previsao = Yestrela, varprev = Varestrela, escalaprev = VYestrela, BMQO = BMQO, stdMQO = stdMQO))
+  return(list(B1=B1, V1=V1, nu1=nu1, s21=s21, CovB=CovB, h1=h1, h1var=h1var, lmlik = lmlik, HPDI95 = HPDI95, HPDI99 = HPDI99, previsao = Yestrela, varprev = Varestrela, escalaprev = VYestrela, BMQO = BMQO, stdMQO = stdMQO, probpos = probpos))
   
 }
 ```
@@ -263,7 +273,7 @@ descr_h <- as.data.frame(descr_h)
 # Monta a tabela com os intervalos de credibilidade    #
 ########################################################
 
-HPDI <- matrix(0, ncol = 3, nrow = 5)
+HPDI <- matrix(0, ncol = 4, nrow = 5)
 
 HPDI[,1] <- c(paste0(beta,"_1"), 
                 paste0(beta,"_2"),
@@ -272,11 +282,12 @@ HPDI[,1] <- c(paste0(beta,"_1"),
                 paste0(beta,"_5"))
 
 for (i in 1:5){
-  HPDI[i,2] <- paste0("[",round(resultados_in$HPDI95[i,1],2),", ",round(resultados_in$HPDI95[i,2],2),"]")
-  HPDI[i,3] <- paste0("[",round(resultados_in$HPDI99[i,1],2),", ",round(resultados_in$HPDI99[i,2],2),"]")
+  HPDI[i,2] <- paste0(round(resultados_in$probpos[i],2))
+  HPDI[i,3] <- paste0("[",round(resultados_in$HPDI95[i,1],2),", ",round(resultados_in$HPDI95[i,2],2),"]")
+  HPDI[i,4] <- paste0("[",round(resultados_in$HPDI99[i,1],2),", ",round(resultados_in$HPDI99[i,2],2),"]")
 }
 
-colnames(HPDI) <- c("Parâmetro", "95% HPDI", "99% HPDI")
+colnames(HPDI) <- c("Parâmetro", "p(beta_j>0|y)", "95% HPDI", "99% HPDI")
 
 HPDI <- as.data.frame(HPDI)
 
