@@ -97,14 +97,23 @@ head(X)
 ## Priori conjugada natural informativa
 
 ```{r}
+
+###########################################
+# Determinando a priori do especialista   #
+###########################################
+
 # Matriz com as características perguntadas ao corretor
-#corretor   <- rbind(c(1, 4000, 2, 1, 1), c(1, 5000, 2, 2, 1), c(1, 3800, 1, 1, 1),
-#                  c(1, 3000, 1, 1, 1), c(1, 6000, 2, 2, 2))
+corretor   <- rbind(c(1, 4000, 2, 1, 1), c(1, 5000, 2, 2, 1), c(1, 3800, 1, 1, 1),
+                  c(1, 3000, 1, 1, 1), c(1, 6000, 2, 2, 2))
 # Palpites de preços do corretor
-#precos_cor <- c(65000, 82000, 60000, 50000, 110000)
+precos_cor <- c(65000, 82000, 60000, 50000, 110000)
 
 # Resolve o sistema AX = B para encontrar as médias a priori
-#bo_ni  <- solve(corretor, precos_cor) # Priori Não Informativa
+b0_cor  <- solve(corretor, precos_cor) # Priori com informações do corretor
+
+#############################################
+# Priori informativa usada no livro         #
+#############################################
 
 # Seta uma priori informativa
 b0_in   <- c(0,10, 5000, 10000, 10000) # Priori Informativa
@@ -117,7 +126,13 @@ stdh0 <- 2/(s02*nu0)
 # Para encontrar os elementos da matriz V, utilizamos a fórmula do texto
 cons    <- (nu0 * s02)/(nu0-2)
 varbeta <- c(10000^2, 25, 2500^2, 5000^2, 5000^2)
-V0      <- diag(5)*(varbeta/cons) # Matriz de escala da priori
+V0_in   <- diag(5)*(varbeta/cons) # Matriz de escala da priori
+
+##############################################
+# Priori não informativa                     #
+##############################################
+
+V0_ni <- 0
 
 #Xestrela <- c(1,5000,2,2,1)
 #Y <- dados[,1]
@@ -144,8 +159,8 @@ conjugada_natural <- function(Y, X, nu0, s20, B0, V0, varargin = NULL) {
   # Parâmetros da posteriori
   
   nu1 <- nu0 + N # Graus de liberdade
-  if (det(V0) == Inf){
-    iV0 <- 0
+  if (V0 == 0){
+    iV0 <- diag(k)*0
   } else {
     iV0 <- solve(V0) # Precisão a posteriori
   }
@@ -153,13 +168,19 @@ conjugada_natural <- function(Y, X, nu0, s20, B0, V0, varargin = NULL) {
   
   iV1   <- iV0 + XX    # Inverso da escala a posteriori
   V1    <- solve(iV1)  # Escala a posteriori
-  B1    <- V1 %*% (iV0 %*% B0 + XX %*% BMQO)
+  #if (dim(iV0) == 1) {
+  #  B1    <- V1 %*% (XX %*% BMQO)
+  #} else {
+    B1    <- V1 %*% (iV0 %*% B0 + XX %*% BMQO)
+  #}
   nus21 <- nu0 * s20 + nu * s2
   
   ############ DEBUG: Até aqui, funcionou
   
   if (det(iV0) > 0) {
     nus21 <- nus21 + t(BMQO - B0) %*% solve(V0 + iXX) %*% (BMQO - B0) # SQR a posteriori
+  } else {
+    nus21 <- nus21
   }
   
   s21 <- nus21/nu1 
@@ -203,6 +224,8 @@ conjugada_natural <- function(Y, X, nu0, s20, B0, V0, varargin = NULL) {
     c <- lgamma(0.5*nu1) + 
       0.5*nu0*log(nu0*s20)-lgamma(0.5*nu0)-0.5*N*log(pi) # constante de integração
     lmlik <- c+0.5*log(det(V1)/det(V0)) -0.5*nu1*log(nus21)  # log da veross. marginal
+  } else {
+    lmlik <- 0
   }
   
   # Faz previsão de X* é passado como argumento para a função
@@ -218,7 +241,9 @@ conjugada_natural <- function(Y, X, nu0, s20, B0, V0, varargin = NULL) {
 }
 ```
 
-Faz os cálculos baseado nos valores a priori e previsão para o vetor $X^* = (1 \ 5000 \ 2 \ 2 \ 1)'$:
+## Priori informativa 1
+
+Faz os cálculos baseado nos valores a priori e previsão para o vetor $X^* = (1 \ 5000 \ 2 \ 2 \ 1)'$ considerando a priori do livro (informativa):
 
 ```{r, results='asis', warning = FALSE, message = FALSE}
 list.of.packages <- c("knitr", "stargazer")
@@ -228,7 +253,7 @@ library(knitr, quietly = T)
 library(stargazer, quietly = T)
 
 novos_dados <- c(1, 5000, 2, 2, 1)
-resultados_in  <- conjugada_natural(dados[,1], X, nu0, s02, b0_in, V0, novos_dados)
+resultados_in  <- conjugada_natural(dados[,1], X, nu0, s02, b0_in, V0_in, novos_dados)
 beta='\u03b2'
 
 #############################################################
@@ -246,9 +271,9 @@ colnames(medias_betas) <- c("Parâmetro", "Priori Inf.", "Posteriori")
 
 for (i in 1:5){
   medias_betas[(2*i)-1,2]   <- b0_in[i]
-  medias_betas[(2*i),2]     <- round(sqrt(varbeta[i]), 4)
+  medias_betas[(2*i),2]     <- round(sqrt(varbeta[i]), 2)
   medias_betas[(2*i)-1,3]   <- round(resultados_in$B1[i],2)
-  medias_betas[(2*i),3]     <- round(sqrt(diag(resultados_in$CovB)[i]), 4)
+  medias_betas[(2*i),3]     <- round(sqrt(diag(resultados_in$CovB)[i]), 2)
 }
 
 medias_betas <- as.data.frame(medias_betas)
@@ -283,8 +308,168 @@ HPDI[,1] <- c(paste0(beta,"_1"),
 
 for (i in 1:5){
   HPDI[i,2] <- paste0(round(resultados_in$probpos[i],2))
-  HPDI[i,3] <- paste0("[",round(resultados_in$HPDI95[i,1],2),", ",round(resultados_in$HPDI95[i,2],2),"]")
-  HPDI[i,4] <- paste0("[",round(resultados_in$HPDI99[i,1],2),", ",round(resultados_in$HPDI99[i,2],2),"]")
+  HPDI[i,3] <- paste0("[",round(resultados_in$HPDI95[i,1],0),", ",round(resultados_in$HPDI95[i,2],0),"]")
+  HPDI[i,4] <- paste0("[",round(resultados_in$HPDI99[i,1],0),", ",round(resultados_in$HPDI99[i,2],0),"]")
+}
+
+colnames(HPDI) <- c("Parâmetro", "p(beta_j>0|y)", "95% HPDI", "99% HPDI")
+
+HPDI <- as.data.frame(HPDI)
+
+stargazer(medias_betas, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
+stargazer(descr_h, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
+stargazer(HPDI, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
+```
+
+# Priori informativa 2 (não está no livro)
+
+Faz os cálculos baseado nos valores a priori e previsão para o vetor $X^* = (1 \ 5000 \ 2 \ 2 \ 1)'$ considerando a priori do livro (informativa com palpite do corretor):
+
+```{r, results='asis', warning = FALSE, message = FALSE}
+list.of.packages <- c("knitr", "stargazer")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+library(knitr, quietly = T)
+library(stargazer, quietly = T)
+
+novos_dados <- c(1, 5000, 2, 2, 1)
+resultados_in  <- conjugada_natural(dados[,1], X, nu0, s02, b0_cor, V0_in, novos_dados)
+beta='\u03b2'
+
+#############################################################
+# Monta a tabela de médias a priori e posteriori dos betas  #
+#############################################################
+
+medias_betas     <- matrix(0, ncol = 3, nrow = 10)
+medias_betas[,1] <- c(paste0(beta,"_1"), paste0("sd[",beta,"_1","]"), 
+                paste0(beta,"_2"), paste0("sd[",beta,"_2","]"),
+                paste0(beta,"_3"), paste0("sd[",beta,"_3","]"),
+                paste0(beta,"_4"), paste0("sd[",beta,"_4","]"),
+                paste0(beta,"_5"), paste0("sd[",beta,"_5","]"))
+
+colnames(medias_betas) <- c("Parâmetro", "Priori Inf.", "Posteriori")
+
+for (i in 1:5){
+  medias_betas[(2*i)-1,2]   <- b0_in[i]
+  medias_betas[(2*i),2]     <- round(sqrt(varbeta[i]), 2)
+  medias_betas[(2*i)-1,3]   <- round(resultados_in$B1[i],2)
+  medias_betas[(2*i),3]     <- round(sqrt(diag(resultados_in$CovB)[i]), 2)
+}
+
+medias_betas <- as.data.frame(medias_betas)
+
+#########################################################
+# Monta a tabela de médias a priori e posteriori de h   #
+#########################################################
+
+descr_h           <- matrix(0, ncol = 3, nrow = 2)
+colnames(descr_h) <- c("Medida", "Priori Inf.", "Posteriori")
+
+descr_h[,1] <- c("Média", "Desv. Padrão")
+
+descr_h[1,2] <- formatC(h0)
+descr_h[2,2] <- formatC(stdh0)
+descr_h[1,3] <- formatC(resultados_in$h1)
+descr_h[2,3] <- formatC(resultados_in$h1var)
+
+descr_h <- as.data.frame(descr_h)
+
+########################################################
+# Monta a tabela com os intervalos de credibilidade    #
+########################################################
+
+HPDI <- matrix(0, ncol = 4, nrow = 5)
+
+HPDI[,1] <- c(paste0(beta,"_1"), 
+                paste0(beta,"_2"),
+                paste0(beta,"_3"),
+                paste0(beta,"_4"),
+                paste0(beta,"_5"))
+
+for (i in 1:5){
+  HPDI[i,2] <- paste0(round(resultados_in$probpos[i],2))
+  HPDI[i,3] <- paste0("[",round(resultados_in$HPDI95[i,1],0),", ",round(resultados_in$HPDI95[i,2],0),"]")
+  HPDI[i,4] <- paste0("[",round(resultados_in$HPDI99[i,1],0),", ",round(resultados_in$HPDI99[i,2],0),"]")
+}
+
+colnames(HPDI) <- c("Parâmetro", "p(beta_j>0|y)", "95% HPDI", "99% HPDI")
+
+HPDI <- as.data.frame(HPDI)
+
+stargazer(medias_betas, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
+stargazer(descr_h, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
+stargazer(HPDI, summary=FALSE, rownames = FALSE, header = FALSE, type = 'html')
+```
+
+## Priori não informativa
+
+Faz os cálculos considerando a priori do livro, porém mudando a matriz de escala para ela ser não informativa:
+
+```{r, results='asis', warning = FALSE, message = FALSE}
+list.of.packages <- c("knitr", "stargazer")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+library(knitr, quietly = T)
+library(stargazer, quietly = T)
+
+novos_dados <- c(1, 5000, 2, 2, 1)
+resultados_in  <- conjugada_natural(dados[,1], X, nu0, s02, b0_in, V0_ni, novos_dados)
+beta='\u03b2'
+
+#############################################################
+# Monta a tabela de médias a priori e posteriori dos betas  #
+#############################################################
+
+medias_betas     <- matrix(0, ncol = 3, nrow = 10)
+medias_betas[,1] <- c(paste0(beta,"_1"), paste0("sd[",beta,"_1","]"), 
+                paste0(beta,"_2"), paste0("sd[",beta,"_2","]"),
+                paste0(beta,"_3"), paste0("sd[",beta,"_3","]"),
+                paste0(beta,"_4"), paste0("sd[",beta,"_4","]"),
+                paste0(beta,"_5"), paste0("sd[",beta,"_5","]"))
+
+colnames(medias_betas) <- c("Parâmetro", "Priori Inf.", "Posteriori")
+
+for (i in 1:5){
+  medias_betas[(2*i)-1,2]   <- b0_in[i]
+  medias_betas[(2*i),2]     <- round(sqrt(varbeta[i]), 2)
+  medias_betas[(2*i)-1,3]   <- round(resultados_in$B1[i],2)
+  medias_betas[(2*i),3]     <- round(sqrt(diag(resultados_in$CovB)[i]), 2)
+}
+
+medias_betas <- as.data.frame(medias_betas)
+
+#########################################################
+# Monta a tabela de médias a priori e posteriori de h   #
+#########################################################
+
+descr_h           <- matrix(0, ncol = 3, nrow = 2)
+colnames(descr_h) <- c("Medida", "Priori Inf.", "Posteriori")
+
+descr_h[,1] <- c("Média", "Desv. Padrão")
+
+descr_h[1,2] <- formatC(h0)
+descr_h[2,2] <- formatC(stdh0)
+descr_h[1,3] <- formatC(resultados_in$h1)
+descr_h[2,3] <- formatC(resultados_in$h1var)
+
+descr_h <- as.data.frame(descr_h)
+
+########################################################
+# Monta a tabela com os intervalos de credibilidade    #
+########################################################
+
+HPDI <- matrix(0, ncol = 4, nrow = 5)
+
+HPDI[,1] <- c(paste0(beta,"_1"), 
+                paste0(beta,"_2"),
+                paste0(beta,"_3"),
+                paste0(beta,"_4"),
+                paste0(beta,"_5"))
+
+for (i in 1:5){
+  HPDI[i,2] <- paste0(round(resultados_in$probpos[i],2))
+  HPDI[i,3] <- paste0("[",round(resultados_in$HPDI95[i,1],0),", ",round(resultados_in$HPDI95[i,2],0),"]")
+  HPDI[i,4] <- paste0("[",round(resultados_in$HPDI99[i,1],0),", ",round(resultados_in$HPDI99[i,2],0),"]")
 }
 
 colnames(HPDI) <- c("Parâmetro", "p(beta_j>0|y)", "95% HPDI", "99% HPDI")
