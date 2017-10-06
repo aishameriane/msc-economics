@@ -217,8 +217,8 @@ head(X)</code></pre>
 ## [5,]    1 6360    2    1    1
 ## [6,]    1 4160    3    1    1</code></pre>
 </div>
-<div id="priori-conjugada-natural-informativa" class="section level2">
-<h2>Priori conjugada natural informativa</h2>
+<div id="priori-conjugada-natural" class="section level2">
+<h2>Priori conjugada natural</h2>
 <pre class="r"><code>###########################################
 # Determinando a priori do especialista   #
 ###########################################
@@ -273,8 +273,6 @@ V0_ni &lt;- 0
   CovMQO &lt;- as.numeric(s2) * iXX                          # Matriz de covariância do beta de MQO
   stdMQO &lt;- sqrt(diag(CovMQO))                            # Desvio padrão das estimativas de MQO
   
-  ########## DEBUG: Até aqui bate com o do Guilherme
-  
   # Parâmetros da posteriori
   
   nu1 &lt;- nu0 + N # Graus de liberdade
@@ -283,18 +281,11 @@ V0_ni &lt;- 0
   } else {
     iV0 &lt;- solve(V0) # Precisão a posteriori
   }
-  ############ DEBUG: Até aqui, depois de corrigir V0 do Guilherme, funcionou
   
   iV1   &lt;- iV0 + XX    # Inverso da escala a posteriori
   V1    &lt;- solve(iV1)  # Escala a posteriori
-  #if (dim(iV0) == 1) {
-  #  B1    &lt;- V1 %*% (XX %*% BMQO)
-  #} else {
-    B1    &lt;- V1 %*% (iV0 %*% B0 + XX %*% BMQO)
-  #}
+  B1    &lt;- V1 %*% (iV0 %*% B0 + XX %*% BMQO)
   nus21 &lt;- nu0 * s20 + nu * s2
-  
-  ############ DEBUG: Até aqui, funcionou
   
   if (det(iV0) &gt; 0) {
     nus21 &lt;- nus21 + t(BMQO - B0) %*% solve(V0 + iXX) %*% (BMQO - B0) # SQR a posteriori
@@ -303,14 +294,11 @@ V0_ni &lt;- 0
   }
   
   s21 &lt;- nus21/nu1 
-  ############ DEBUG: Até aqui, funcionou
   
   # Parâmetros da distribuição posterior marginal beta
   
   CovB &lt;- V1 * as.numeric(nus21/(nu1-2))  # Variância da distribuição t
   stdB &lt;- sqrt(diag(CovB))    # Desvio padrão da posteriori marginal de beta
-  
-  ############ DEBUG: Até aqui, funcionou
   
   # Calcula os intervalos de maior densidade a posteriori de 95% e 99%
   
@@ -319,8 +307,6 @@ V0_ni &lt;- 0
   
   HPDI95  &lt;- round(cbind(B1 - lim95*stdB, B1 + lim95*stdB),4)
   HPDI99  &lt;- round(cbind(B1 - lim99*stdB, B1 + lim99*stdB),4)
-  
-  # Para o futuro - Calcula a probabilidade de que cada beta é positivo
   
   probpos=vector()
 
@@ -333,8 +319,6 @@ V0_ni &lt;- 0
   
   h1    &lt;- 1/s21            # Média da distribuição gama que determina h
   h1var &lt;- 2/(nus21)    # Variância da distribuição a posteriori marginal de h
-  
-  ############ DEBUG: Até aqui, funcionou
   
   # Logaritmo da função de verossimilhança marginal
   
@@ -359,8 +343,8 @@ V0_ni &lt;- 0
   
 }</code></pre>
 </div>
-<div id="priori-informativa-1" class="section level2">
-<h2>Priori informativa 1</h2>
+<div id="priori-informativa" class="section level2">
+<h2>Priori informativa</h2>
 <p>Faz os cálculos baseado nos valores a priori e previsão para o vetor <span class="math inline">\(X^* = (1 \ 5000 \ 2 \ 2 \ 1)'\)</span> considerando a priori do livro (informativa):</p>
 <pre class="r"><code>list.of.packages &lt;- c(&quot;knitr&quot;, &quot;stargazer&quot;)
 new.packages &lt;- list.of.packages[!(list.of.packages %in% installed.packages()[,&quot;Package&quot;])]
@@ -406,7 +390,7 @@ descr_h[,1] &lt;- c(&quot;Média&quot;, &quot;Desv. Padrão&quot;)
 descr_h[1,2] &lt;- formatC(h0)
 descr_h[2,2] &lt;- formatC(stdh0)
 descr_h[1,3] &lt;- formatC(resultados_in$h1)
-descr_h[2,3] &lt;- formatC(resultados_in$h1var)
+descr_h[2,3] &lt;- formatC(sqrt(resultados_in$h1var))
 
 descr_h &lt;- as.data.frame(descr_h)
 
@@ -424,8 +408,8 @@ HPDI[,1] &lt;- c(paste0(beta,&quot;_1&quot;),
 
 for (i in 1:5){
   HPDI[i,2] &lt;- paste0(round(resultados_in$probpos[i],2))
-  HPDI[i,3] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI95[i,1],0),&quot;, &quot;,round(resultados_in$HPDI95[i,2],0),&quot;]&quot;)
-  HPDI[i,4] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI99[i,1],0),&quot;, &quot;,round(resultados_in$HPDI99[i,2],0),&quot;]&quot;)
+  HPDI[i,3] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI95[i,1],2),&quot;, &quot;,round(resultados_in$HPDI95[i,2],2),&quot;]&quot;)
+  HPDI[i,4] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI99[i,1],2),&quot;, &quot;,round(resultados_in$HPDI99[i,2],2),&quot;]&quot;)
 }
 
 colnames(HPDI) &lt;- c(&quot;Parâmetro&quot;, &quot;p(beta_j&gt;0|y)&quot;, &quot;95% HPDI&quot;, &quot;99% HPDI&quot;)
@@ -608,7 +592,7 @@ Desv. Padrão
 1.6e-08
 </td>
 <td>
-1.106e-11
+3.326e-06
 </td>
 </tr>
 <tr>
@@ -648,10 +632,10 @@ p(beta_j&gt; 0| y)
 0.13
 </td>
 <td>
-[-10969, 2899]
+[-10969.27, 2899.17]
 </td>
 <td>
-[-13160, 5090]
+[-13159.75, 5089.64]
 </td>
 </tr>
 <tr>
@@ -662,10 +646,10 @@ p(beta_j&gt; 0| y)
 1
 </td>
 <td>
-[5, 6]
+[4.71, 6.15]
 </td>
 <td>
-[4, 6]
+[4.49, 6.38]
 </td>
 </tr>
 <tr>
@@ -676,10 +660,10 @@ p(beta_j&gt; 0| y)
 0.99
 </td>
 <td>
-[559, 5214]
+[559.29, 5214.34]
 </td>
 <td>
-[-176, 5950]
+[-175.96, 5949.58]
 </td>
 </tr>
 <tr>
@@ -690,10 +674,10 @@ p(beta_j&gt; 0| y)
 1
 </td>
 <td>
-[13610, 20320]
+[13610.2, 20320.27]
 </td>
 <td>
-[12550, 21380]
+[12550.37, 21380.1]
 </td>
 </tr>
 <tr>
@@ -704,10 +688,10 @@ p(beta_j&gt; 0| y)
 1
 </td>
 <td>
-[5683, 9600]
+[5682.82, 9599.65]
 </td>
 <td>
-[5064, 10218]
+[5064.16, 10218.3]
 </td>
 </tr>
 <tr>
@@ -764,7 +748,7 @@ descr_h[,1] &lt;- c(&quot;Média&quot;, &quot;Desv. Padrão&quot;)
 descr_h[1,2] &lt;- formatC(h0)
 descr_h[2,2] &lt;- formatC(stdh0)
 descr_h[1,3] &lt;- formatC(resultados_in$h1)
-descr_h[2,3] &lt;- formatC(resultados_in$h1var)
+descr_h[2,3] &lt;- formatC(sqrt(resultados_in$h1var))
 
 descr_h &lt;- as.data.frame(descr_h)
 
@@ -782,8 +766,8 @@ HPDI[,1] &lt;- c(paste0(beta,&quot;_1&quot;),
 
 for (i in 1:5){
   HPDI[i,2] &lt;- paste0(round(resultados_in$probpos[i],2))
-  HPDI[i,3] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI95[i,1],0),&quot;, &quot;,round(resultados_in$HPDI95[i,2],0),&quot;]&quot;)
-  HPDI[i,4] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI99[i,1],0),&quot;, &quot;,round(resultados_in$HPDI99[i,2],0),&quot;]&quot;)
+  HPDI[i,3] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI95[i,1],2),&quot;, &quot;,round(resultados_in$HPDI95[i,2],2),&quot;]&quot;)
+  HPDI[i,4] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI99[i,1],2),&quot;, &quot;,round(resultados_in$HPDI99[i,2],2),&quot;]&quot;)
 }
 
 colnames(HPDI) &lt;- c(&quot;Parâmetro&quot;, &quot;p(beta_j&gt;0|y)&quot;, &quot;95% HPDI&quot;, &quot;99% HPDI&quot;)
@@ -966,7 +950,7 @@ Desv. Padrão
 1.6e-08
 </td>
 <td>
-1.105e-11
+3.323e-06
 </td>
 </tr>
 <tr>
@@ -1006,10 +990,10 @@ p(beta_j&gt; 0| y)
 0.13
 </td>
 <td>
-[-10983, 2896]
+[-10983.41, 2896.45]
 </td>
 <td>
-[-13176, 5089]
+[-13175.69, 5088.73]
 </td>
 </tr>
 <tr>
@@ -1020,10 +1004,10 @@ p(beta_j&gt; 0| y)
 1
 </td>
 <td>
-[5, 6]
+[4.72, 6.16]
 </td>
 <td>
-[4, 6]
+[4.5, 6.39]
 </td>
 </tr>
 <tr>
@@ -1034,10 +1018,10 @@ p(beta_j&gt; 0| y)
 0.99
 </td>
 <td>
-[523, 5182]
+[522.69, 5181.57]
 </td>
 <td>
-[-213, 5917]
+[-213.16, 5917.42]
 </td>
 </tr>
 <tr>
@@ -1048,10 +1032,10 @@ p(beta_j&gt; 0| y)
 1
 </td>
 <td>
-[13556, 20271]
+[13555.86, 20271.45]
 </td>
 <td>
-[12495, 21332]
+[12495.15, 21332.15]
 </td>
 </tr>
 <tr>
@@ -1062,10 +1046,10 @@ p(beta_j&gt; 0| y)
 1
 </td>
 <td>
-[5741, 9661]
+[5740.75, 9660.81]
 </td>
 <td>
-[5122, 10280]
+[5121.59, 10279.98]
 </td>
 </tr>
 <tr>
@@ -1120,7 +1104,7 @@ descr_h[,1] &lt;- c(&quot;Média&quot;, &quot;Desv. Padrão&quot;)
 descr_h[1,2] &lt;- formatC(h0)
 descr_h[2,2] &lt;- formatC(stdh0)
 descr_h[1,3] &lt;- formatC(resultados_in$h1)
-descr_h[2,3] &lt;- formatC(resultados_in$h1var)
+descr_h[2,3] &lt;- formatC(sqrt(resultados_in$h1var))
 
 descr_h &lt;- as.data.frame(descr_h)
 
@@ -1138,8 +1122,8 @@ HPDI[,1] &lt;- c(paste0(beta,&quot;_1&quot;),
 
 for (i in 1:5){
   HPDI[i,2] &lt;- paste0(round(resultados_in$probpos[i],2))
-  HPDI[i,3] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI95[i,1],0),&quot;, &quot;,round(resultados_in$HPDI95[i,2],0),&quot;]&quot;)
-  HPDI[i,4] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI99[i,1],0),&quot;, &quot;,round(resultados_in$HPDI99[i,2],0),&quot;]&quot;)
+  HPDI[i,3] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI95[i,1],2),&quot;, &quot;,round(resultados_in$HPDI95[i,2],2),&quot;]&quot;)
+  HPDI[i,4] &lt;- paste0(&quot;[&quot;,round(resultados_in$HPDI99[i,1],2),&quot;, &quot;,round(resultados_in$HPDI99[i,2],2),&quot;]&quot;)
 }
 
 colnames(HPDI) &lt;- c(&quot;Parâmetro&quot;, &quot;p(beta_j&gt;0|y)&quot;, &quot;95% HPDI&quot;, &quot;99% HPDI&quot;)
@@ -1322,7 +1306,7 @@ Desv. Padrão
 1.6e-08
 </td>
 <td>
-1.107e-11
+3.328e-06
 </td>
 </tr>
 <tr>
@@ -1362,10 +1346,10 @@ p(beta_j&gt; 0| y)
 0.13
 </td>
 <td>
-[-11038, 3019]
+[-11037.74, 3018.64]
 </td>
 <td>
-[-13258, 5239]
+[-13257.9, 5238.8]
 </td>
 </tr>
 <tr>
@@ -1376,10 +1360,10 @@ p(beta_j&gt; 0| y)
 1
 </td>
 <td>
-[5, 6]
+[4.71, 6.15]
 </td>
 <td>
-[4, 6]
+[4.48, 6.38]
 </td>
 </tr>
 <tr>
@@ -1390,10 +1374,10 @@ p(beta_j&gt; 0| y)
 0.99
 </td>
 <td>
-[455, 5194]
+[455.02, 5194.2]
 </td>
 <td>
-[-294, 5943]
+[-293.52, 5942.74]
 </td>
 </tr>
 <tr>
@@ -1404,10 +1388,10 @@ p(beta_j&gt; 0| y)
 1
 </td>
 <td>
-[13722, 20488]
+[13722.01, 20488.34]
 </td>
 <td>
-[12653, 21557]
+[12653.28, 21557.06]
 </td>
 </tr>
 <tr>
@@ -1418,10 +1402,10 @@ p(beta_j&gt; 0| y)
 1
 </td>
 <td>
-[5669, 9601]
+[5668.75, 9601.04]
 </td>
 <td>
-[5048, 10222]
+[5047.66, 10222.13]
 </td>
 </tr>
 <tr>
