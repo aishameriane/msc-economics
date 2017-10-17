@@ -1,0 +1,283 @@
+---
+title: "Estimating TVP-VARs with MSV using Efficient Importance Sampling"
+author: "A. Schmidt"
+
+header-includes:
+   - \widowpenalties
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+   - \usepackage{calrsfs}
+   - \usepackage{mathrsfs}
+date: "October, 2017"
+output: 
+  ioslides_presentation:
+    self_contained: yes
+    widescreen: yes
+    incremental: true
+    autosize: false
+    fig_width: 7
+    fig_height: 6
+    fig_caption: true
+bibliography: references2.bib
+---
+
+```{css}
+slide {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+```
+```{r deps,include=FALSE}
+# this ensures jquery is loaded
+dep <- htmltools::htmlDependency(name = "jquery", version = "1.11.3", src = system.file("rmd/h/jquery-1.11.3", package='rmarkdown'), script = "jquery.min.js")
+htmltools::attachDependencies(htmltools::tags$span(''), dep)
+```
+
+```{js move-id-background-color}
+$(document).ready(function(){
+    // for every article tag inside a slide tag
+    $("slide > article").each(function(){
+        // copy the article name to the parentNode's (the slide) ID
+        this.parentNode.id=$(this).attr('name');
+    });
+});
+```
+
+
+## Contents
+
+```{r, out.width = "400px", echo=FALSE, fig.align= 'right', eval = FALSE}
+knitr::include_graphics('images\\Imagem3.png')
+```
+
+<img style="float: right;" src="images\Imagem3.png" width="400">
+
+1. Economic motivation
+2. TVP-VARs with MSV
+3. Some existent models
+    * [@cogley_sargent_2001], [@cogley_sargent2005] and [@primiceri2005]
+    * [@philipov_glickman2006a] and [@philipov_glickman2006b]
+4. (Efficient) Importance Sampling 
+5. Next steps
+    
+## Specification of econometric models
+
+* Econometrics is typically concerned with the estimation of relationships that are characterized by 
+$$y_t = F(y_{t-1, x_t, \theta, \varepsilon});$$
+    * The assumption that underlies most estimation theory is that $F$ and $\theta$ will be stable over time [@cooley_prescott1976];
+* Lucas' Critique (1976) is about the inadequacy to assume stability of the model's structure:
+    * If the parameters are fixed, then the model shouldn't be used as "laboratory" to simulate other policies.
+
+## TVP-VAR with MSV
+
+Consider the following state-space representation of a TVP-VAR with MSV:
+
+\[
+\begin{eqnarray}
+y_t &= Z_t\alpha_t + \epsilon_t \qquad \epsilon_t \sim \mathcal{N}_k(\mathbf{0}_k, \Omega_t^{-1}) &\text{(measure eq.)}\tag{01}\\
+\alpha_t &= \alpha_{t-1}+u_t \qquad u_t \sim \mathcal{N}_p(\mathbf{0}_p, Q) & \text{(state transition eq.)}\tag{02}
+\end{eqnarray}
+\]
+
+Some remarks:
+
+* We don't observe $\alpha_t$ directly (latent variable);
+* If $\Omega_t^{-1}$ were non stochastic, the Kalman Filter could be used to obtain the ML function
+    * Since it is not the case, we have an analytically intractable high-dimensional integral
+
+## {.SlideClass #SlideID name=ThisSlide}
+
+```{r background-function,include=FALSE}
+makeBG <- function(id, file)
+{
+    cat(
+        sprintf('<style type="text/css">\n#%s {\nbackground-image: url(%s);\n}\n</style>',
+                id, knitr::image_uri(file))
+    )
+}
+```
+
+```{r results='asis',echo=FALSE}
+makeBG(id='ThisSlide', 'images\\Imagem2.jpg')
+```
+
+## Cogley and Sargent (2001,2005){.smaller}
+
+- Their first work was a TVP-VAR of the form:
+
+- \[
+\begin{eqnarray}
+y_t &= Z_t\alpha_t + \epsilon_t \qquad \epsilon_t \sim \mathcal{N}_k(\mathbf{0}_k, R) \tag{03}\\
+\alpha_t &= \alpha_{t-1}+u_t \qquad u_t \sim \mathcal{N}_p(\mathbf{0}_p, Q) \tag{04}
+\end{eqnarray}
+\]
+
+- After being criticized in (2001) for the lack of MVS in their model, C&S proposed changing $\epsilon_t$ in (03) by $\epsilon_t = R_t^{1/2}\xi_t$, where $\xi_t$ follows a standard normal distribution and $R_t = B^{-1}H_tB^{-1'}$ with:
+
+- \[
+B = 
+\begin{bmatrix}
+   1 & 0 & \cdots & 0 \\
+   \beta_{21} & 1 & \cdots & 0\\
+   \vdots & \vdots & \ddots & \vdots \\
+   \beta_{k1} & \beta_{k2} & \cdots & 1 
+\end{bmatrix}
+\quad
+H_t = 
+\begin{bmatrix}
+   h_{1t} & 0 & \cdots & 0 \\
+   0 & h_{2t} & \cdots & 0\\
+   \vdots & \vdots & \ddots & \vdots \\
+   0 & 0 & \cdots & h_{kt} 
+\end{bmatrix}
+\]
+
+- The elements of $H$ follow driftless, geometric random walks of the form: $ln(h_{it})=ln(h_{it-1})+\sigma_i \eta_{it}$, $\eta_{it} \sim \mathcal{N}(0,1)$.
+
+## Primiceri(2005)
+
+- Same specification as [@cogley_sargent2005] but allowed the covariances in $B$ to evolve over time:
+
+- \[
+B = 
+\begin{bmatrix}
+   1 & 0 & \cdots & 0 \\
+   \beta_{21,t} & 1 & \cdots & 0\\
+   \vdots & \vdots & \ddots & \vdots \\
+   \beta_{k1,t} & \beta_{k2,t} & \cdots & 1 
+\end{bmatrix}
+\qquad
+\text{with } \beta_t = \beta_{t-1} + \upsilon_t\tag{05}
+\]
+
+    - where $\upsilon_t$ are mean-zero normal errors with constant covariance matrix.
+
+- Drawback: (05) is not invariant to the observable variables ($y_t$) ordering!
+    - The problem, therefore, lies in the MSV structure.
+
+## Wishart MSV models {.smaller}
+
+- Uhlig (1997) proposed a model with precision matrix $\Omega_t$ following:
+
+- \[ 
+\Omega_t = \Omega_{t-1}^{1/2'}\Theta_t\Omega_t^{1/2}, \qquad \Theta \sim \mathcal{B}(\nu/2, 1/2)
+\]
+
+    - But this specification does not allows the shocks to have a persistent behavior
+
+- [@philipov_glickman2006a] and [@philipov_glickman2006b] proposes a different specification:
+
+- \[ 
+\Omega_t | \Omega_{t-1} \sim \mathcal{W}(\nu, S_{t-1}),\quad  \text{with } \ S_t = \frac{1}{\nu}A^{1/2}\Omega_t^d A^{1/2'} \tag{06}
+\]
+
+    - where $A$ is a positive definite symmetric matrix containing parameters determining the intertemporal sensitivity of each element of the precision matrix and $d \in [0,1)$ is a scalar that accounts for overall persistence of the process.
+
+- This model is invariant to ordering!
+
+## Proposal
+
+<img style="float: center;" src="images\fusion.gif">
+
+We can incorporate the Wishart MSV à la [@philipov_glickman2006a] in a TVP-VAR structure!
+
+## Proposal {.smaller}
+
+This gives us:
+
+\[
+\begin{eqnarray}
+y_t &= Z_t\alpha_t + \epsilon_t, \quad \epsilon_t \sim \mathcal{N}_k(\mathbf{0}_k, \Omega_t^{-1}) \tag{01}\\
+\alpha_t &= \alpha_{t-1}+u_t, \quad u_t \sim \mathcal{N}_p(\mathbf{0}_p, Q) \tag{02} \\
+\Omega_t | \Omega_{t-1} &\sim \mathcal{W}_k\left(\nu, \frac{1}{\nu}\  A^{1/2} \ \Omega_{t-1}^d \ A^{1/2'} \right) \tag{06}.
+\end{eqnarray}
+\]
+
+- Which leads to the following likelihood form:
+
+- \[
+L_\theta = \int \int \prod\limits_{t=1}^T g_\theta(y_t|\Omega_t, \alpha_t)p_\theta(\alpha_t|\alpha_{t-1})p_\theta(\Omega_t|\Omega_{t-1})d\alpha_T\  d\Omega_T,
+\]
+
+    - for a given sequence $\Omega_T$, the Kalman Filter can be used and the problem is simplified to:
+    
+- \[ 
+L_\theta = \int \prod\limits_{t=1}^T g_\theta(y_t|y_{t-1}, \Omega_t)\ p_\theta(\Omega_t|\Omega_{t-1})\  d\Omega_T.
+\]
+
+- But even with the simplification, it is still a challenge to estimate...
+
+## Importance sampling {.smaller}
+
+Suppose that we want to obtain an estimate for:
+
+\[ \tag{I4}
+I=\int\limits_\Theta g(x)p(\theta|y)d\theta = \int\limits_\Theta \frac{g(x)p(\theta|y)}{m(\theta)}m(\theta) d\theta = \mathbb{E}_m\left[\frac{g(x)p(\theta|y)}{m(\theta)} \right]
+\]
+
+- Where $\theta$ is a random vector with p.d.f. $m(\cdot)$ such as $m(\theta) > 0 \ \forall \ \theta \in D \quad$. Then
+
+    - \[
+    I \approx \hat{I}_S(\theta) = \frac{1}{S} \sum\limits_{i=1}\frac{g(\theta^i)f(\theta^i)}{m_X(\theta)}
+    \]
+    
+- is unbiased for (I4) and its variance is given by $Var[\hat{I}_S] = \int g^2(\theta)\frac{f^2(\theta)}{m(\theta)}d\theta - I^2$
+
+## Importance sampling {.smaller}
+
+```{r, out.width = "600px", echo=FALSE, fig.align= 'center', warning = FALSE}
+library(ggplot2)
+windowsFonts(xkcd=windowsFont("xkcd"))
+
+p9 <- ggplot(data.frame(x = c(0, 1)), aes(x = x)) +
+        stat_function(fun = dbeta, args = list(2, 2),
+                      aes(colour = "Beta 2,2 "), size = 1.5) +
+        stat_function(fun = dunif, args = list(0, 1),
+                      aes(colour = "U 0,1"), size = 1.5) +
+         stat_function(fun = dunif, args = list(0, 5),
+                      aes(colour = "U 0,5"), size = 1.5) +
+        scale_x_continuous(name = "X",
+                              breaks = seq(0, 5, 0.5),
+                              limits=c(0, 5)) +
+        scale_y_continuous(name = "Density") +
+        ggtitle("Beta2,2 x U0,1 x U0,5") +
+        scale_colour_brewer(palette="Set1") +
+        labs(colour = "Distribution") +
+        theme(axis.line = element_line(size=1, colour = "black"),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank(),
+              plot.title=element_text(size = 20, family="xkcd"),
+              text=element_text(size = 16, family="xkcd"),
+              axis.text.x=element_text(colour="black", size = 12),
+              axis.text.y=element_text(colour="black", size = 12))
+p9
+```
+
+## Efficient Importance Sampling
+
+- There are two major questions when working with IS:
+    1. Choosing a parametric class of estimators $\mathcal{M}$; 
+    2. Finding the best parameters that minimize the Monte Carlo variance;
+- EIS [@richard_zhang2007] provides a way to solve (2);
+    - Choosing $\mathcal{M}$ whithin the exponential family gives the advantage to simplify the algorithm to a sequence of OLS estimates;
+    - Since the problem posed is a high dimension integral, we are going to use the *sequencial* form of EIS.
+
+## Next steps
+
+0. _Heal left arm, avoid destroying the other arm_
+1. Implement EIS estimates for [@philipov_glickman2006b] model (_Econometrics II article_);
+2. *Find some data* and implement [@primiceri2005] model (_Macro II article_);
+3. Generalize step one for the TVP-VAR w/ Wishart MSV model combining EIS with Rao-Blackwellization;
+    * Make inferences;
+    * Develop diagnostic tools;
+    * Compare with the benchmark model from step 2.
+
+
+## References {.smaller}
+
+\footnotesize
