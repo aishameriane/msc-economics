@@ -55,22 +55,13 @@ knitr::include_graphics('images\\Imagem3.png')
 
 <img style="float: right;" src="images\Imagem3.png" width="400">
 
-1. Economic motivation
-2. TVP-VARs with MSV
-3. Some existent models
+1. TVP-VARs with MSV
+2. Some existing models
     * [@cogley_sargent_2001], [@cogley_sargent2005] and [@primiceri2005]
     * [@philipov_glickman2006a] and [@philipov_glickman2006b]
-4. (Efficient) Importance Sampling 
-5. Next steps
+3. (Efficient) Importance Sampling 
+4. Next steps
     
-## Specification of econometric models
-
-* Econometrics is typically concerned with the estimation of relationships that are characterized by 
-$$y_t = F(y_{t-1}, x_t, \theta, \varepsilon);$$
-    * The assumption that underlies most estimation theory is that $F$ and $\theta$ will be stable over time [@cooley_prescott1976];
-* Lucas' Critique (1976) is about the inadequacy to assume stability of the model's structure:
-    * If the parameters are fixed, then the model shouldn't be used as "laboratory" to simulate alternative policies.
-
 ## TVP-VAR with MSV
 
 Consider the following state-space representation of a TVP-VAR with MSV:
@@ -88,22 +79,6 @@ Some remarks:
 * If $\Omega_t^{-1}$ were non stochastic, the Kalman Filter could be used to obtain the ML function;
     * Since it is not the case, we have an analytically intractable high-dimensional integral.
 
-## {.SlideClass #SlideID name=ThisSlide}
-
-```{r background-function,include=FALSE}
-makeBG <- function(id, file)
-{
-    cat(
-        sprintf('<style type="text/css">\n#%s {\nbackground-image: url(%s);\n}\n</style>',
-                id, knitr::image_uri(file))
-    )
-}
-```
-
-```{r results='asis',echo=FALSE}
-makeBG(id='ThisSlide', 'images\\Imagem4.png')
-```
-
 ## Cogley and Sargent (2001,2005){.smaller}
 
 - Their first work was a TVP-VAR of the form:
@@ -115,7 +90,7 @@ y_t &= Z_t\alpha_t + \epsilon_t \qquad \epsilon_t \sim \mathcal{N}_k(\mathbf{0}_
 \end{eqnarray}
 \]
 
-- After being criticized in (2001) for the lack of MVS in their model, C&S proposed changing $\epsilon_t$ in (03) by $\epsilon_t = R_t^{1/2}\xi_t$, where $\xi_t$ follows a standard normal distribution and $R_t = B^{-1}H_tB^{-1'}$ with:
+- After being criticized in (2001) for the lack of MVS in their model, C&S proposed changing $\epsilon_t$ in (03) for $\epsilon_t = R_t^{1/2}\xi_t$, where $\xi_t$ follows a standard normal distribution and $R_t = B^{-1}H_tB^{-1'}$ with:
 
 - \[
 B = 
@@ -135,7 +110,7 @@ H_t =
 \end{bmatrix}
 \]
 
-- The elements of $H$ follow driftless, geometric random walks of the form: $$ln(h_{it})=ln(h_{it-1})+\sigma_i \eta_{it}, \eta_{it} \sim \mathcal{N}(0,1).$$
+- The elements of $H$ follow driftless, geometric random walks of the form: $$ln(h_{it})=ln(h_{it-1})+\sigma_i \eta_{it},  \quad \eta_{it} \sim \mathcal{N}(0,1).$$
 
 ## Primiceri(2005)
 
@@ -158,17 +133,9 @@ B_t =
 - <span style="color:red">Drawback:</span> *(05) is not invariant to the observable variables ($y_t$) order!*
     - The problem lies in the MSV structure.
 
-## Wishart MSV models {.smaller}
+## Wishart MSV models
 
-- Uhlig (1997) proposed a model with precision matrix $\Omega_t$ following:
-
-- \[ 
-\Omega_t = \Omega_{t-1}^{1/2'}\Theta_t\Omega_{t-1}^{1/2}, \qquad \Theta \sim \mathcal{B}(\nu/2, 1/2)
-\]
-
-    - But this specification does not allows the shocks to have a persistent behavior.
-
-- [@philipov_glickman2006a] and [@philipov_glickman2006b] proposes a different specification:
+- [@philipov_glickman2006a] and [@philipov_glickman2006b] proposes the following specification:
 
 - \[ 
 \Omega_t | \Omega_{t-1} \sim \mathcal{W}(\nu, S_{t-1}),\quad  \text{with } \ S_t = \frac{1}{\nu}A^{1/2}\Omega_t^d A^{1/2'} \tag{06}
@@ -208,23 +175,7 @@ L_\theta = \int \int \prod\limits_{t=1}^T g_\theta(y_t|\Omega_t, \alpha_t)p_\the
 L_\theta = \int \prod\limits_{t=1}^T g_\theta(y_t|y_{t-1}, \Omega_t)\ p_\theta(\Omega_t|\Omega_{t-1})\  d\Omega_T.
 \]
 
-- But even with the simplification, estimaion is still a challenge...
-
-## Importance sampling {.smaller}
-
-Suppose that we want to obtain an estimate for:
-
-\[ \tag{I4}
-I=\int\limits_\Theta g(x)p(\theta|y)d\theta = \int\limits_\Theta \frac{g(x)p(\theta|y)}{m(\theta)}m(\theta) d\theta = \mathbb{E}_m\left[\frac{g(x)p(\theta|y)}{m(\theta)} \right]
-\]
-
-- Where $\theta$ is a random vector with p.d.f. $m(\cdot)$ such as $m(\theta) > 0 \ \forall \ \theta \in D \quad$. Then
-
-    - \[
-    I \approx \hat{I}_S(\theta) = \frac{1}{S} \sum\limits_{i=1}\frac{g(\theta^i)f(\theta^i)}{m_X(\theta)}
-    \]
-    
-- is unbiased for (I4) and its variance is given by $Var[\hat{I}_S] = \int g^2(\theta)\frac{f^2(\theta)}{m(\theta)}d\theta - I^2$
+- But even with the simplification, estimation is still a challenge...
 
 ## Importance sampling {.smaller}
 
