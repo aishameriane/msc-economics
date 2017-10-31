@@ -1,0 +1,399 @@
+---
+title: "EIS - Pilot Applications"
+author: "A. Schmidt and C. Piazza"
+date: "29 de outubro de 2017"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+output: html_document
+bibliography: references.bib
+---
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { 
+      equationNumbers: {
+ 
+            autoNumber: "all",
+            formatNumber: function (n) {return '9.'+n}
+      } 
+  }
+});
+</script>
+
+
+# Introduction
+
+This notes are based on Richard and Zhang's article: *Efficient high-dimensional importance sampling* [@richard_zhang2007]. This notes are not intended to be my original work, I just made them while studying.
+
+Other texts used are:
+
+- Guilherme Moura PhD Dissertation: *Efficient importance sampling in applied econometrics* [@moura_2010];
+- Robert and Casella's Book: *Monte Carlo Statistical Methods* [@casella_MC];
+- Liesenfeld and Richard's articles: *Improving MCMC, using efficient importance sampling* [@liesenfeld_richard2008] and *Univariate and multivariate stochastic volatility models: estimation and diagnostics* [@liesenfeld_richard2003];
+
+# Importance Sampling (quick review)
+
+I have some stuff on IS here: [Github](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Bayesian-macro/article/self-study/importance-sampling.html). And [here](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Bayesian-macro/lecture_notes/int_num_exemplos.html) I have some of my notes about Monte Carlo Integration. Both are in Portuguese.
+
+Just to introduce notation, assume that we are interested in evaluating an integral of the form:
+
+\[\tag{01}
+G(\delta) = \int_\chi \varphi(x;\delta) dx,
+\]
+with $\varphi: X \times \Delta \to \mathbb{R}^*_+$, whence $\varphi$ denotes a [density kernel](https://en.wikipedia.org/wiki/Kernel_(statistics)) (I personally like the discussion in Bauwens, Lubrano and Richard's Book *Bayesian inference in dynamic econometric models* [@BLR2000] - I think it's on chapter 2) with support $\chi$ and one needs to compute its integrating constant $G$ as a function of $\delta$. Recall that the kernel is the part of density that depends on the random variable and the constant is everything else, whose role is to standardize the density in order to integrate one.
+
+It is often the case that the statistical formulation of the model under consideration produces an initial factorization of the form:
+
+\[\tag{02}
+\varphi(x;\delta) = g(x; \delta) \cdot p(x|\delta),
+\]
+where $p$ denotes a density for $x$ given $\delta$ which is directly amenable to MC simulation. It is referred in the paper as *initial sampler*.
+
+Using MC integration, the estimator of $G(\delta)$ is given by:
+
+\[\tag{03}
+\bar{G_s}(\delta) = \frac{1}{S} \sum\limits_{i=1}^S g(\tilde{x}_i\ ; \delta),
+\]
+where $\{\tilde{x}_i\ ; \ i: 1 \to S \}$ denotes a set of $S$ i.i.d. draws from $p$. One drawback of MC methods is the sampling variance. If the MC sampling variance of $g$ on $p$ is large, one will need a bigger $S$ to attain a good approximation.
+
+Importance sampling consists of replacing the initial sampler $p$ by an auxiliary IS sampler $m(x|a)$ and rewriting equation (01) as:
+
+\[\tag{03}
+G(\delta) = \int_\chi \frac{\varphi(x \ ; \delta)}{m(x|a)} m(x|a) dx = \int_\chi \omega(x \ ; \delta,a)\cdot m(x|a) dx,
+\]
+
+And the corresponding IS estimator of $G$ is given by:
+
+\[\tag{04}
+\bar{G_{s,m}}(\delta;a) = \frac{1}{S} \sum\limits_{i=1}^S \omega(\tilde{x}_i\ ; \delta, a),
+\]
+where $\{\tilde{x}_i\ ; \ i: 1 \to S \}$ now denotes a set of $S$ i.i.d. draws from $m$.
+
+The main objective is to select a class of $M = \{m(x|a): a \in \mathcal{A} \}$ and a value $a(\delta) \in \mathcal{A}$ which minimizes the MC sampling variance of the ratio $\varphi/m$ on $m$. This variance will be given by (a demonstration can be seen in my Github's notes on IS):
+
+\[\tag{05}
+\bar{V_{s,m}}(\delta;a) = \frac{1}{S}  \int_\chi [\omega(x \ ; \delta,a)-G(\delta)]^2 \cdot m(x|a) dx,
+\]
+
+Two main "problems" arise when dealing with IS: 1) The choice of the class of samplers, $M$; and 2) the selection of a sampler in $M$ that minimizes (05), i.e. the value of $a$ that minimizes the variance of the estimates.
+
+# EIS baseline algorithm
+
+EIS is an algorithm proposed by Richard and Zhang to address the second problem. This means that we will assume that a parametric class $M = \{m(x|a): a \in \mathcal{A} \}$ of samplers was already ~~provided by some god~~ chosen by the researcher. For any given $\delta$, the objective is find the value $a(\delta)$ which minimizes the MC sampling variance of the ratio $\frac{\varphi(x;\delta)}{m(x|a)}$ on draws from $m$. All factors in $\varphi$ and/or $m$ which do not depend on $x$ are regrouped together in the form of a proportionality factor whose logarithm will serve as the (implicit) constant term of the auxiliary EIS regression to be estimated along with $a$.
+
+Since $m$ is a density, it can be written as the ratio between an efficient density kernel, $k(x\ ;\ a)$ within a preassigned class $K = \{k(x\ ;\ a): a \in \mathcal{A} \}$ and a constant as follows:
+
+\[\tag{06}
+m(x|a) = \frac{k(x\ ;\ a)}{\chi(a)} \qquad \text{with } \chi(a)^{-1} =  \int_\chi k(x\ ; a)dx
+\]
+*Aisha's remark*: I added the $-1$ exponent in $\chi$ in order to make sense with section 3.2.
+*Aisha's remark 2:* Had to come back to obtain the same expression for $c$ (eq. 75)
+<span style="color:red">Do we need to correct the examples?</span>
+
+We shall assume here that $\chi(a)$ is known analytically.
+
+(The next part is from Guilherme's Dissertation)
+
+We can rearrange the terms in (05) isolating everything that depends on $a$ as follows:
+
+\[\tag{07}
+\begin{align*}
+\bar{V_{s,m}}(\delta;a) &= \frac{1}{S} \int_\chi [\omega(x \ ; \delta,a)-G(\delta)]^2 \cdot m(x|a) dx \\
+&= \frac{1}{S} \int_\chi [\omega(x \ ; \delta,a)-G(\delta)]^2 \frac{G(\delta)^2}{G(\delta)^2} \cdot m(x|a) dx \\
+&=\frac{1}{S}  G(\delta) \int_\chi \frac{[\omega(x \ ; \delta,a)-G(\delta)]^2}{G(\delta)^2} G(\delta) \cdot m(x|a) dx \\
+&= \frac{1}{S} G(\delta) \int_\chi \left[\frac{\omega(x \ ; \delta,a)-G(\delta)}{G(\delta)} \right]^2 G(\delta) \cdot m(x|a) dx \\
+&=\frac{1}{S} G(\delta) \int_\chi \left[\frac{\omega(x \ ; \delta,a)}{G(\delta)}-1 \right]^2 G(\delta) \cdot m(x|a) dx \\
+&= \frac{1}{S}G(\delta) \int_\chi \left[\frac{\omega(x \ ; \delta,a)^2}{G(\delta)^2}-2\frac{\omega(x \ ; \delta,a)}{G(\delta)} +1 \right] G(\delta) \cdot m(x|a) dx
+\end{align*}
+\]
+
+Now we use the relation $\frac{\varphi(x \ ; \delta)}{m(x|a)} = \omega(x \ ; \delta,a) \Rightarrow m(x|a) = \frac{\varphi(x \ ; \delta)}{\omega(x \ ; \delta,a)}$ to obtain:
+
+\[\tag{08}
+\begin{align*}
+\bar{V_{s,m}}(\delta;a) &= \frac{1}{S}G(\delta) \int_\chi \left[\frac{\omega(x \ ; \delta,a)^2}{G(\delta)^2}-2\frac{\omega(x \ ; \delta,a)}{G(\delta)} +1 \right] G(\delta) \cdot \frac{\varphi(x \ ; \delta)}{\omega(x \ ; \delta,a)} dx \\
+&= \frac{1}{S}G(\delta) \int_\chi \left[\frac{\omega(x \ ; \delta,a)^2}{G(\delta)^2}-2\frac{\omega(x \ ; \delta,a)}{G(\delta)} +1 \right] \frac{G(\delta)}{\omega(x \ ; \delta,a)} \cdot \varphi(x \ ; \delta) dx \\
+&= \frac{1}{S}G(\delta) \int_\chi \left[\frac{\omega(x \ ; \delta,a)}{G(\delta)} + \frac{G(\delta)}{\omega(x \ ; \delta,a)}-2  \right] \cdot \varphi(x \ ; \delta) dx \\
+&= \frac{1}{S}G(\delta) \cdot V(a\ ;\ \delta,)
+\end{align*}
+\]
+where $V(a\ ;\ \delta,) = \int_\chi \left[\frac{\omega(x \ ; \delta,a)}{G(\delta)} + \frac{G(\delta)}{\omega(x \ ; \delta,a)}-2  \right] \cdot \varphi(x \ ; \delta) dx$ is the part of $\bar{V_{s,m}}(\delta;a)$ which depends on $a$.
+
+Let
+
+\[ \tag{09}
+\begin{align*}
+d(x\ ;\ a,c) &= \ln \left(\frac{\omega(x\ ;\ a)}{G(\delta)} \right) = \ln (\omega(x\ ;\ a)) - ln(G(\delta)) \\
+&= \ln \left(\frac{\varphi(x \ ; \delta)}{m(x|a)} \right) - \ln(G(\delta)) \\
+& = \ln \varphi(x \ ; \delta) - \ln m(x|a) - \ln G(\delta)\\
+& = \ln \varphi(x \ ; \delta) - \ln \left[\frac{k(x\ ;\ a)}{\chi(a)}\right] - \ln G(\delta)\\
+& = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) + \ln \chi(a) - \ln G(\delta)\\
+& = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) - (\ln G(\delta)\ln - \chi(a)) \\
+& = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) - c 
+\end{align*}
+\]
+
+Next, [@moura_2010] and [@richard_zhang2007] make the same "without hands" trick by saying "it is possible to show that..."
+
+\[\tag{10}
+V(a\ ;\ \delta,) = \int_\chi h[d^2(x,a,c,\delta)]\cdot \varphi(x\ ; \ \delta)dx, 
+\]
+where $h(r) = e^{\sqrt{r}} + e^{-\sqrt{r}} -2 = 2 \sum\limits_{i=1}^\infty \frac{r^i}{(2i)!}$
+
+An optimal choice of $(a\, \ c)$ can be found through the solution of the following nonlinear minimization problem:
+
+\[
+(a^*, c^*) = \text{arg min}[{a \in \mathcal{A}, c \in \mathbb(c)}] V(x\ ;\ a)
+\]
+
+Since $c$ does not depend on $x$, only $I$, it will be trated as the intercept of the minimization problem.
+
+Both texts arguments the following (which I didn't understand):
+
+[@moura_2010]
+*Note that h(r) is a monotone and convex function on R+, and an efficient sampler will be one such that m(x; a) closely mimics the integrand g(x)f(x), implying that d(x; a) is expected to be close to zero. Therefore, an useful simplification is attained by replacing h(r) by its leading term r, which means solving the simpler problem*
+
+\[\tag{11}
+(\hat{a}, \hat{c}) = \text{arg min}[{a \in \mathcal{A}, c \in \mathbb(c)}] Q(x\ ;\ a)
+\]
+
+*where:*
+\[\tag{12}
+Q(x\ ;\ a) = \int d^2(x,a) \cdot \varphi(x\ ; \ \delta)dx, 
+\]
+
+Equations (2) and (11)-(12) can be interpreted as a (functional) generalized least squares (GLS) problem with $x$ being distributed according to the initial sampler $p$ and weight $g$. However, MC approximations of based upon i.i.d. draws from $p$ would generally be highly inaccurate due to the typically (very) high MC sampling variance of $g$. In contrast, MC approximations based upon an efficient sampler $m(x|a)$ would be expected to be far more accurate and numerically reliable. Therefore, using $m(x|a) = \frac{\varphi(x \ ; \delta)}{\omega(x \ ; \delta,a)}$ we can use the same trick of dividind and multiplying by the same term in (12) to obtain:
+
+\[\tag{13}
+\begin{align*}
+Q(x\ ;\ a) &= \int d^2(x,a) \cdot \varphi(x\ ; \ \delta) \frac{m(x|a)}{m(x|a)} dx\\
+&= \int d^2(x,a) \cdot \varphi(x\ ; \ \delta) \frac{m(x|a)}{\frac{\varphi(x \ ; \delta)}{\omega(x \ ; \delta,a)}}\\
+&= \int d^2(x,a) \cdot \varphi(x\ ; \ \delta)\frac{\omega(x \ ; \delta,a)}{\varphi(x \ ; \delta)} m(x|a)\\
+&= \int d^2(x,a) \cdot \omega(x \ ; \delta,a)\cdot m(x|a)
+\end{align*}
+\]
+
+Now we will replace $Q$ by an MC approximation. Problem is that $m$ (the auxiliary sampler) depends on $a$. In order to resolve that, Richard and Zhang uses an argument based on fixed point. Accordingly to [@moura_2010]: *Instead, Richard and Zhang (2007) adopt an iterative procedure to search for a fixed point, whereby a sequence of samplers* $\{m(x; \hat{a}^k)\}^*_{k=0}$ *is constructed that converges towards* $m(x; \hat{a}^*)$. *Specifically, the baseline EIS algorithm consists of computing a converging sequence of GLS estimates of* $\{\hat{a}^k)\}^*_{k=0}$, *which are used to construct global approximations to the target integrand, as they are based on GLS estimates on the full support of* $\varphi$. *The algorithm is based upon the following recursion*
+
+\[ \tag{14}
+(\hat{a}_{k+1}(\delta), \hat{c}_{k+1}(\delta)) = \text{Arg Min}[a \in \mathcal{A}, c \in \mathbb{R}]\ \bar{Q}_s(a\ ,\ c\ ; \delta|\ \hat{a}_k(\delta))
+\]
+
+where
+
+\[\tag{13}
+\begin{align*}
+\bar{Q}_S(a\ ,\ c\ ;\ \delta|\ \hat{a}_k(\delta)) &= \frac{1}{S}\sum\limits_{i=1}^S  d^2(\tilde{x}_i^k\ ,\ a\ ,\ c\ ,\ \delta) \cdot \omega(\tilde{x}_i^k\ \ ; \delta,\hat{a}_k(\delta))
+\end{align*}
+\]
+and $\{\tilde{x}_i^k\ ; \ i: 1 \to S \}$ denotes a set of $S$ i.i.d. draws from $m(x|\hat{a}_k(\delta))$. An initial value $\hat{a}_0(\delta)$ can be produced by conventional local approximations techniques or, more conveniently, by $p$ itself (since we cal always add $p$ to the class $M$ and reinterpret it as $m(x|\hat{a}_k(\delta))$). [@richard_zhang2007] adives to set all weights $\omega$ equal to one in the initial interations to avoid GLS instability. They also say that for most problems we can use an OLS version of (13) with all weights equal to one at all steps. At convergence, EIS estimate of $G(\delta)$ will be given by:
+
+\[\tag{14}
+\bar{G}_S(\delta) =  \frac{1}{S}\sum\limits_{i=1}^S \omega(\tilde{x}_i^k\ \ ; \delta,\hat{a}_k(\delta)
+\]
+
+<span style="color:red">Tá, então a ideia é: queremos minimizar a variância da estimativa pra G -> primeiro minimizamos a variância -> pega esses parâmetros e estima G?</span>
+
+## EIS from the exponential family of distributions
+
+*Aisha's remark:* Casella and Berger's book (Statistical Inference) have a good section talking about exponential family.
+
+If $m$ belongs to the exponential family of distributions, then $m(x|a)$ can be written as:
+
+\[ \tag{15}
+m(x|a) = \chi(a)^{-1} \cdot b(x) \cdot \exp(a' \cdot t(x))
+\]
+
+(I've changed the notation including $-1$ in $\chi$ exponent)
+
+Using (06) $m(x|a) = \frac{k(x\ ;\ a)}{\chi(a)}$, we have $k(x\ ;\ a) = m(x|a)\cdot \chi(a)$. Taking the log in both sides of (15) produces:
+
+\[ \tag{16}
+\begin{align*}
+m(x|a)\chi(a) &= b(x) \cdot \exp(a' \cdot t(x))\\
+k(x\ ;\ a) &= b(x) \cdot \exp(a' \cdot t(x))\\
+\ln k(x\ ;\ a) &= \ln(b(x) \cdot \exp(a' \cdot t(x)))\\
+\ln k(x\ ;\ a) &= \ln b(x) +\ln(\exp(a' \cdot t(x)))\\
+\ln k(x\ ;\ a) &= \ln b(x) + a' \cdot t(x)\\
+\end{align*}
+\]
+
+We can use (16) in (09) to obtain:
+
+\[ \tag{17}
+\begin{align*}
+d(x\ ;\ a,c) &= \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) - c \\
+&=  \ln \varphi(x \ ; \delta) - [\ln b(x) + a' \cdot t(x)] - c\\
+&=  \ln \varphi(x \ ; \delta) - \ln b(x) - a' \cdot t(x) - c\\
+\end{align*}
+\]
+
+Note that now $d$ is linear with respect to $a$. [@richard_zhang2007] also point out that (16) implies that, subject to integrability restrictions, $\mathcal{A}$ is closed under addition (the sum of two elements in $\mathcal{A}$ will be an element of $\mathcal{A}$ too).
+<span style="color:green">There are some parts missing, corresponding to eq (21)-(23) from the paper and page 53 of Guilherme's dissertation, I'll come back to this later.</span>
+
+# Two pilot applications
+
+## Integrating the Gamma Function
+
+The Gamma function is defined as:
+
+$$\Gamma(z) = \int_0^{+\infty} x^{z-1}e^{-x} $$
+
+with the property that $\Gamma(z+1) = z\Gamma(z)$.
+
+Consider $G(\delta) = \Gamma(\delta + 1)$. By definition, $G(\delta) = \delta \Gamma(\delta) = \delta \int_0^{+\infty} x^{\delta-1}e^{-x}$. <span style="color:green">I'm not sure how to make this work, so I'll as Gilles later.</span>  
+
+Just let $\varphi$ denote a density kernel:
+
+\[\tag{18}
+\varphi(x\ ;\ \delta) = \exp(-x^{1/\delta}), \quad x>0, \ \delta > 0
+\]
+
+in which case $G(\delta) = \Gamma(\delta+1)$. Let also
+\[\tag{19}
+k(x\ ;\ a) = \exp(-ax)
+\]
+
+denote an exponential density kernel. Let's find $Q(a,c.\delta)$ and $d$ (eq 09) for this problem:
+
+\[\tag{20}
+\begin{align*}
+d(x,a,c;\delta) &= ln \ \varphi(x;\delta) - c -ln\ k(x;a)\\
+&= -x^{1\delta} - c - (-ax)\\
+&= -\frac{1}{\delta}x - c + ax\\
+&= -c +\left(-\frac{1}{\delta}+a\right)x\\
+&= \beta_0 + \beta_1 x
+\end{align*}
+\]
+
+Thus, $Q$ (eq 12) will be:
+
+\[\tag{21}
+\begin{align*}
+Q(x\ ;\ a) &= \int d^2(x,a) \cdot \varphi(x\ ; \ \delta)dx\\
+&= \int \left[-c +\left(-\frac{1}{\delta}+a\right)x\right]^2 \cdot\ \exp(-x^{1/\delta})\  dx
+\end{align*}
+\]
+
+Richard and Zhang say: *"Under (19), the EIS auxiliary regression, as defined in equations (09)-(12), amounts to a simple LS regression of $x^{1/\delta}$ on $x$. If the $x's$ are drawn from $m(x|a)$, then the true value of the corresponding regression coefficient is given by:*"
+
+\[\tag{22}]
+\hat{a}(\delta) = a^{1-1/\delta} \cdot \frac{1}{\delta} \cdot \Gamma\left(1+\frac{1}{\delta} \right)
+\]
+
+*with a fixed point solution* (where they got this stuff???):
+
+\[\tag{23}]
+\hat{a}_\varphi(\delta) = \left[\frac{1}{\delta} \cdot \Gamma\left(1+\frac{1}{\delta} \right) \right]^\delta
+\]
+
+They suggest $a_\varphi = \frac{1}{\delta}$.
+
+The code bellow tries to reproduce the results from table 1.
+
+*Package loading*
+
+```{r, warning = FALSE, message = FALSE}
+list.of.packages <- c("ggplot2", "reshape2", "gridExtra","knitr", "stargazer", "nlme")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+library(ggplot2, quietly = T)
+library(reshape2, quietly = T)
+library(gridExtra, quietly = T)
+library(knitr, quietly = T)
+library(stargazer, quietly = T)
+library(nlme, quietly = T)
+options(scipen=999)
+```
+```
+
+```{r}
+# IMPLEMENTAÇÃO EIS Amostragem por importância eficiente - ARTIGO RICHARD E ZHANG 2007
+# SEÇÃO 3.6 PRIMEIRA APLICAÇÃO PILOTO
+
+# Tem-se \varphi (x, \delta) = exp(-x^(1/\delta))
+# Fixa um delta
+del<-0.8
+# Fixa o número de retiradas de m() para cada iteração
+S<-100
+
+# Os valores verdadeiros da integral G(\delta) e a(\delta) de acordo com o artigo
+G_verdadeiro <- gamma(del + 1)
+a_verdadeiro <- ((1/del)*gamma(1 + (1/del)))^(del)
+
+# A função kernel utilizada é k(x,a) = exp(-ax)
+k<-function(x,a){exp(-a*x)}
+# Note que faaendo m = k/\chi(a) e usando que \chi(a) = \int k, temos \chi(a) = (1/a) e m = ak
+
+#Função \varphi
+phi<-function(x,del){
+  exp(-x^(1/del))
+}
+
+#Função d com base na classe K
+d <- function(x,a,c){
+  a*x - log(c) - x^(1/del)
+}
+
+# Função h (eq 77 do apêndice A)
+h<- function(x){
+  exp(sqrt(x)) + exp(-sqrt(x)) - 2
+}
+
+# Função amostradora m(x|a)
+m <- function(x,a){
+  dexp(x, rate = a)
+}
+
+# Função w (ômega) é a razão entre phi e m
+w <- function(x,a){
+  phi(x,del)/m(x,a)
+}
+
+
+####### Parâmetros iniciais: (del é fixo, mas a e c mudarão a cada iteração)
+a <- 1/del
+c <- 1
+G_chapeu<-0
+variacao_a<-10
+variacao_c<-10
+variacao_G<-10
+cont<-0
+
+# Sorteio dos números aleatórios do CRN
+u_i<-runif(S, 0,1)
+
+while(variacao_a > 0.000001 & variacao_c > 0.000001 & variacao_G > 0.000001){
+### A distribuição exp(rate=a) tem fórmula a*exp(-ax) = k/\chi(a)
+# Para converter a u ~ U(0,1) em x(u) ~ exp(rate=a), tem-se: x = -1/a * log(u-0/1-0)
+  x_i<- (-1/a)*log(1-u_i);
+  xexp<-x_i^(1/del);
+  dados<-as.data.frame(cbind(x_i,xexp));
+  reg<-gls(xexp~x_i, dados);
+  a_ant<-a;
+  c_ant<-c;
+  G_chapeu_ant<-G_chapeu;
+  cont<-cont+1;
+  a<-reg$coefficients[2];
+  c<-exp(reg$coefficients[1]);
+  G_chapeu<-mean(w(x_i,a));
+  variacao_a<-abs(a-a_ant);
+  variacao_c<-abs(c-c_ant);
+  variacao_G<-abs(G_chapeu-G_chapeu_ant);
+  print(c(cont,a,c));
+}
+
+print(c("Parâmetro a",a,"Integral G",G_chapeu))
+# Calcular a variância (Tirei da equação 24, que é o que tem na tese tbm...)
+#aux<-h(d(x_i,a,c)^2)*w(x_i,a)
+#variancia<- mean(aux)
+
+# Com base na eq 7?
+variancia2<-mean((w(x_i,a)-G_chapeu)^2)
+```
+
+
+# References
