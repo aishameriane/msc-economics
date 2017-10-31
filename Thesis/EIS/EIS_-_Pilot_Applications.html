@@ -134,6 +134,16 @@ MathJax.Hub.Config({
   }
 });
 </script>
+<div id="duvidas-pendentes" class="section level1">
+<h1>Dúvidas pendentes</h1>
+<ul>
+<li>A definição de <span class="math inline">\(m\)</span> com relação ao kernel e a constante: para chegar no mesmo sinal de <span class="math inline">\(c\)</span>, precisa que <span class="math inline">\(\chi\)</span> esteja no denominador de <span class="math inline">\(k\)</span>, mas no exemplo da família exponencial eles usaram outra definição.</li>
+<li>A função <span class="math inline">\(h\)</span> é necessária ou não? E como que chega na expressão dela? Além disso, como que vai da equação 78 para 79 no apêndice?</li>
+<li>Pq no artigo o termo <span class="math inline">\(1/S\)</span> fica na variância mas na equação (33) da tese do Guilherme ela não aparece? E não seria <span class="math inline">\(1/S^2\)</span>?</li>
+<li>O desvio padrão da tabela 1 é a raiz da variância usando a equação do apêndice ou é algum desvio padrão numérico?</li>
+<li>Como fica o amostrador por importância de <span class="math inline">\(G_2\)</span>?</li>
+</ul>
+</div>
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>This notes are based on Richard and Zhang’s article: <em>Efficient high-dimensional importance sampling</em> <span class="citation">(J.-F. Richard and Zhang 2007)</span>. This notes are not intended to be my original work, I just made them while studying.</p>
@@ -336,106 +346,189 @@ library(knitr, quietly = T)
 library(stargazer, quietly = T)
 library(nlme, quietly = T)
 options(scipen=999)</code></pre>
-<p>```</p>
-<pre class="r"><code># IMPLEMENTAÇÃO EIS Amostragem por importância eficiente - ARTIGO RICHARD E ZHANG 2007
-# SEÇÃO 3.6 PRIMEIRA APLICAÇÃO PILOTO
-
-# Tem-se \varphi (x, \delta) = exp(-x^(1/\delta))
-# Fixa um delta
-del&lt;-0.8
-# Fixa o número de retiradas de m() para cada iteração
-S&lt;-100
-
-# Os valores verdadeiros da integral G(\delta) e a(\delta) de acordo com o artigo
-G_verdadeiro &lt;- gamma(del + 1)
-a_verdadeiro &lt;- ((1/del)*gamma(1 + (1/del)))^(del)
-
-# A função kernel utilizada é k(x,a) = exp(-ax)
-k&lt;-function(x,a){exp(-a*x)}
-# Note que faaendo m = k/\chi(a) e usando que \chi(a) = \int k, temos \chi(a) = (1/a) e m = ak
-
-#Função \varphi
-phi&lt;-function(x,del){
-  exp(-x^(1/del))
-}
-
-#Função d com base na classe K
-d &lt;- function(x,a,c){
-  a*x - log(c) - x^(1/del)
-}
-
-# Função h (eq 77 do apêndice A)
-h&lt;- function(x){
-  exp(sqrt(x)) + exp(-sqrt(x)) - 2
-}
-
-# Função amostradora m(x|a)
-m &lt;- function(x,a){
-  dexp(x, rate = a)
-}
-
-# Função w (ômega) é a razão entre phi e m
-w &lt;- function(x,a){
-  phi(x,del)/m(x,a)
-}
-
-
-####### Parâmetros iniciais: (del é fixo, mas a e c mudarão a cada iteração)
-a &lt;- 1/del
-c &lt;- 1
-G_chapeu&lt;-0
-variacao_a&lt;-10
-variacao_c&lt;-10
-variacao_G&lt;-10
-cont&lt;-0
-
-# Sorteio dos números aleatórios do CRN
-u_i&lt;-runif(S, 0,1)
-
-while(variacao_a &gt; 0.000001 &amp; variacao_c &gt; 0.000001 &amp; variacao_G &gt; 0.000001){
-### A distribuição exp(rate=a) tem fórmula a*exp(-ax) = k/\chi(a)
-# Para converter a u ~ U(0,1) em x(u) ~ exp(rate=a), tem-se: x = -1/a * log(u-0/1-0)
-  x_i&lt;- (-1/a)*log(1-u_i);
-  xexp&lt;-x_i^(1/del);
-  dados&lt;-as.data.frame(cbind(x_i,xexp));
-  reg&lt;-gls(xexp~x_i, dados);
-  a_ant&lt;-a;
-  c_ant&lt;-c;
-  G_chapeu_ant&lt;-G_chapeu;
-  cont&lt;-cont+1;
-  a&lt;-reg$coefficients[2];
-  c&lt;-exp(reg$coefficients[1]);
-  G_chapeu&lt;-mean(w(x_i,a));
-  variacao_a&lt;-abs(a-a_ant);
-  variacao_c&lt;-abs(c-c_ant);
-  variacao_G&lt;-abs(G_chapeu-G_chapeu_ant);
-  print(c(cont,a,c));
-}</code></pre>
-<pre><code>##                     x_i (Intercept) 
-##   1.0000000   1.3195990   0.8070592 
-##                     x_i (Intercept) 
-##   2.0000000   1.3018441   0.8184684 
-##                     x_i (Intercept) 
-##   3.0000000   1.3062603   0.8156734 
-##                     x_i (Intercept) 
-##   4.0000000   1.3051549   0.8163757 
-##                     x_i (Intercept) 
-##   5.0000000   1.3054312   0.8162003 
-##                     x_i (Intercept) 
-##   6.0000000   1.3053621   0.8162442 
-##                     x_i (Intercept) 
-##   7.0000000   1.3053794   0.8162332</code></pre>
-<pre class="r"><code>print(c(&quot;Parâmetro a&quot;,a,&quot;Integral G&quot;,G_chapeu))</code></pre>
-<pre><code>##                                   x_i                    
-##      &quot;Parâmetro a&quot; &quot;1.30537936616031&quot;       &quot;Integral G&quot; 
-##                    
-## &quot;0.94367333629036&quot;</code></pre>
-<pre class="r"><code># Calcular a variância (Tirei da equação 24, que é o que tem na tese tbm...)
-#aux&lt;-h(d(x_i,a,c)^2)*w(x_i,a)
-#variancia&lt;- mean(aux)
-
-# Com base na eq 7?
-variancia2&lt;-mean((w(x_i,a)-G_chapeu)^2)</code></pre>
+<table style="text-align:center">
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+alpha chapéu
+</td>
+<td>
+G
+</td>
+<td>
+iterações
+</td>
+</tr>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+0.6
+</td>
+<td>
+1.736
+</td>
+<td>
+0.8935
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+1.8571
+</td>
+<td>
+0.9173
+</td>
+<td>
+29
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+0.8
+</td>
+<td>
+1.321
+</td>
+<td>
+0.9314
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+1.3417
+</td>
+<td>
+0.9266
+</td>
+<td>
+8
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+1.2
+</td>
+<td>
+0.7466
+</td>
+<td>
+1.1018
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+0.7337
+</td>
+<td>
+1.1184
+</td>
+<td>
+6
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+1.6
+</td>
+<td>
+0.3959
+</td>
+<td>
+1.4296
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+0.364
+</td>
+<td>
+1.4736
+</td>
+<td>
+12
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+2.0
+</td>
+<td>
+0.1963
+</td>
+<td>
+2
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+0.1878
+</td>
+<td>
+2.0455
+</td>
+<td>
+18
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+2.4
+</td>
+<td>
+0.0916
+</td>
+<td>
+2.9812
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+0.0929
+</td>
+<td>
+2.8985
+</td>
+<td>
+22
+</td>
+</tr>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
