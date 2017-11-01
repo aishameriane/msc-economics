@@ -135,7 +135,7 @@ d(x\ ;\ a,c) &= \ln \left(\frac{\omega(x\ ;\ a)}{G(\delta)} \right) = \ln (\omeg
 & = \ln \varphi(x \ ; \delta) - \ln m(x|a) - \ln G(\delta)\\
 & = \ln \varphi(x \ ; \delta) - \ln \left[\frac{k(x\ ;\ a)}{\chi(a)}\right] - \ln G(\delta)\\
 & = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) + \ln \chi(a) - \ln G(\delta)\\
-& = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) - (\ln G(\delta)\ln - \chi(a)) \\
+& = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) - (\ln G(\delta) - \chi(a)) \\
 & = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) - c 
 \end{align*}
 \]
@@ -301,7 +301,7 @@ The code bellow tries to reproduce the results from table 1.
 *Package loading*
 
 ```{r, warning = FALSE, message = FALSE}
-list.of.packages <- c("ggplot2", "reshape2", "gridExtra","knitr", "stargazer", "nlme")
+list.of.packages <- c("ggplot2", "reshape2", "gridExtra","knitr", "stargazer", "nlme", "latex2exp")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 library(ggplot2, quietly = T)
@@ -310,6 +310,7 @@ library(gridExtra, quietly = T)
 library(knitr, quietly = T)
 library(stargazer, quietly = T)
 library(nlme, quietly = T)
+library(latex2exp, quietly = T)
 options(scipen=999)
 ```
 
@@ -321,7 +322,7 @@ The algorithm is structured as follows:
 * We calculate the difference between the real and the approximation, if it is low enough, the algorithm stops.
 
 
-```{r,message = FALSE, warning = FALSE, echo=FALSE, results='asis'}
+```{r,message = FALSE, warning = FALSE, results='asis'}
 # IMPLEMENTAÇÃO EIS Amostragem por importância eficiente - ARTIGO RICHARD E ZHANG 2007
 # SEÇÃO 3.6 PRIMEIRA APLICAÇÃO PILOTO
 
@@ -335,7 +336,7 @@ Tesao <- 100
 # Os valores verdadeiros da integral G(\delta) e a(\delta) de acordo com o artigo
 G_verdadeiro <- gamma(delta + 1)
 a_verdadeiro <- ((1/delta)*gamma(1 + (1/delta)))^(delta)
-G2_verdadeiro <- 1
+G2_verdadeiro <- c(0.5588, 0.9937, 4.460, 28.54, 240.0, 2521)
 
 # A função kernel utilizada é k(x,a) = exp(-ax)
 kernel <- function(x,a){
@@ -374,6 +375,7 @@ w <- function(x,a){
 
 # Cria uma lista para armazenar os valores
 lista <- list()
+lista2 <- list()
 
 for (i in 1:(length(delta))){
   estimativas <- matrix(0, nrow = Tesao, ncol = 4, dimnames = list(c(1:Tesao), c("a", "G_chapeu", "G2", "cont")))
@@ -416,25 +418,28 @@ for (i in 1:(length(delta))){
       cont<-cont+1;
   }
 
-  estimativas[i,]<-c(a,G_chapeu,G_chapeu2,cont)
+  estimativas[j,]<-c(a,G_chapeu,G_chapeu2,cont)
 
   # Com base na eq 7?
     variancia2<-mean((w(x_i,a)-G_chapeu)^2)
   }
-  lista[[i]] <- list(mean(estimativas[,1]), mean(estimativas[,2]), mean(estimativas[,3]), cont)
+  lista[[i]] <- list(mean(estimativas[,1]), mean(estimativas[,2]), mean(estimativas[,3]),mean(estimativas[,3])/mean(estimativas[,2]),cont)
+  lista2[[i]] <- list(sd(estimativas[,1])/10, sd(estimativas[,2])/10, sd(estimativas[,3])/10, sd(estimativas[,3]/estimativas[,2])/10, "")
 }
 
 # Montando a tabela
 
-tabela <- matrix(0, nrow = 12,ncol =4)
-colnames(tabela) <- c("alpha chapéu", "G", "G^2", "iterações")
-rownames(tabela) <- c("0.6", "", "0.8", "", "1.2", "", "1.6", "", "2.0", "", "2.4", "")
+tabela <- matrix(0, nrow = 18, ncol =6)
+colnames(tabela) <- c(".", "Alpha Chapeu(delta)", "G(delta)", "G^2(delta)", "E[X^2]", "iterações")
+rownames(tabela) <- c("", "0.6","", "","0.8", "", "", "1.2","", "","1.6", "", "","2.0", "", "","2.4", "")
+tabela[,1] <- rep(c("Verdadeiro", "EIS", "SD"),length(delta))
 
 for (i in 1:length(lista)){
-  for (j in 1:4){
-    tabela[(2*i),j] <- round(as.numeric(lista[[i]][j]),4)
+  for (j in 1:5){
+    tabela[(3*i-1),(j+1)] <- round(as.numeric(lista[[i]][j]),4)
+    tabela[(3*i),(j+1)] <- round(as.numeric(lista2[[i]][j]),4)
   }
-  tabela[(2*i-1),]   <- c(round(a_verdadeiro[i],4), round(G_verdadeiro[i],4), "", "")
+  tabela[(3*i-2),2:6]   <- c(round(a_verdadeiro[i],4), round(G_verdadeiro[i],4), G2_verdadeiro[i], round(G2_verdadeiro[i]/G_verdadeiro[i],4) , "")
 }
 
 tabela <- as.data.frame(tabela)

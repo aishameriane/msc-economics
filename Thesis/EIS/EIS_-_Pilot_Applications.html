@@ -217,7 +217,7 @@ d(x\ ;\ a,c) &amp;= \ln \left(\frac{\omega(x\ ;\ a)}{G(\delta)} \right) = \ln (\
 &amp; = \ln \varphi(x \ ; \delta) - \ln m(x|a) - \ln G(\delta)\\
 &amp; = \ln \varphi(x \ ; \delta) - \ln \left[\frac{k(x\ ;\ a)}{\chi(a)}\right] - \ln G(\delta)\\
 &amp; = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) + \ln \chi(a) - \ln G(\delta)\\
-&amp; = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) - (\ln G(\delta)\ln - \chi(a)) \\
+&amp; = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) - (\ln G(\delta) - \chi(a)) \\
 &amp; = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) - c 
 \end{align*}
 \]</span></p>
@@ -333,7 +333,7 @@ Q(x\ ;\ a) &amp;= \int d^2(x,a) \cdot \varphi(x\ ; \ \delta)dx\\
 <p>They suggest <span class="math inline">\(a_\varphi = \frac{1}{\delta}\)</span>.</p>
 <p>The code bellow tries to reproduce the results from table 1.</p>
 <p><em>Package loading</em></p>
-<pre class="r"><code>list.of.packages &lt;- c(&quot;ggplot2&quot;, &quot;reshape2&quot;, &quot;gridExtra&quot;,&quot;knitr&quot;, &quot;stargazer&quot;, &quot;nlme&quot;)
+<pre class="r"><code>list.of.packages &lt;- c(&quot;ggplot2&quot;, &quot;reshape2&quot;, &quot;gridExtra&quot;,&quot;knitr&quot;, &quot;stargazer&quot;, &quot;nlme&quot;, &quot;latex2exp&quot;)
 new.packages &lt;- list.of.packages[!(list.of.packages %in% installed.packages()[,&quot;Package&quot;])]
 if(length(new.packages)) install.packages(new.packages)
 library(ggplot2, quietly = T)
@@ -342,6 +342,7 @@ library(gridExtra, quietly = T)
 library(knitr, quietly = T)
 library(stargazer, quietly = T)
 library(nlme, quietly = T)
+library(latex2exp, quietly = T)
 options(scipen=999)</code></pre>
 <p>The algorithm is structured as follows:</p>
 <ul>
@@ -350,34 +351,163 @@ options(scipen=999)</code></pre>
 <li>We compute G;</li>
 <li>We calculate the difference between the real and the approximation, if it is low enough, the algorithm stops.</li>
 </ul>
+<pre class="r"><code># IMPLEMENTAÇÃO EIS Amostragem por importância eficiente - ARTIGO RICHARD E ZHANG 2007
+# SEÇÃO 3.6 PRIMEIRA APLICAÇÃO PILOTO
+
+# Tem-se \varphi (x, \delta) = exp(-x^(1/\delta))
+# Monta o vetor delta
+delta&lt;-c(0.6, 0.8, 1.2, 1.6, 2.0, 2.4)
+# Fixa o número de retiradas de m() para cada iteração
+S     &lt;-100
+Tesao &lt;- 100
+
+# Os valores verdadeiros da integral G(\delta) e a(\delta) de acordo com o artigo
+G_verdadeiro &lt;- gamma(delta + 1)
+a_verdadeiro &lt;- ((1/delta)*gamma(1 + (1/delta)))^(delta)
+G2_verdadeiro &lt;- c(0.5588, 0.9937, 4.460, 28.54, 240.0, 2521)
+
+# A função kernel utilizada é k(x,a) = exp(-ax)
+kernel &lt;- function(x,a){
+  exp(-a*x)
+}
+
+# Note que faaendo m = k/\chi(a) e usando que \chi(a) = \int k, temos \chi(a) = (1/a) e m = ak
+
+#Função \varphi
+phi &lt;- function(x,del){
+  p &lt;- 1/del
+  exp(-x^(p))
+}
+
+#Função d com base na classe K
+d &lt;- function(x,a,c){
+  a*x - log(c) - x^(1/del)
+}
+
+# Função h (eq 77 do apêndice A)
+# Aisha: precisa mesmo do h? por (13) do artigo achei que ele não era utilizado
+
+h&lt;- function(x){
+  exp(sqrt(x)) + exp(-sqrt(x)) - 2
+}
+
+# Função amostradora m(x|a)
+m &lt;- function(x,a){
+  dexp(x, rate = a)
+}
+
+# Função w (ômega) é a razão entre phi e m
+w &lt;- function(x,a){
+  phi(x,del)/m(x,a)
+}
+
+# Cria uma lista para armazenar os valores
+lista &lt;- list()
+lista2 &lt;- list()
+
+for (i in 1:(length(delta))){
+  estimativas &lt;- matrix(0, nrow = Tesao, ncol = 4, dimnames = list(c(1:Tesao), c(&quot;a&quot;, &quot;G_chapeu&quot;, &quot;G2&quot;, &quot;cont&quot;)))
+  for(j in 1:Tesao) {
+    ######## Parâmetros iniciais: (del é fixo, mas a e c mudarão a cada iteração)
+    a &lt;- 1/delta[i]
+    c &lt;- 1
+    G_chapeu&lt;-0
+    G_chapeu2 &lt;- 0
+    variacao_a&lt;-10
+    variacao_c&lt;-10
+    variacao_G&lt;-10
+    cont&lt;-0
+
+    # Sorteio dos números aleatórios do CRN
+    u_i&lt;-runif(S, 0,1)
+  
+    while(variacao_a &gt; 0.000001 &amp; variacao_c &gt; 0.000001 &amp; variacao_G &gt; 0.000001){
+    ### A distribuição exp(rate=a) tem fórmula a*exp(-ax) = k/\chi(a)
+    # Para converter a u ~ U(0,1) em x(u) ~ exp(rate=a), tem-se: x = -1/a * log(u-0/1-0)
+      del &lt;- delta[i]
+      a_ant&lt;-a;
+      c_ant&lt;-c;
+      G_chapeu_ant  &lt;- G_chapeu;
+      G_chapeu2_ant &lt;- G_chapeu2;
+      
+      #x_i&lt;- (-1/a)*log(1-u_i);
+      x_i &lt;- qexp(u_i, rate=a)
+      xexp&lt;-x_i^(1/del);
+      dados&lt;-as.data.frame(cbind(x_i,xexp));
+      reg&lt;-gls(xexp ~ x_i, dados);
+      a&lt;-reg$coefficients[2];
+      c&lt;-exp(reg$coefficients[1]);
+      G_chapeu  &lt;- mean(w(x_i,a));
+      G_chapeu2 &lt;- mean((x_i^2)*w(x_i,a));
+      variacao_a&lt;-abs(a-a_ant);
+      variacao_c&lt;-abs(c-c_ant);
+      variacao_G&lt;-abs(G_chapeu-G_chapeu_ant);
+      #print(c(cont,a,c));
+      cont&lt;-cont+1;
+  }
+
+  estimativas[j,]&lt;-c(a,G_chapeu,G_chapeu2,cont)
+
+  # Com base na eq 7?
+    variancia2&lt;-mean((w(x_i,a)-G_chapeu)^2)
+  }
+  lista[[i]] &lt;- list(mean(estimativas[,1]), mean(estimativas[,2]), mean(estimativas[,3]),mean(estimativas[,3])/mean(estimativas[,2]),cont)
+  lista2[[i]] &lt;- list(sd(estimativas[,1])/10, sd(estimativas[,2])/10, sd(estimativas[,3])/10, sd(estimativas[,3]/estimativas[,2])/10, &quot;&quot;)
+}
+
+# Montando a tabela
+
+tabela &lt;- matrix(0, nrow = 18, ncol =6)
+colnames(tabela) &lt;- c(&quot;.&quot;, &quot;Alpha Chapeu(delta)&quot;, &quot;G(delta)&quot;, &quot;G^2(delta)&quot;, &quot;E[X^2]&quot;, &quot;iterações&quot;)
+rownames(tabela) &lt;- c(&quot;&quot;, &quot;0.6&quot;,&quot;&quot;, &quot;&quot;,&quot;0.8&quot;, &quot;&quot;, &quot;&quot;, &quot;1.2&quot;,&quot;&quot;, &quot;&quot;,&quot;1.6&quot;, &quot;&quot;, &quot;&quot;,&quot;2.0&quot;, &quot;&quot;, &quot;&quot;,&quot;2.4&quot;, &quot;&quot;)
+tabela[,1] &lt;- rep(c(&quot;Verdadeiro&quot;, &quot;EIS&quot;, &quot;SD&quot;),length(delta))
+
+for (i in 1:length(lista)){
+  for (j in 1:5){
+    tabela[(3*i-1),(j+1)] &lt;- round(as.numeric(lista[[i]][j]),4)
+    tabela[(3*i),(j+1)] &lt;- round(as.numeric(lista2[[i]][j]),4)
+  }
+  tabela[(3*i-2),2:6]   &lt;- c(round(a_verdadeiro[i],4), round(G_verdadeiro[i],4), G2_verdadeiro[i], round(G2_verdadeiro[i]/G_verdadeiro[i],4) , &quot;&quot;)
+}
+
+tabela &lt;- as.data.frame(tabela)
+stargazer(tabela, summary=FALSE, header = FALSE, type = 'html')</code></pre>
 <table style="text-align:center">
 <tr>
-<td colspan="5" style="border-bottom: 1px solid black">
+<td colspan="7" style="border-bottom: 1px solid black">
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-alpha chapéu
+.
 </td>
 <td>
-G
+Alpha Chapeu(delta)
 </td>
 <td>
-G2
+G(delta)
+</td>
+<td>
+G2(delta)
+</td>
+<td>
+E[X2]
 </td>
 <td>
 iterações
 </td>
 </tr>
 <tr>
-<td colspan="5" style="border-bottom: 1px solid black">
+<td colspan="7" style="border-bottom: 1px solid black">
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
-0.6
+</td>
+<td>
+Verdadeiro
 </td>
 <td>
 1.736
@@ -386,6 +516,54 @@ iterações
 0.8935
 </td>
 <td>
+0.5588
+</td>
+<td>
+0.6254
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+0.6
+</td>
+<td>
+EIS
+</td>
+<td>
+1.6986
+</td>
+<td>
+0.8919
+</td>
+<td>
+0.5696
+</td>
+<td>
+0.6387
+</td>
+<td>
+30
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+SD
+</td>
+<td>
+0.0108
+</td>
+<td>
+0.0021
+</td>
+<td>
+0.0084
+</td>
+<td>
+0.009
 </td>
 <td>
 </td>
@@ -394,21 +572,7 @@ iterações
 <td style="text-align:left">
 </td>
 <td>
-0.0185
-</td>
-<td>
-0.0087
-</td>
-<td>
-0.0053
-</td>
-<td>
-28
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-0.8
+Verdadeiro
 </td>
 <td>
 1.321
@@ -417,6 +581,54 @@ iterações
 0.9314
 </td>
 <td>
+0.9937
+</td>
+<td>
+1.0669
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+0.8
+</td>
+<td>
+EIS
+</td>
+<td>
+1.3191
+</td>
+<td>
+0.929
+</td>
+<td>
+1.0434
+</td>
+<td>
+1.1231
+</td>
+<td>
+9
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+SD
+</td>
+<td>
+0.0044
+</td>
+<td>
+0.0011
+</td>
+<td>
+0.0171
+</td>
+<td>
+0.0187
 </td>
 <td>
 </td>
@@ -425,21 +637,7 @@ iterações
 <td style="text-align:left">
 </td>
 <td>
-0.013
-</td>
-<td>
-0.0092
-</td>
-<td>
-0.0091
-</td>
-<td>
-7
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-1.2
+Verdadeiro
 </td>
 <td>
 0.7466
@@ -448,6 +646,54 @@ iterações
 1.1018
 </td>
 <td>
+4.46
+</td>
+<td>
+4.0479
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+1.2
+</td>
+<td>
+EIS
+</td>
+<td>
+0.7583
+</td>
+<td>
+1.0974
+</td>
+<td>
+4.1391
+</td>
+<td>
+3.7717
+</td>
+<td>
+7
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+SD
+</td>
+<td>
+0.0027
+</td>
+<td>
+0.0013
+</td>
+<td>
+0.1594
+</td>
+<td>
+0.1412
 </td>
 <td>
 </td>
@@ -456,21 +702,7 @@ iterações
 <td style="text-align:left">
 </td>
 <td>
-0.0072
-</td>
-<td>
-0.0111
-</td>
-<td>
-0.0541
-</td>
-<td>
-6
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-1.6
+Verdadeiro
 </td>
 <td>
 0.3959
@@ -479,6 +711,54 @@ iterações
 1.4296
 </td>
 <td>
+28.54
+</td>
+<td>
+19.9633
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+1.6
+</td>
+<td>
+EIS
+</td>
+<td>
+0.408
+</td>
+<td>
+1.4165
+</td>
+<td>
+22.6389
+</td>
+<td>
+15.9819
+</td>
+<td>
+12
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+SD
+</td>
+<td>
+0.0034
+</td>
+<td>
+0.0046
+</td>
+<td>
+1.1624
+</td>
+<td>
+0.7709
 </td>
 <td>
 </td>
@@ -487,21 +767,7 @@ iterações
 <td style="text-align:left">
 </td>
 <td>
-0.0041
-</td>
-<td>
-0.0141
-</td>
-<td>
-0.2048
-</td>
-<td>
-13
-</td>
-</tr>
-<tr>
-<td style="text-align:left">
-2.0
+Verdadeiro
 </td>
 <td>
 0.1963
@@ -510,21 +776,32 @@ iterações
 2
 </td>
 <td>
+240
+</td>
+<td>
+120
 </td>
 <td>
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
+2.0
 </td>
 <td>
-0.0024
+EIS
 </td>
 <td>
-0.0196
+0.2028
 </td>
 <td>
-0.6841
+1.9591
+</td>
+<td>
+173.4345
+</td>
+<td>
+88.5259
 </td>
 <td>
 18
@@ -532,7 +809,30 @@ iterações
 </tr>
 <tr>
 <td style="text-align:left">
-2.4
+</td>
+<td>
+SD
+</td>
+<td>
+0.0032
+</td>
+<td>
+0.0101
+</td>
+<td>
+14.6438
+</td>
+<td>
+6.7643
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+</td>
+<td>
+Verdadeiro
 </td>
 <td>
 0.0916
@@ -541,31 +841,64 @@ iterações
 2.9812
 </td>
 <td>
+2521
+</td>
+<td>
+845.6308
 </td>
 <td>
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
+2.4
 </td>
 <td>
-0.0011
+EIS
 </td>
 <td>
-0.0276
+0.0992
 </td>
 <td>
-3.9376
+2.8633
+</td>
+<td>
+1258.6555
+</td>
+<td>
+439.5839
 </td>
 <td>
 22
 </td>
 </tr>
 <tr>
-<td colspan="5" style="border-bottom: 1px solid black">
+<td style="text-align:left">
+</td>
+<td>
+SD
+</td>
+<td>
+0.0021
+</td>
+<td>
+0.0186
+</td>
+<td>
+159.4355
+</td>
+<td>
+48.1984
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td colspan="7" style="border-bottom: 1px solid black">
 </td>
 </tr>
 </table>
+<pre class="r"><code>#stargazer(previsoes, summary=FALSE, rownames = FALSE, header = FALSE, type = 'latex')</code></pre>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
