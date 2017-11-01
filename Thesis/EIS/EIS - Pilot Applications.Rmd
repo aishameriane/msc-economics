@@ -23,13 +23,10 @@ MathJax.Hub.Config({
 });
 </script>
 
-# Dúvidas pendentes
+# Pendências
 
-* A definição de $m$ com relação ao kernel e a constante: para chegar no mesmo sinal de $c$, precisa que $\chi$ esteja no denominador de $k$, mas no exemplo da família exponencial eles usaram outra definição.
-* A função $h$ é necessária ou não? E como que chega na expressão dela? Além disso, como que vai da equação 78 para 79 no apêndice?
-* Pq no artigo o termo $1/S$ fica na variância mas na equação (33) da tese do Guilherme ela não aparece? E não seria $1/S^2$?
-* O desvio padrão da tabela 1 é a raiz da variância usando a equação do apêndice ou é algum desvio padrão numérico?
-* Como fica o amostrador por importância de $G_2$?
+* Está faltando: Calcular o G2 verdadeiro, calcular o E[X^2] e calcular a razão de variâncias para incorporar na tabela
+* Colocar o histograma
 
 # Introduction
 
@@ -316,6 +313,14 @@ library(nlme, quietly = T)
 options(scipen=999)
 ```
 
+The algorithm is structured as follows:
+
+* We will run $100$ ($T$) experiments of size $100$ ($S$);
+* For each $i \in \{ 1, \ldots, S\}$, we will compute an OLS regression: the intercept will be $c$ and the angular coefficient will be $a$;
+* We compute G;
+* We calculate the difference between the real and the approximation, if it is low enough, the algorithm stops.
+
+
 ```{r,message = FALSE, warning = FALSE, echo=FALSE, results='asis'}
 # IMPLEMENTAÇÃO EIS Amostragem por importância eficiente - ARTIGO RICHARD E ZHANG 2007
 # SEÇÃO 3.6 PRIMEIRA APLICAÇÃO PILOTO
@@ -324,11 +329,13 @@ options(scipen=999)
 # Monta o vetor delta
 delta<-c(0.6, 0.8, 1.2, 1.6, 2.0, 2.4)
 # Fixa o número de retiradas de m() para cada iteração
-S<-100
+S     <-100
+Tesao <- 100
 
 # Os valores verdadeiros da integral G(\delta) e a(\delta) de acordo com o artigo
 G_verdadeiro <- gamma(delta + 1)
 a_verdadeiro <- ((1/delta)*gamma(1 + (1/delta)))^(delta)
+G2_verdadeiro <- 1
 
 # A função kernel utilizada é k(x,a) = exp(-ax)
 kernel <- function(x,a){
@@ -339,7 +346,8 @@ kernel <- function(x,a){
 
 #Função \varphi
 phi <- function(x,del){
-  exp(-x^(1/del))
+  p <- 1/del
+  exp(-x^(p))
 }
 
 #Função d com base na classe K
@@ -368,63 +376,65 @@ w <- function(x,a){
 lista <- list()
 
 for (i in 1:(length(delta))){
-  ####### Parâmetros iniciais: (del é fixo, mas a e c mudarão a cada iteração)
-  a <- 1/delta[i]
-  c <- 1
-  G_chapeu<-0
-  variacao_a<-10
-  variacao_c<-10
-  variacao_G<-10
-  cont<-0
+  estimativas <- matrix(0, nrow = Tesao, ncol = 4, dimnames = list(c(1:Tesao), c("a", "G_chapeu", "G2", "cont")))
+  for(j in 1:Tesao) {
+    ######## Parâmetros iniciais: (del é fixo, mas a e c mudarão a cada iteração)
+    a <- 1/delta[i]
+    c <- 1
+    G_chapeu<-0
+    G_chapeu2 <- 0
+    variacao_a<-10
+    variacao_c<-10
+    variacao_G<-10
+    cont<-0
 
-  # Sorteio dos números aleatórios do CRN
-  u_i<-runif(S, 0,1)
+    # Sorteio dos números aleatórios do CRN
+    u_i<-runif(S, 0,1)
   
-  while(variacao_a > 0.000001 & variacao_c > 0.000001 & variacao_G > 0.000001){
-  ### A distribuição exp(rate=a) tem fórmula a*exp(-ax) = k/\chi(a)
-  # Para converter a u ~ U(0,1) em x(u) ~ exp(rate=a), tem-se: x = -1/a * log(u-0/1-0)
-    del <- delta[i]
-    a_ant<-a;
-    c_ant<-c;
-    G_chapeu_ant  <- G_chapeu;
-    #G_chapeu2_ant <- G_chapeu2;
-    x_i<- (-1/a)*log(1-u_i);
-    xexp<-x_i^(1/del);
-    dados<-as.data.frame(cbind(x_i,xexp));
-    reg<-gls(xexp ~ x_i, dados);
-    a<-reg$coefficients[2];
-    c<-exp(reg$coefficients[1]);
-    G_chapeu  <- mean(w(x_i,a));
-    #G_chapeu2 <- 
-    variacao_a<-abs(a-a_ant);
-    variacao_c<-abs(c-c_ant);
-    variacao_G<-abs(G_chapeu-G_chapeu_ant);
-    #print(c(cont,a,c));
-    cont<-cont+1;
+    while(variacao_a > 0.000001 & variacao_c > 0.000001 & variacao_G > 0.000001){
+    ### A distribuição exp(rate=a) tem fórmula a*exp(-ax) = k/\chi(a)
+    # Para converter a u ~ U(0,1) em x(u) ~ exp(rate=a), tem-se: x = -1/a * log(u-0/1-0)
+      del <- delta[i]
+      a_ant<-a;
+      c_ant<-c;
+      G_chapeu_ant  <- G_chapeu;
+      G_chapeu2_ant <- G_chapeu2;
+      
+      #x_i<- (-1/a)*log(1-u_i);
+      x_i <- qexp(u_i, rate=a)
+      xexp<-x_i^(1/del);
+      dados<-as.data.frame(cbind(x_i,xexp));
+      reg<-gls(xexp ~ x_i, dados);
+      a<-reg$coefficients[2];
+      c<-exp(reg$coefficients[1]);
+      G_chapeu  <- mean(w(x_i,a));
+      G_chapeu2 <- mean((x_i^2)*w(x_i,a));
+      variacao_a<-abs(a-a_ant);
+      variacao_c<-abs(c-c_ant);
+      variacao_G<-abs(G_chapeu-G_chapeu_ant);
+      #print(c(cont,a,c));
+      cont<-cont+1;
   }
 
-  #print(c("Parâmetro a",a,"Integral G",G_chapeu))
-  # Calcular a variância (Tirei da equação 24, que é o que tem na tese tbm...)
-  #aux<-h(d(x_i,a,c)^2)*w(x_i,a)
-  #variancia<- mean(aux)
+  estimativas[i,]<-c(a,G_chapeu,G_chapeu2,cont)
 
   # Com base na eq 7?
-  variancia2<-mean((w(x_i,a)-G_chapeu)^2)
-  
-  lista[[i]] <- list(a, G_chapeu, cont)
+    variancia2<-mean((w(x_i,a)-G_chapeu)^2)
+  }
+  lista[[i]] <- list(mean(estimativas[,1]), mean(estimativas[,2]), mean(estimativas[,3]), cont)
 }
 
 # Montando a tabela
 
-tabela <- matrix(0, nrow = 12,ncol =3)
-colnames(tabela) <- c("alpha chapéu", "G", "iterações")
+tabela <- matrix(0, nrow = 12,ncol =4)
+colnames(tabela) <- c("alpha chapéu", "G", "G^2", "iterações")
 rownames(tabela) <- c("0.6", "", "0.8", "", "1.2", "", "1.6", "", "2.0", "", "2.4", "")
 
 for (i in 1:length(lista)){
-  for (j in 1:3){
+  for (j in 1:4){
     tabela[(2*i),j] <- round(as.numeric(lista[[i]][j]),4)
   }
-  tabela[(2*i-1),]   <- c(round(a_verdadeiro[i],4), round(G_verdadeiro[i],4), "")
+  tabela[(2*i-1),]   <- c(round(a_verdadeiro[i],4), round(G_verdadeiro[i],4), "", "")
 }
 
 tabela <- as.data.frame(tabela)

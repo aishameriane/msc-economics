@@ -134,14 +134,11 @@ MathJax.Hub.Config({
   }
 });
 </script>
-<div id="duvidas-pendentes" class="section level1">
-<h1>Dúvidas pendentes</h1>
+<div id="pendencias" class="section level1">
+<h1>Pendências</h1>
 <ul>
-<li>A definição de <span class="math inline">\(m\)</span> com relação ao kernel e a constante: para chegar no mesmo sinal de <span class="math inline">\(c\)</span>, precisa que <span class="math inline">\(\chi\)</span> esteja no denominador de <span class="math inline">\(k\)</span>, mas no exemplo da família exponencial eles usaram outra definição.</li>
-<li>A função <span class="math inline">\(h\)</span> é necessária ou não? E como que chega na expressão dela? Além disso, como que vai da equação 78 para 79 no apêndice?</li>
-<li>Pq no artigo o termo <span class="math inline">\(1/S\)</span> fica na variância mas na equação (33) da tese do Guilherme ela não aparece? E não seria <span class="math inline">\(1/S^2\)</span>?</li>
-<li>O desvio padrão da tabela 1 é a raiz da variância usando a equação do apêndice ou é algum desvio padrão numérico?</li>
-<li>Como fica o amostrador por importância de <span class="math inline">\(G_2\)</span>?</li>
+<li>Está faltando: Calcular o G2 verdadeiro, calcular o E[X^2] e calcular a razão de variâncias para incorporar na tabela</li>
+<li>Colocar o histograma</li>
 </ul>
 </div>
 <div id="introduction" class="section level1">
@@ -346,9 +343,16 @@ library(knitr, quietly = T)
 library(stargazer, quietly = T)
 library(nlme, quietly = T)
 options(scipen=999)</code></pre>
+<p>The algorithm is structured as follows:</p>
+<ul>
+<li>We will run <span class="math inline">\(100\)</span> (<span class="math inline">\(T\)</span>) experiments of size <span class="math inline">\(100\)</span> (<span class="math inline">\(S\)</span>);</li>
+<li>For each <span class="math inline">\(i \in \{ 1, \ldots, S\}\)</span>, we will compute an OLS regression: the intercept will be <span class="math inline">\(c\)</span> and the angular coefficient will be <span class="math inline">\(a\)</span>;</li>
+<li>We compute G;</li>
+<li>We calculate the difference between the real and the approximation, if it is low enough, the algorithm stops.</li>
+</ul>
 <table style="text-align:center">
 <tr>
-<td colspan="4" style="border-bottom: 1px solid black">
+<td colspan="5" style="border-bottom: 1px solid black">
 </td>
 </tr>
 <tr>
@@ -361,11 +365,14 @@ alpha chapéu
 G
 </td>
 <td>
+G2
+</td>
+<td>
 iterações
 </td>
 </tr>
 <tr>
-<td colspan="4" style="border-bottom: 1px solid black">
+<td colspan="5" style="border-bottom: 1px solid black">
 </td>
 </tr>
 <tr>
@@ -380,18 +387,23 @@ iterações
 </td>
 <td>
 </td>
+<td>
+</td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-1.8571
+0.0185
 </td>
 <td>
-0.9173
+0.0087
 </td>
 <td>
-29
+0.0053
+</td>
+<td>
+28
 </td>
 </tr>
 <tr>
@@ -406,18 +418,23 @@ iterações
 </td>
 <td>
 </td>
+<td>
+</td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-1.3417
+0.013
 </td>
 <td>
-0.9266
+0.0092
 </td>
 <td>
-8
+0.0091
+</td>
+<td>
+7
 </td>
 </tr>
 <tr>
@@ -432,15 +449,20 @@ iterações
 </td>
 <td>
 </td>
+<td>
+</td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-0.7337
+0.0072
 </td>
 <td>
-1.1184
+0.0111
+</td>
+<td>
+0.0541
 </td>
 <td>
 6
@@ -458,18 +480,23 @@ iterações
 </td>
 <td>
 </td>
+<td>
+</td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-0.364
+0.0041
 </td>
 <td>
-1.4736
+0.0141
 </td>
 <td>
-12
+0.2048
+</td>
+<td>
+13
 </td>
 </tr>
 <tr>
@@ -484,15 +511,20 @@ iterações
 </td>
 <td>
 </td>
+<td>
+</td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-0.1878
+0.0024
 </td>
 <td>
-2.0455
+0.0196
+</td>
+<td>
+0.6841
 </td>
 <td>
 18
@@ -510,22 +542,27 @@ iterações
 </td>
 <td>
 </td>
+<td>
+</td>
 </tr>
 <tr>
 <td style="text-align:left">
 </td>
 <td>
-0.0929
+0.0011
 </td>
 <td>
-2.8985
+0.0276
+</td>
+<td>
+3.9376
 </td>
 <td>
 22
 </td>
 </tr>
 <tr>
-<td colspan="4" style="border-bottom: 1px solid black">
+<td colspan="5" style="border-bottom: 1px solid black">
 </td>
 </tr>
 </table>
