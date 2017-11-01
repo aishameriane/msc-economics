@@ -25,7 +25,7 @@ MathJax.Hub.Config({
 
 # Pendências
 
-* Está faltando: Calcular o G2 verdadeiro, calcular o E[X^2] e calcular a razão de variâncias para incorporar na tabela
+* Está faltando: calcular a razão de variâncias para incorporar na tabela
 * Colocar o histograma
 
 # Introduction
