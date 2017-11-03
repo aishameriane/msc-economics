@@ -1,0 +1,247 @@
+---
+title: "Questão 1 - Prova 2 - Econometria II"
+author: "Aishameriane Schmidt"
+date: "2 de novembro de 2017"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+output: html_document
+---
+
+# Introdução e Interpretação Econômica
+
+A questão solicita que sejam analisadas pelo menos 3 séries temporais (podendo ser macroeconômicas ou financeiras).
+
+Eu optei pelas seguintes séries:
+
+* Taxa de juros americana (_Effective Federal Funds Rate_) mensal, obtida pelo FRED. Os dados originais são de julho de 1954 até outubro de 2017;
+* Taxa de câmbio (R$/US$). Os dados originais são de até;
+* Taxa de inflação brasileira (medida através da variação mensal do IPCA). Eu utilizei a variação mensal e não o índice bruto porque as pessoas não se interessam em saber qual o valor da inflação e sim o quanto ela aumentou de um mês para o outro. Os dados originais são de até. Porque eu calculei a variação, a primeira observação é perdida.
+
+A escolha das variáveis é com base no seguinte argumento econômico: se a taxa de juros americana sobe, os ativos dos Estados Unidos ficam mais atraentes para investidores. Então, investidores cujo portfólio envolve títulos brasileiros ficarão atraídos a trocar seus ativos (pois os papéis americanos tem risco menor), de forma que há um aumento da procura por dólares (enquanto que há uma diminuição da procura por reais). Esse movimento cria uma alteração na taxa de câmbio, uma vez que a alta procura pelo dólar gera uma pressão para que seu "preço" suba, causando uma desvalorização cambial. O aumento da taxa de câmbio nominal faz com que fique mais caro importar bens e com isso a cesta de itens ao consumidor fica mais cara, gerando pressão inflacionária.
+
+# Análise descritiva das séries
+
+Carregando os pacotes:
+
+```{r, echo=FALSE, message = FALSE, warning= FALSE}
+list.of.packages <- c("quantmod","tseries","xts","ggplot2","highfrequency","vars","forecast","ustyc","MTS", "urca")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+library(quantmod, quietly = T)
+library(tseries, quietly = T)
+library(ggplot2, quietly = T)
+#library(highfrequency, quietly = T)
+library(vars, quietly = T)
+library(forecast, quietly = T)
+#library(ustyc, quietly = T)
+#library(MTS, quietly = T)
+library(reshape2, quietly = T)
+#library(knitr, quietly = T)
+#library(stargazer, quietly = T)
+```
+
+Leitura das séries (as séries do Brasil eu baixei em outro computador e salvei o csv porque sou avessa ao risco e não quero mexer na minha instalação do R antes do final do semestre para instalar o BETS, hehe):
+
+```{r, warning = FALSE, message = FALSE}
+FEDFUNDS <- getSymbols("FEDFUNDS", src = "FRED", auto.assign = FALSE)
+
+# Taxa de juros americana
+plot.ts(
+  ts(FEDFUNDS,
+     start = c(
+       as.numeric(format(index(FEDFUNDS)[1],"%Y")),
+       as.numeric(format(index(FEDFUNDS)[1],"%m"))
+     ),
+     frequency = 12
+  ), # some backwards conversion to ts from xts
+  xlab = "Data",
+  ylab = "FEDFUNDS",
+  main = "Effective Federal Funds Rate"
+)
+
+ipca <- read.csv("C:\\Users\\Aishameriane\\Dropbox\\Problema dos pontos\\ipca.csv")
+head(ipca)
+
+dolar <- read.csv("C:\\Users\\Aishameriane\\Dropbox\\Problema dos pontos\\dolar.csv")
+head(dolar)
+
+ipca2 <- ts(ipca[,2], start = c(1980,1), end = c(2017, 09), frequency = 12)
+autoplot(ipca2, main = "IPCA (variação mensal) - 1980 a 2017", xlab = "Tempo", ylab = "IPCA")
+
+dolar2 <- ts(dolar[,2], start = c(1953,1), end = c(2017, 10), frequency = 12)
+autoplot(dolar2, main = "Taxa de Câmbio (mensal) - 1953 a 2017", xlab = "Tempo", ylab = "Tx. de Câmbio")
+
+```
+
+Como a série do IPCA e do dólar sofrem muita variação (principalmente no período de hiperinflação e trocas de moeda no Brasil), optei por cortar as séries (arbitrariamente) no ano 2000.
+
+```{r, warning = FALSE, message = FALSE}
+ipca2 <- tail(ipca2, n=213)
+autoplot(ipca2, main = "IPCA (variação mensal) - 2000 a 2017", xlab = "Tempo", ylab = "IPCA")
+
+dolar2 <- tail(dolar2, n=214)
+dolar2 <- head(dolar2, n=213)
+autoplot(dolar2, main = "Taxa de Câmbio (mensal) - 2000 a 2017", xlab = "Tempo", ylab = "Tx. de Câmbio")
+
+juroseua <- tail(FEDFUNDS, n=214)
+juroseua <- head(juroseua, n=213)
+juroseua <- ts(juroseua, start = c(2000,1), end = c(2017, 9), frequency = 12)
+autoplot(juroseua, main = "Taxa de juros americana (mensal) - 2000 a 2017", xlab = "Tempo", ylab = "FED Funds Rate")
+
+# Monta um dataframe para fazer um gráfico das três séries juntas
+
+datas <- seq.Date(as.Date('2000-01-01'), as.Date('2017-09-01'), by='month')
+
+df <- data.frame(datas, juroseua, dolar2, ipca2)
+colnames(df) <- c("Data", "FedFunds", "TxCambio", "IPCA")
+df2 <- melt(data = df, id.vars = "Data")
+
+ggplot(df2, aes(Data, value, colour = variable)) +
+  geom_line(alpha = 1)+
+  labs(title="Juros Americanos, IPCA e Taxa de Câmbio - 2000 a 2017", y = "", x= "Tempo", color = "Variável") +
+  scale_colour_brewer(palette = "Dark2") +
+  theme_bw()
+
+```
+
+Aparentemente a intuição econômica anterior sobre a taxa de juros americana estar relacionada com a taxa de câmbio faz sentido: os períodos de queda do FedFunds (linha verde) são sucedidos de aumentos na taxa de câmbio (linha laranja). No entanto, a inflação parece ter uma vida própria distinta das duas outras variáveis. Vamos analisar a estacionariedade das séries, procurando por raízes unitárias.
+
+```{r, message = FALSE, warning = FALSE}
+ndiffs(ipca2,test="adf",alpha = 0.1)
+ndiffs(dolar2, test = "adf", alpha = 0.1)
+ndiffs(juroseua, test = "adf", alpha = 0.1)
+```
+
+Bom, aparentemente apenas a taxa de câmbio é não estacionária, o que vai complicar a minha vida para falar de cointegração.
+
+Pensando em uma estrutura similar à que havia sido proposta anteriormente, pode-se pensar na influência que o mercado financeiro americado tem sobre as variáveis macroeconômicas brasileiras. Um dos índices mais tradicionais do mercado americano é o índice Dow Jones. Assim como a taxa de juros americana, eu esperaria que aumentos no índice (que sinalizam maior retorno aos investidores) afetem a taxa de câmbio brasileira. Como já visto que a taxa de câmbio é $I(1)$, a outra variável que vou utilizar é novamente o IPCA, mas dessa vez não vou pegar a variação. Como no Fred as três variáveis estão disponíveis, vou pegar tudo de lá, exceto o Dow Jones, que para ser mensal tive que baixar a planilha do site.
+
+```{r}
+dowjones <- read.csv("C:\\Users\\Aishameriane\\Dropbox\\Problema dos pontos\\DJIA.csv")
+head(dowjones)
+tail(dowjones)
+dowjones <- head(dowjones, n=118)
+dowjones2 <- ts(dowjones[,2], start = c(2007,11), end = c(2017, 08), frequency = 12)
+
+ipca <- read.csv("C:\\Users\\Aishameriane\\Dropbox\\Problema dos pontos\\BRACPIALLMINMEI.csv")
+head(ipca)
+tail(ipca)
+ipca2 <- ts(ipca[,2], start = c(2007,11), end = c(2017, 08), frequency = 12)
+
+cambio <- read.csv("C:\\Users\\Aishameriane\\Dropbox\\Problema dos pontos\\EXBZUS.csv")
+head(cambio)
+tail(cambio)
+cambio  <- head(cambio, n=118)
+cambio2 <- ts(cambio[,2], start = c(2007,11), end = c(2017, 08), frequency = 12)
+
+datas <- seq.Date(as.Date('2007-11-01'), as.Date('2017-08-01'), by='month')
+
+df <- data.frame(datas, dowjones2/1000, cambio2*100, ipca2)
+colnames(df) <- c("Data", "Dow Jones", "TxCambio", "IPCA")
+df2 <- melt(data = df, id.vars = "Data")
+
+ggplot(df2, aes(Data, value, colour = variable)) +
+  geom_line(alpha = 1)+
+  labs(title="Índ. Dow Jones(/1000), IPCA e Taxa de Câmbio(*100) - 2000 a 2017", y = "", x= "Tempo", color = "Variável") +
+  scale_colour_brewer(palette = "Dark2") +
+  theme_bw()
+```
+
+Agora, vamos verificar a estacionariedade das séries. Foi utilizado o teste de Dikey Fulles aumentado com significância de 5%.
+
+```{r, message = FALSE, warning = FALSE}
+noquote(paste0(c("A variável IPCA é integrada de ordem ", ndiffs(ipca2,test="adf",alpha = 0.05))))
+noquote(paste0(c("A variável taxa de câmbio é integrada de ordem ", ndiffs(cambio2, test = "adf", alpha = 0.05))))
+noquote(paste0(c("A série do Índice Dow Jones é integrada de ordem ", ndiffs(dowjones2, test = "adf", alpha = 0.05))))
+```
+
+A análise visual das séries é confirmada pelo teste de raiz unitária: de fato as três séries aparentam uma tendência positiva não estacionária.
+
+# Estimando um modelo VAR
+
+Para a seleção do melhor modelo, utilizei a função `VARselect`. Essa função fornece o critério de informação para um número máximo de lags. Como este modelo é macroeconômico, acredito que mais de 4 meses não fazem sentido para as defasagens e por isso trunquei neste valor o lag máximo. Eu cheguei a testa para o lag máximo igual a 10 e a escolha permaneceu em um modelo mais parcimonioso de ordem $2$ (dois dos 4 critérios indicaram que seria 3).
+
+```{r}
+VARselect(df[,c(2,3,4)], lag.max = 4)
+```
+
+Tendo selecionado o número de defasagens igual a 2, vou estimar o modelo VAR utilizando a função de mesmo nome.
+
+```{r}
+MeuVar <- VAR(df[,c(2,3,4)], p = 2, type = "both")
+summary(MeuVar)
+```
+Com relação ao modelo estimado, podemos analisar individualmente cada equação do VAR.
+
+Optei pela inclusão de uma variável para intercepto e uma de tendência, dado que as séries são não estacionárias.
+
+Com relação à equação do índice Dow Jones, vemos que ele tem como coeficiante mais importante o da sua própria defasagem, onde o valor do índice hoje depende diretamente do valor passado (mas não depende do valor em duas defasagens anteriores). Isso corrobora a análise de raiz unitária feita anteriormente. Considerando 10% de significância também são significativos os coeficientes associados à primeira e à segunda defasagens da taxa de câmbio. Isso é condizente com a intuição de que o índice financeiro de fato influencia na taxa de câmbio através da atração dos ativos (o valor do coeficiente da primeira defasagem é segundo, o que sugere uma relação inversa entre as variáveis).
+
+Já a taxa de câmbio se relaciona, a uma significância de 10%, exclusivamente com suas duas defasagens anteriores, contrariando a expectativa de que pudesse sofrer influèncias do Índice Americano.
+
+Finalmente, para a equação do IPCA, encontramos que são significativos a um nível de significância de 10%: as suas duas defasagens, o coeficiente do índice Dow Jones e as variáveis indicando constante e tendência.
+
+Pela matriz de correlação dos resíduos, vê-se uma relação negativa entre a taxa de Câmbio e o Índice Dow Jones, conforme era esperado, mas positiva entre o IPCA e o Índice (embora essa correlação seja muito pequena). Também é positiva e pequena a correlação entre o IPCA e a taxa de câmbio. Eu esperava que a taxa de câmbio fosse o "canal" por onde o Índice DJ afetasse a inflação no Brasil, então esse resultado de certa forma contrariou as expectativas.
+
+# Funções Impulso Resposta e Causalidade de Granger
+
+Para as funções impulso resposta, estou utilizando a função `irf`.
+
+```{r, message = FALSE, warning = FALSE}
+#Função impulso resposta para a variável "Dow Jones"
+DJ.IRF <- irf(MeuVar, response = "Dow.Jones", n.ahead = 12, boot = TRUE)
+plot(DJ.IRF)
+```
+
+A análise da função impulso resposta para a variável Dow Jones sugere que de fato choques na taxa de câmbio afetam negativamente essa variável. Porém, através do IC da função observamos que em 4 meses esse efeito já não é dintinguível do valor zero. Com relação ao IPCA, o IC contém o zero em toda sua extensão.
+
+```{r, message = FALSE, warning = FALSE}
+#Função impulso resposta para a variável "cambio"
+Cambio.IRF <- irf(MeuVar, response = "TxCambio", n.ahead = 12, boot = TRUE)
+plot(Cambio.IRF)
+```
+
+A mesma relação negativa entre taxa de câmbio e índice Dow Jones volta a aparecer: um choque na variável Dow Jones impacta negativamente o valor da Taxa de Câmbio. Já com relação à SELIC, não parece haver uma relação clara nos dados, pois o IC contém o zero em toda sua extensão.
+
+```{r, message = FALSE, warning = FALSE}
+#Função impulso resposta para a variável "IPCA"
+IPCA.IRF <- irf(MeuVar, response = "IPCA", n.ahead = 12, boot = TRUE)
+plot(IPCA.IRF)
+```
+
+Para o IPCA, apesar do Índice Dow Jones aparentar uma relação positiva, essa relação não é estatisticamente diferente de zero. Porém, quando analisamos a FIR para IPCA e Taxa de Câmbio, vemos uma relação positiva: choques positivos na taxa de câmbio farão a inflação aumentar, o que faz sentido, considerando que a cesta de bens do IPCA possivelmente tem muitos produtos importados.
+
+Agora, vamos calcular o teste de causalidade de Granger.
+
+```{r}
+#Causalidade de Granger
+causality(MeuVar, cause = "TxCambio")
+causality(MeuVar, cause = "Dow.Jones")
+causality(MeuVar, cause = "IPCA")
+```
+
+Para a taxa de câmbio, rejeita-se a hipótese nula de que ela não causa, no sentido de Granger, o índice Dow Jones e o IPCA. O mesmo pode ser dito para o índice Dow Jones e as outras duas variáveis. Por fim, aceita-se a hipótese de não causalidade (no sentido de Granger) do IPCA nas demais variáveis.
+
+# Análise de Cointegração
+
+Para análise de cointegração, será utilizada a função `ca.jo` do pacote `urca`, que faz o teste de Johansen. Escolhi fazer pelo método do traço.
+
+```{r}
+dados <- ts.intersect(dowjones2,ipca2,cambio2)
+summary(ca.jo(dados, type = "trace", ecdet = "const", K = 2, spec = "transitory", season = 12))
+```
+
+Analisando as estatísticas de teste e comparando com os valores críticos, conclui-se que para o nível de significância de 1% existem dois vetores de cointegração. Com isso, podemos estimar um modelo VEC (item f).
+
+```{r}
+# Estima modelo VEC
+vecm <- ca.jo(dados, type = "trace", ecdet = "const", K = 2, spec = "transitory", season = 12)
+vecm.r2 <- cajorls(vecm, r = 2)
+print(vecm.r2)
+summary(vecm.r2$rlm)
+```
+
+A matriz beta nos mostra que com relação à sua primeira componente (primeiro vetor de cointegração), o câmbio e a constante aparecem com valores altos, o mesmo para a segunda componente. Quando olhamos os coeficientes, o coeficiente de ambos vetores é estatisticamente diferente de zero para o Índice Dow Jones enquanto que os coeficientes dos vetores de cointegração são estatisticamente iguais a zero para o câmbio. Quanto ao IPCA, apenas o primeiro vetor tem coeficiente não nulo, considerando 10% de significância.
