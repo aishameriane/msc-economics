@@ -1,0 +1,151 @@
+---
+title: "Questão 2 - Prova 2 - Econometria II"
+author: "Aishameriane Schmidt"
+date: "2 de novembro de 2017"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+output: html_document
+---
+
+# Introdução
+
+Para esta questão escolhi os seguintes ativos:
+
+* Starbucks Corporation (NASDAQ:SBUX)
+* McDonald's Corporation (NYSE:MCD)
+* Domino's Pizza, Inc. (NYSE:DPZ)
+* PepsiCo, Inc. (NYSE:PEP)
+* The Coca-Cola Co (NYSE:KO)
+
+Escolhi empresas do ramo alimentício (na área de fast food) por acreditar que seus ativos vão estar de alguma forma reçacionados.
+
+# Carregamento dos pacotes e download das séries
+
+```{r, warning = FALSE, message = FALSE}
+list.of.packages <- c("quantmod","tseries","xts","ggplot2","highfrequency","vars","forecast","ustyc","MTS", "knitr", "stargazer", "rmgarch", "PerformanceAnalytics")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+library(quantmod, quietly = T)
+library(tseries, quietly = T)
+library(ggplot2, quietly = T)
+library(highfrequency, quietly = T)
+library(vars, quietly = T)
+library(forecast, quietly = T)
+library(ustyc, quietly = T)
+library(MTS, quietly = T)
+library(reshape2, quietly = T)
+library(xts, quietly = T)
+library(rmgarch, quietly = T)
+library(PerformanceAnalytics, quietly = T)
+library(knitr, quietly = T)
+library(stargazer, quietly = T)
+```
+
+
+# Baixa dados dos ativos e faz o gráfico das séries conjuntas
+
+```{r, message = FALSE, warning = FALSE}
+symbols <- c("SBUX","MCD","DPZ","PEP","KO")
+getSymbols(symbols, src = 'google', from = "2010-01-01", 
+             auto.assign = TRUE, warnings = FALSE) 
+prices <- merge(SBUX,MCD,DPZ,PEP,KO)
+prices <- prices[,grepl( "Close" , names(prices) )]
+colnames(prices) <- c("Starbucks", "McDonald's", "Domino's Pizza", "Pepsi", "Coca-Cola")
+returns <- na.omit(Return.calculate(prices, method = "log"))*100
+
+autoplot(returns)
+```
+
+No gráfico com as séries separadas, observamos que algumas séries aparentam ter um comportamento menos volátil que outras. Por exemplo, a série de retornos da Starbucks e Domino's Pizza parecem ter mais clusters de alta volatilidade.
+
+Para verificar, fiz o plot das séries juntas:
+
+```{r, message = FALSE, warning = FALSE}
+autoplot(as.ts(returns), main = "Distribuição das séries dos retornos", xlab = "Tempo", ylab = "Retorno") +   
+  scale_colour_brewer(palette = "Dark2") +
+  theme_bw()
+```
+
+De fato, ao observar as séries conjuntamente, há uma concentração dos retornos da Coca-Cola na região central do gráfico, em contraste com a grande quantidade de picos da série da Starbucks e da Domino's Pizza, que detoam das demais séries.
+
+Para a especificação da variância, optei por um modelo sGARCH(1,1) com uma distribuição de erros GED com assimetria. Essa escolha é em decorrência de termos visto em aula que a GED era a distribuição que melhor se adequava ao exercício feito e a assimetria eu escolhi porque já discutimos como é comum que a volatilidade não seja a mesma em períodos de alta do mercado em relação aos períodos de baixa, para séries financeiras.
+
+Para fins de simplicidade, usei a mesma especificação para todos os 5 ativos. Idealmente poderia-se pensar em especificações diferentes para cada série, *mas idealmente eu teria mais de 48h para fazer e não estaria com os dois braços inflamados*.
+
+```{r}
+# meu garch vai seguir uma GED com assimetria
+especificacao <- ugarchspec(distribution = "sged")
+junta_tudo    <- multispec(c(especificacao, especificacao,especificacao,especificacao,especificacao))
+
+# Faz a distribuição conjunta - eu escolhi uma t multivariada pelas caudas pesadas
+dcc_espec     <- dccspec(junta_tudo, distribution = "mvt")
+ajuste <- dccfit(dcc_espec, returns)
+``` 
+
+# Parâmetros estimados
+
+Agora, vamos analisar os coeficientes calculados.
+
+```{r, warning = FALSE, message = FALSE}
+# Mostra os parâmetros estimados
+ajuste
+
+# DCC 1,1 significa que a autocorrelação segue um AR(1)
+```
+
+Para os parâmetros, temos para cada uma das séries:
+
+* $\mu$ - média incondicional
+* $ma$ - theta da parte média móvel da média
+* $ar$ - phi da parte autoregressiva da média
+* $\omega$ - intercepto da variância
+* $alpha_1$ - parte autoregressiva da variância (do processo garch)
+* $\beta_1$ - parte da média móvel da variância
+* $shape$ - graus de liberdade da t
+
+
+# Variâncias condicionais
+
+Para analisar as variâncias condicionais, primeiro utilizamos a função `rcov()` e depois plotamos os gráficos.
+
+```{r, warning = FALSE, message = FALSE}
+# faz a matriz de covariâncias
+matriz_cov <- rcov(ajuste)
+
+# Na diagonal estão as covariâncias, por exemplo para starbucks
+ts.plot(matriz_cov[1,1,])
+ts.plot(matriz_cov[2,2,])
+ts.plot(matriz_cov[3,3,])
+ts.plot(matriz_cov[4,4,])
+ts.plot(matriz_cov[5,5,])
+
+autoplot(cbind(as.ts(matriz_cov[1,1,]), as.ts(matriz_cov[2,2,]), as.ts(matriz_cov[3,3,]), as.ts(matriz_cov[4,4,]), as.ts(matriz_cov[5,5,])))
+
+
+```
+
+# O mesmo para as covariâncias
+
+```{r, message = FALSE, warning = FALSE}
+# Para a correlação condicional precisamos primeiro montar a matriz
+matriz_cor <- rcor(ajuste)
+# na linha 1 e coluna 2 tem a correlação da starbucks com o mc donalds
+ts.plot(matriz_cor[1,2,])
+ts.plot(matriz_cor[1,3,])
+ts.plot(matriz_cor[1,4,])
+ts.plot(matriz_cor[1,5,])
+
+ts.plot(matriz_cor[2,3,])
+ts.plot(matriz_cor[2,4,])
+ts.plot(matriz_cor[2,5,])
+
+ts.plot(matriz_cor[3,4,])
+ts.plot(matriz_cor[3,4,])
+
+ts.plot(matriz_cor[4,5,])
+
+```
+
