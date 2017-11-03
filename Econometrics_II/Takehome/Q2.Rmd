@@ -87,16 +87,7 @@ ajuste <- dccfit(dcc_espec, returns)
 
 # Parâmetros estimados
 
-Agora, vamos analisar os coeficientes calculados.
-
-```{r, warning = FALSE, message = FALSE}
-# Mostra os parâmetros estimados
-ajuste
-
-# DCC 1,1 significa que a autocorrelação segue um AR(1)
-```
-
-Para os parâmetros, temos para cada uma das séries:
+Agora, vamos verificar os coeficientes calculados. Para os parâmetros, temos para cada uma das séries:
 
 * $\mu$ - média incondicional
 * $ma$ - theta da parte média móvel da média
@@ -107,6 +98,90 @@ Para os parâmetros, temos para cada uma das séries:
 * $shape$ - graus de liberdade da t
 
 
+```{r, warning = FALSE, message = FALSE}
+# Mostra os parâmetros estimados
+ajuste
+
+```
+
+Para melhor visualizar melhor os resultados, fiz uma tabela separada com os coeficientes da média e da variância.
+
+## Coeficientes da média condicional
+
+```{r, warning = FALSE, message = FALSE, results='asis'}
+coef_media <- matrix(0, ncol = 5, nrow = 9)
+colnames(coef_media) <- c("Starbucks", "McDonald's", "Domino's Pizza", "Pepsi", "Coca-Cola")
+rownames(coef_media) <- c("mu", "D.P.", "p valor", 
+                          "AR", "D.P.", "p valor",
+                          "MA", "D.P.", "p valor")
+
+for (i in 1:3) {
+  coef_media[(1+3*(i-1)),] <- round(c(ajuste@mfit$coef[i], 
+                      ajuste@mfit$coef[i+8], 
+                      ajuste@mfit$coef[i+2*8],
+                      ajuste@mfit$coef[i+3*8],
+                      ajuste@mfit$coef[i+4*8]),4)
+}
+
+for (i in 1:3) {
+  coef_media[(2+3*(i-1)),] <- round(c(ajuste@mfit$matcoef[i,2], 
+                      ajuste@mfit$matcoef[i+8,2], 
+                      ajuste@mfit$matcoef[i+2*8,2],
+                      ajuste@mfit$matcoef[i+3*8,2],
+                      ajuste@mfit$matcoef[i+4*8,2]),4)
+}
+
+for (i in 1:3) {
+  coef_media[(3+3*(i-1)),] <- round(c(ajuste@mfit$matcoef[i,4], 
+                      ajuste@mfit$matcoef[i+8,4], 
+                      ajuste@mfit$matcoef[i+2*8,4],
+                      ajuste@mfit$matcoef[i+3*8,4],
+                      ajuste@mfit$matcoef[i+4*8,4]),4)
+}
+coef_media <- as.data.frame(coef_media)
+stargazer(coef_media, summary=FALSE, header = TRUE, type = 'html')
+```
+
+Para todos coeficientes para os retornos da Coca-Cola rejeita-se a hipótese nula de que o valor do coeficiente seja estatisticamente igual a zero. Os demais retornos todos apresentam um modelo bem definido para a média condicional da série.
+
+## Coeficientes da variância
+
+```{r, message = FALSE, warning = FALSE, results='asis'}
+coef_variancia <- matrix(0, ncol = 5, nrow = 9)
+colnames(coef_variancia) <- c("Starbucks", "McDonald's", "Domino's Pizza", "Pepsi", "Coca-Cola")
+rownames(coef_variancia) <- c("&omega", "D.P.", "p valor", 
+                          "alpha", "D.P.", "p valor",
+                          "beta", "D.P.", "p valor")
+
+for (i in 1:3) {
+  coef_variancia[(1+3*(i-1)),] <- round(c(ajuste@mfit$coef[i], 
+                      ajuste@mfit$coef[(i+3)+8], 
+                      ajuste@mfit$coef[(i+3)+2*8],
+                      ajuste@mfit$coef[(i+3)+3*8],
+                      ajuste@mfit$coef[(i+3)+4*8]),4)
+}
+
+for (i in 1:3) {
+  coef_variancia[(2+3*(i-1)),] <- round(c(ajuste@mfit$matcoef[i,2], 
+                      ajuste@mfit$matcoef[(i+3)+8,2], 
+                      ajuste@mfit$matcoef[(i+3)+2*8,2],
+                      ajuste@mfit$matcoef[(i+3)+3*8,2],
+                      ajuste@mfit$matcoef[(i+3)+4*8,2]),4)
+}
+
+for (i in 1:3) {
+  coef_variancia[(3+3*(i-1)),] <- round(c(ajuste@mfit$matcoef[i,4], 
+                      ajuste@mfit$matcoef[(i+3)+8,4], 
+                      ajuste@mfit$matcoef[(i+3)+2*8,4],
+                      ajuste@mfit$matcoef[(i+3)+3*8,4],
+                      ajuste@mfit$matcoef[(i+3)+4*8,4]),4)
+}
+
+stargazer(coef_variancia, summary=FALSE, header = TRUE, type = 'html')
+# DCC 1,1 significa que a autocorrelação segue um AR(1)
+```
+Com relação aos coeficientes do modelo para variância condicional, tanto a Pepsi como a Coca-Cola apresentaram como significativo (a um nível de 5% de significância) apenas o coeficiente beta, correspondente à "média móvel" do modelo GARCH.
+
 # Variâncias condicionais
 
 Para analisar as variâncias condicionais, primeiro utilizamos a função `rcov()` e depois plotamos os gráficos.
@@ -116,36 +191,44 @@ Para analisar as variâncias condicionais, primeiro utilizamos a função `rcov()` 
 matriz_cov <- rcov(ajuste)
 
 # Na diagonal estão as covariâncias, por exemplo para starbucks
-ts.plot(matriz_cov[1,1,])
-ts.plot(matriz_cov[2,2,])
-ts.plot(matriz_cov[3,3,])
-ts.plot(matriz_cov[4,4,])
-ts.plot(matriz_cov[5,5,])
+ts.plot(matriz_cov[1,1,], main = "Variância condicional dos retornos da Starbucks", xlab = "Tempo", ylab = "Variância")
+ts.plot(matriz_cov[2,2,], main = "Variância condicional dos retornos do McDonald's", xlab = "Tempo", ylab = "Variância")
+ts.plot(matriz_cov[3,3,], main = "Variância condicional dos retornos da Domino's Piza", xlab = "Tempo", ylab = "Variância")
+ts.plot(matriz_cov[4,4,], main = "Variância condicional dos retornos da Pepsi", xlab = "Tempo", ylab = "Variância")
+ts.plot(matriz_cov[5,5,], main = "Variância condicional dos retornos da Coca-Cola", xlab = "Tempo", ylab = "Variância")
 
-autoplot(cbind(as.ts(matriz_cov[1,1,]), as.ts(matriz_cov[2,2,]), as.ts(matriz_cov[3,3,]), as.ts(matriz_cov[4,4,]), as.ts(matriz_cov[5,5,])))
+# Vou montar um data frame com as séries para plotar melhor
+variancias <- as.data.frame(cbind(as.ts(matriz_cov[1,1,]), as.ts(matriz_cov[2,2,]), as.ts(matriz_cov[3,3,]), as.ts(matriz_cov[4,4,]), as.ts(matriz_cov[5,5,])))
 
+colnames(variancias) <- c("Starbucks", "McDonald's", "Domino's Pizza", "Pepsi", "Coca-Cola")
 
+autoplot(as.ts(variancias), main = "Distribuição das variâncias condicionais", xlab = "Tempo", ylab = "Volatilidade") +   
+  scale_colour_brewer(palette = "Dark2") +
+  theme_bw()
+
+#autoplot(cbind(as.ts(matriz_cov[1,1,]), as.ts(matriz_cov[2,2,]), as.ts(matriz_cov[3,3,]), as.ts(matriz_cov[4,4,]), as.ts(matriz_cov[5,5,])))
 ```
 
-# O mesmo para as covariâncias
+# Correlações condicionais
+
 
 ```{r, message = FALSE, warning = FALSE}
 # Para a correlação condicional precisamos primeiro montar a matriz
 matriz_cor <- rcor(ajuste)
 # na linha 1 e coluna 2 tem a correlação da starbucks com o mc donalds
-ts.plot(matriz_cor[1,2,])
-ts.plot(matriz_cor[1,3,])
-ts.plot(matriz_cor[1,4,])
-ts.plot(matriz_cor[1,5,])
+ts.plot(matriz_cor[1,2,], main = "Correlação condicional - Starbucks x McDonald's", xlab = "Tempo", ylab = "Correlação")
+ts.plot(matriz_cor[1,3,], main = "Correlação condicional - Starbucks x Domino's", xlab = "Tempo", ylab = "Correlação")
+ts.plot(matriz_cor[1,4,], main = "Correlação condicional - Starbucks x Pepsi", xlab = "Tempo", ylab = "Correlação")
+ts.plot(matriz_cor[1,5,], main = "Correlação condicional - Starbucks x Coca-Cola", xlab = "Tempo", ylab = "Correlação")
 
-ts.plot(matriz_cor[2,3,])
-ts.plot(matriz_cor[2,4,])
-ts.plot(matriz_cor[2,5,])
+ts.plot(matriz_cor[2,3,], main = "Correlação condicional - McDonald's x Domino's", xlab = "Tempo", ylab = "Correlação")
+ts.plot(matriz_cor[2,4,], main = "Correlação condicional - McDonald's x Pepsi", xlab = "Tempo", ylab = "Correlação")
+ts.plot(matriz_cor[2,5,], main = "Correlação condicional - McDonald's x Coca-Cola", xlab = "Tempo", ylab = "Correlação")
 
-ts.plot(matriz_cor[3,4,])
-ts.plot(matriz_cor[3,4,])
+ts.plot(matriz_cor[3,4,], main = "Correlação condicional - Domino's x Pepsi", xlab = "Tempo", ylab = "Correlação")
+ts.plot(matriz_cor[3,4,], main = "Correlação condicional - Domino's x Coca-Cola", xlab = "Tempo", ylab = "Correlação")
 
-ts.plot(matriz_cor[4,5,])
+ts.plot(matriz_cor[4,5,], main = "Correlação condicional - Pepsi x Coca-Cola", xlab = "Tempo", ylab = "Correlação")
 
 ```
 
