@@ -149,7 +149,7 @@ Para todos coeficientes para os retornos da Coca-Cola rejeita-se a hipótese nula
 ```{r, message = FALSE, warning = FALSE, results='asis'}
 coef_variancia <- matrix(0, ncol = 5, nrow = 9)
 colnames(coef_variancia) <- c("Starbucks", "McDonald's", "Domino's Pizza", "Pepsi", "Coca-Cola")
-rownames(coef_variancia) <- c("&omega", "D.P.", "p valor", 
+rownames(coef_variancia) <- c("omega", "D.P.", "p valor", 
                           "alpha", "D.P.", "p valor",
                           "beta", "D.P.", "p valor")
 
