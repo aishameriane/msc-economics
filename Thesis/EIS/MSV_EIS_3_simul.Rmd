@@ -18,7 +18,9 @@ The aim of this code is to estimate the wishart stochastic volatility model (MSV
 
 The code is based in Matlab code provided by Richard Schnorrenberger.
 
-# Preliminaires
+# Code initialization
+
+<span style="color:purple">*Aisha's remark*: I'm not sure about the order of the topics, when we finish the implementation we can discuss what is better. I think we should mantain the markdown file for documentation purposes but run the code in a R regular file, because *.rmd files are a little slower to compile.</span>
 
 The observational density is given by
 
