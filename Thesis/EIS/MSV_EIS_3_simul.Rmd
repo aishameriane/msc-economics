@@ -1,0 +1,164 @@
+---
+title: "EIS in MSV Wishart Models"
+author: "A. Schmidt, C. Piazza"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+   - \usepackage{calrsfs}
+date: "8 de novembro de 2017"
+output: html_document
+bibliography: references.bib
+---
+
+# Introduction
+
+The aim of this code is to estimate the wishart stochastic volatility model (MSV) proposed by [@philipov2006a] and [@philipov2006b] using efficient importance sampling (EIS), proposed by [@richard_zhang2007]. [Click here](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Thesis/EIS/EIS_-_Pilot_Applications.html) for a pilot application of EIS in R.
+
+The code is based in Matlab code provided by Richard Schnorrenberger.
+
+# Preliminaires
+
+The observational density is given by
+
+$$p(y_t|\Sigma_t)\sim N(0,\Sigma_t)$$
+
+Densidade de transição dos estados
+
+$$p(\Sigma_{t}^{-1}|\Sigma_{t-1}^{-1},v,d,C)\sim Wishart(v,S_{t-1})$$
+$$S_{t-1}=\frac{1}{v}(C^{1/2})(\Sigma_{t-1}^{-1})^{d}(C^{1/2})^{\prime}$$
+## Loading packages
+```{r, warning = FALSE, message= FALSE}
+list.of.packages <- c("ggplot2", "MASS")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+library(ggplot2, quietly = TRUE)
+library(MASS, quietly = TRUE)
+```
+
+
+## Reading Phillipov's Data
+
+```{r, eval = FALSE, echo = FALSE}
+dados <- read.delim("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Dissertação\\Pesquisa - EIS - Richard\\Meus códigos\\5_Industry_Portfolios.txt", sep = ";")
+head(dados)
+summary(dados[,-1])
+dados[,2] <- as.numeric(dados[,2])
+dados[,3] <- as.numeric(dados[,3])
+dados[,4] <- as.numeric(dados[,4])
+dados[,5] <- as.numeric(dados[,5])
+dados[,6] <- as.numeric(dados[,6])
+```
+
+
+## Initial parameters and variables
+
+```{r, eval = FALSE}
+K     <- 3      # Number of observable variables
+Tesao <- 240    # Number of time periods (it is consistent with P&G Multivariate...)
+N     <- 500    # MC sample size (S from our original notation)
+burn  <- 0      # Burn in ----- onde que usa?
+d     <- 0.5    # Persistence parameter
+v     <- 14     # Degrees of freedon from Wishart transition density ------ como decidir?
+iv    <- 1/v
+
+aux   <- c(0.0238, 0.0057, 0.0145, 0.0057, 0.0239, 0.0056, 0.0145, 0.0056, 0.0330)
+invC  <- matrix(aux, ncol = 3, nrow = 3)   # From P&G page 321
+# Obs: The inverse of C has a direct relation to the covariance matrix, while C relates to the precision matrix (inverse covariance)
+## In the article, this matrix is called A
+
+C     <- solve(invC)
+cC    <- t(chol(C)) # produce a lower triangular matrix C^{1/2} (cC), so that C=C^{1/2}*C^{1/2}' = cC %*% t(cC);
+# Chol provides the upper Chol Decomposition, that's why I'm transposing
+
+zeroK <- as.vector(rep(0,K))
+aux   <- matrix(1, ncol = K, nrow = K) 
+aux[!lower.tri(matrix(1, ncol = K, nrow = K), diag = TRUE)] <- 0 
+aux2 <- matrix(seq(1,K*K,1), ncol = K, nrow = K)
+inds <- as.vector(aux2[!aux == 0]) # Index from covariance matrix to EIS parameters
+
+semente <- set.seed(123456789)
+
+# Initial States
+Vini <- solve(diag(K)*0.15)  # What is this?
+V0   <- Vini
+
+# Generate data
+Vtrue      <- rep(matrix(NaN, ncol = K, nrow = K),Tesao)    # NaN(1,2,3) in Matlab creates 3 1\times2 matrices filled with NaN
+dim(Vtrue) <- c(K, K, Tesao)                            # So first I've created the elements and then I adjust the dimension
+yT         <- matrix(NaN, nrow = T, ncol = K)
+# lik_ratio <- matrix(NaN, nrow = T, ncol = 1)          # This line is commented in Matlab as well
+#s          <- # I have to wait for Richard to understand the lines using RandStream
+
+for (t in 1:Tesao){
+  # Scale matrix
+  S  <- cC%*% (V0^d) %*% t(cC)*iv                        # Draw from the Scale Matrix
+  # Note that this loop is sampling one single realization from the variable of interest for every period t
+  
+  # Data Generating Process
+  # rWishart(n, df, Sigma) - Generate n random matrices, distributed according to the Wishart distribution with parameters Sigma and df
+
+  V1 <- rWishart(1, v, S)
+  Vtrue[,,t] <- V1
+  
+  # Observable multivariate data
+  # mvrnorm(n = 1, mu, Sigma, tol = 1e-6, empirical = FALSE, EISPACK = FALSE)
+  # Produces one or more samples from the specified multivariate normal distribution.
+  
+  Y <- mvrnorm(n = 1, mu = zeroK, Sigma = solve(matrix(V1, ncol = K, nrow = K))) # Samples of observables drawn from a zero mean multivariate normal distribution with covariance matrix \Sigma_{t}; 
+  yt[t,] <- Y
+  # lik_ratio[t] <- ISratioWishart(yt(t,:),S,v); # This line is commented in Matlab
+  V0 <- V1          # Note that V1_{t} is used as V0 for period t+1. That is, V1_{t} enters in S from the next period as V0_{t+1};
+}
+```
+
+# Estimation
+
+## EIS Procedure
+
+## EIS Algorithm
+
+This part requires 2 main functions: `lik_KChi_initial()` and `lik_KChi_R()`.
+
+### Implementation of `lik_KChi_initial()`
+
+### Implementation of `lik_KChi_R()`
+
+## Getting everything together with `MSV_EIS_3_simul`
+
+## Compute likelihood multiple times to analyze MC std for varying seeds and fixed parameters
+
+```{r, eval = FALSE}
+MC          <- 100
+loglikK     <- matrix(0, nrow = MC, ncol = 1)
+loglikK_ini <- loglikK
+loglikK2    <- loglikK
+time        <- loglikK
+time_ini    <- time
+time2       <- time
+adj         <- 7.4
+cCinds      <- t(cC[inds])
+parreal     <- cbind(d, v, cCinds)
+it_print    <- 1
+tm1 <- system.time(   # Mimics the usage of tic toc
+tic
+  {
+    
+    for (j in 1:MC) {
+      if (j %% it_print == 0) {
+        print(j)
+        toc
+      }
+      seed <- semente + 187*j
+      tic
+      loglikK_ini <- lik_KChi_initial(parreal, yt, Vini, N, adj, seed) # Initial Sampler
+      time_ini[j] <- toc
+      tic
+      loglikK_ini2[j] <- lik_KChi_R(parreal, yt, Vini, N, adj, seed)
+      time2[j]        <- toc # Not sure if this tic toc will work, maybe I'll have to make a workround using system.time later
+    }
+  }) # Probably this will go wrong because the tic toc in Richard's code is intended to go only until the if part and mine gets the role for() loop. I'll look into this later
+```
+
+# References
