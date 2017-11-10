@@ -387,7 +387,7 @@ sigma_chapeu<-(1/length(vetor_v))*sum((vetor_v-aproximacao)^2)
 desv_pad_num<-sqrt(sigma_chapeu)/(sqrt(length(vetor_v)))
 ```
 
-Calculating one time, the estimated value is `r round(aproximacao, 4)`, while the true value is $\mathbb{P}(X \leq -4.5) =$ `r pnorm(t,mean=0,sd=1)`. The numeric std. deviation is given by: $\frac{\hat{\sigma}_g}{\sqrt{S}}=$ `r round(desv_pad_num,4)`.
+Calculating one time, the estimated value is `r aproximacao`, while the true value is $\mathbb{P}(X \leq -4.5) =$ `r pnorm(t,mean=0,sd=1)`. The numeric std. deviation is given by: $\frac{\hat{\sigma}_g}{\sqrt{S}}=$ `r round(desv_pad_num,4)`.
 
 ```{r, echo = FALSE}
 # Define um tamanho de S e faz S retiradas de uma uniforme(-1/4.5, 0)
