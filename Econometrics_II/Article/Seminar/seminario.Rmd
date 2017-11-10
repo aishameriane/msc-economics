@@ -1,0 +1,710 @@
+---
+title: "Estimating a Wishart Multivariate Stochastic Volatility Model using Efficient Importance Sampling"
+author: "A. Schmidt"
+
+header-includes:
+   - \widowpenalties
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+   - \usepackage{calrsfs}
+   - \usepackage{mathrsfs}
+date: "October, 2017"
+output: 
+  ioslides_presentation:
+    self_contained: yes
+    widescreen: yes
+    incremental: true
+    autosize: false
+    fig_width: 7
+    fig_height: 6
+    fig_caption: true
+bibliography: references2.bib
+---
+
+```{css}
+slide {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+```
+```{r deps,include=FALSE}
+# this ensures jquery is loaded
+dep <- htmltools::htmlDependency(name = "jquery", version = "1.11.3", src = system.file("rmd/h/jquery-1.11.3", package='rmarkdown'), script = "jquery.min.js")
+htmltools::attachDependencies(htmltools::tags$span(''), dep)
+```
+
+```{js move-id-background-color}
+$(document).ready(function(){
+    // for every article tag inside a slide tag
+    $("slide > article").each(function(){
+        // copy the article name to the parentNode's (the slide) ID
+        this.parentNode.id=$(this).attr('name');
+    });
+});
+```
+
+
+## Contents
+
+1. Motivation
+2. MSV Models
+    * [@philipov_glickman2006a] and [@philipov_glickman2006b]
+3. Monte Carlo Methods
+    * Importance Sampling
+    * Efficient Importance Sampling
+4. Next steps
+
+## Motivation
+
+* <img style="float: left;" src="images\Imagem3.png" width="450">
+
+* <img style="float: right;" src="images\Imagem5.png" width="450">
+
+## MSV models
+
+- While GARCH models consider that the conditional volatility is a deterministic function of the past returns, in SV models the volatility process is random.
+- These models are important for both economic and econometric aspects [@asai2006]:
+    * Improve the knowledge of the correlation structure between many financial applications in order to make better decisions;
+    * The multivariate framework leads to greater statistical efficiency.
+- Two good reviews about these models are [@asai2006] and [@chib2009multivariate].
+
+## Wishart MSV models {.smaller}
+
+- Uhlig (1997) proposed a model with precision matrix $\Omega_t$ following:
+
+- \[ 
+\Omega_t = \Omega_{t-1}^{1/2'}\Theta_t\Omega_{t-1}^{1/2}, \qquad \Theta \sim \mathcal{B}(\nu/2, 1/2)
+\]
+
+    - But this specification does not allows the shocks to have a persistent behavior.
+
+- [@philipov_glickman2006a] and [@philipov_glickman2006b] proposes a different specification:
+
+- \[ 
+\Omega_t | \Omega_{t-1} \sim \mathcal{W}(\nu, S_{t-1}),\quad  \text{with } \ S_t = \frac{1}{\nu}A^{1/2}\Omega_t^d A^{1/2'} \tag{06}
+\]
+
+    - where $A$ is a positive definite symmetric matrix containing parameters determining the intertemporal sensitivity of each element of the precision matrix and $d \in [0,1)$ is a scalar that accounts for overall persistence of the process.
+
+## Phillipov and Glickman MSV Model
+
+- \[ 
+\Omega_t | \Omega_{t-1} \sim \mathcal{W}(\nu, S_{t-1}),\quad  \text{with } \ S_t = \frac{1}{\nu}A^{1/2}\Omega_t^d A^{1/2'} \tag{06}
+\]
+
+- Have some desirable properties:
+    * Flexible covariance structure (in comparison to Primiceri TVP-VAR w/ MSV and Uhlig's model)
+    * Does not suffer from changes in the variable's order
+
+- Plus, some estimation problems:
+    * P&G (2006b) had trouble estimating simultaneously the elements of the matrix $A$ and persistence parameter $d$ and proposed to use a fixed $d$;
+    * Assai and McAleer (2009) reported problems in the Gibbs algorithm.
+
+## Monte Carlo Methods 
+
+- Monte Carlo (MC) Methods are an alternative way to solve complex integrals
+    - Specially used for high-dimension problems, where non-stochastic algorithms are way too slow;
+- The idea is to resample values from a probability density (thus, is a stochastic method), using a pseudo-random number generator and the inverting theorem.
+
+## Monte Carlo Methods (cont.)
+
+Consider the following integral:
+
+\[\tag{01}
+I = \int_\chi g(x)f(x)d\theta
+\]
+
+If $X$ is a random vector with pfd $f_X(\cdot)$, then (1) is the espectation of $g(X)$ with respect to $f(\cdot)$:
+
+\[\tag{02}
+I  = \mathbb{E}[g(\theta)|x]
+\]
+
+In cases where the function $f$ is known, using the law of large numbers we can use the sample mean to approximate (1):
+
+\[\tag{03}
+I \approx \frac{1}{N}\sum\limits_{i=1}^N g(x_i)
+\]
+
+## MC Methods: Example 1
+
+The CDF of the Standard Normal Distribution is given by:
+$$\Phi(\theta)=\int_{-\infty}^{x}\!\frac{1}{\sqrt{2\pi}}e^{\theta^2/2}\,d\theta\tag{04}$$
+However, (4) does not possesses analytical solution.
+
+- But, if we can obtain $\theta^i\sim N(0,1)$, then
+
+- $$\Phi(t)=\int_{-\infty}^{t}\!\frac{1}{\sqrt{2\pi}}e^{\theta^2/2}\,d\theta\approx\widehat{\Phi}_S(t)=\frac{1}{S}\sum_{i=1}^{S}1{\hskip -2.5 pt}\hbox{I}(\theta^{i}\leq t)$$
+
+- Using the Binomial distribution properties, we know that 
+    -$$Var[\widehat{\Phi}_S(t)] =\frac{\Phi(t)(1-\Phi(t))}{S^2}$$
+
+## MC Methods: Example 1 (cont.)
+
+Running some codes we can calculate the true and MC values [the code is hidden].
+
+```{r, echo = FALSE}
+# Fixa a semente
+set.seed(1235)
+
+# Cria um vetor para theta
+theta<-rep(0,1)
+
+# Fixa um t
+t <- 0
+
+# Cria um vetor para as indicadoras
+indicadora <- rep(0,200000)
+
+# Gera um vetor para guardar os thetas
+thetas<-rep(0,length(indicadora))
+
+# Gera um valor aleatório da normal padrão e compara com o valor de t
+for (i in 1:length(indicadora)){
+  theta<-rnorm(1, mean = 0, sd = 1)
+  ifelse(theta <= t, indicadora[i] <- 1, indicadora[i]<-0)
+  thetas[i]<-theta
+}
+
+g_chapeu<-sum(indicadora)/length(indicadora)
+sigma_chapeu<-(1/length(indicadora))*sum((thetas-g_chapeu)^2)
+desv_pad_num<-sqrt(sigma_chapeu)/(sqrt(length(indicadora)))
+```
+
+Comparing the value from the normal table `r pnorm(t,mean=0,sd=1)` with the approximation `r sum(indicadora)/length(indicadora)` we have a difference between true and estimated values of approximately `r pnorm(t,mean=0,sd=1) - sum(indicadora)/length(indicadora)`. The variance $\hat{\sigma}_g^2$ is approximately `r round(sigma_chapeu,4)` and the numeric std.deviation, $\frac{\hat{\sigma}_g}{\sqrt{S}}$, is `r round(sqrt(sigma_chapeu)/(sqrt(length(indicadora))),4)`. 
+
+- Now we need to replicate the experiment several times to discard the "luck" possibility
+
+## MC Methods: Example 1 (cont.) {.smaller}
+
+Replicating the experiment 1000 times, we have the following results (again, code is hidden).
+
+```{r, echo = FALSE}
+# Cria um vetor para theta
+theta<-rep(0,1)
+
+# Fixa um t
+t <- 0
+
+# Cria um vetor para as indicadoras
+indicadora <- rep(0,5000)
+
+# Cria um vetor para as estimativas
+agregado <- rep(0,1000)
+
+# Gera 1000 valores aleatórios da normal padrão e compara com o valor de t
+# Não é muito eficiente colocar for dentro de for, mas é o que tem pra hoje.
+for (j in 1:1000) {
+  for (i in 1:length(indicadora)){
+    theta<-rnorm(1, mean = 0, sd = 1)
+    ifelse(theta <= t, indicadora[i] <- 1, indicadora[i]<-0)
+  }
+agregado[j]<-sum(indicadora)/length(indicadora)
+}
+```
+
+The mean of the 1000 estimated values is `r round(mean(agregado),4)` with a std. deviation of `r round(sd(agregado),4)`.
+
+Next, we can plot the histogram:
+
+```{r, out.width = "450px", echo=FALSE, fig.align= 'center', warning = FALSE, message = FALSE}
+library(latex2exp, quietly = TRUE)
+library(ggplot2, quietly = TRUE)
+
+x<-seq(.45,.55,length.out = 5000)
+y<-agregado
+dados<-data.frame(x,y)
+
+p <- ggplot(dados, aes(x = y)) +
+        geom_histogram(color = "black", fill="white", binwidth = .001)+
+        ylab(TeX("$\\hat{\\Phi}_N(\\z)$")) +
+        xlab("") +
+        ggtitle(TeX("Estimated values for $P(Z \\leq 0)$")) +
+        scale_colour_brewer(palette="Set1") +
+        theme(axis.line = element_line(size=1, colour = "black"),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank(),
+              plot.title=element_text(size = 20),
+              text=element_text(size = 16),
+              axis.text.x=element_text(colour="black", size = 12),
+              axis.text.y=element_text(colour="black", size = 12))
+p <- p + geom_vline(aes(xintercept=pnorm(0,mean=0,sd=1)),
+            color="blue", linetype="dashed", size=1)
+
+#pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Imagens artigo\\fig-2_02.pdf")
+p
+#dev.off()
+```
+
+## MC Methods: Example 1 (cont.) {.smaller}
+
+What happens when we are interested in rare events, like $\mathbb{P}(X < 4.5)$?
+
+Fixing $S=10.000$, we have [code hidden] the following results.
+
+```{r, echo = FALSE}
+# Seta a semente
+set.seed(1234)
+
+# Cria uma variável para theta
+theta<-rep(0,1)
+
+# Fixa um t
+t <- -4.5
+
+# Cria um vetor para as indicadoras
+indicadora <- rep(0,10000)
+
+# Gera um valor aleatório da normal padrão e compara com o valor de t
+for (i in 1:length(indicadora)){
+  theta<-rnorm(1, mean = 0, sd = 1)
+  ifelse(theta <= t, indicadora[i] <- 1, indicadora[i]<-0)
+}
+```
+
+The sum of the sampled values is equal to `r sum(indicadora)`, so, in 10.000 realizations, there wasn't a single value below $-4.5$. Although the true probability is small, $\mathbb{P}(X \leq -4.5) =$ `r pnorm(t,mean=0,sd=1)`, it is not equal to zero, showing that the MC estimate is not accurate.
+
+```{r, echo = FALSE}
+# Seta a semente
+set.seed(1235)
+
+# Uma variável para theta
+theta<-rep(0,1)
+
+# Fixa um t
+t <- -4.5
+
+# Cria um vetor para as indicadoras
+indicadora <- rep(0,10000)
+
+# Cria um vetor para ir salvando as estimativas
+agregado<-rep(0,1000)
+
+# Gera um valor aleatório da normal padrão e compara com o valor de t
+for (j in 1:length(agregado)){
+  for (i in 1:length(indicadora)){
+    theta<-rnorm(1, mean = 0, sd = 1)
+    ifelse(theta <= t, indicadora[i] <- 1, indicadora[i]<-0)
+  }
+agregado[j]<-sum(indicadora)/length(indicadora)
+}
+```
+
+```{r, out.width = "400px", echo=FALSE, fig.align= 'center', warning = FALSE, message = FALSE}
+library(latex2exp, quietly = TRUE)
+library(ggplot2, quietly = TRUE)
+library(latex2exp)
+library(ggplot2)
+
+x<-seq(.45,.55,length.out = 5000)
+y<-agregado
+dados<-data.frame(x,y)
+
+p <- ggplot(dados, aes(x = y)) +
+        geom_histogram(color = "black", fill="white", binwidth = .000001)+
+        ylab(TeX("$\\hat{\\Phi}_N(z)$")) +
+        xlab("") +
+        ggtitle(TeX("Estimated values for $P(Z \\leq -4.5)$")) +
+        scale_colour_brewer(palette="Set1") +
+        theme(axis.line = element_line(size=1, colour = "black"),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank(),
+              plot.title=element_text(size = 20),
+              text=element_text(size = 16),
+              axis.text.x=element_text(colour="black", size = 12),
+              axis.text.y=element_text(colour="black", size = 12))
+p <- p + geom_vline(aes(xintercept=pnorm(-4.5,mean=0,sd=1)),
+            color="blue", linetype="dashed", size=1)
+
+#pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Imagens artigo\\fig-2_03.pdf")
+p
+#dev.off()
+```
+
+## Importance sampling {.smaller}
+
+```{r, out.width = "600px", echo=FALSE, fig.align= 'center', warning = FALSE}
+library(ggplot2)
+windowsFonts(xkcd=windowsFont("xkcd"))
+
+p9 <- ggplot(data.frame(x = c(0, 1)), aes(x = x)) +
+        stat_function(fun = dbeta, args = list(2, 2),
+                      aes(colour = "Beta 2,2 "), size = 1.5) +
+        stat_function(fun = dunif, args = list(0, 1),
+                      aes(colour = "U 0,1"), size = 1.5) +
+         stat_function(fun = dunif, args = list(0, 5),
+                      aes(colour = "U 0,5"), size = 1.5) +
+        scale_x_continuous(name = "X",
+                              breaks = seq(0, 5, 0.5),
+                              limits=c(0, 5)) +
+        scale_y_continuous(name = "Density") +
+        ggtitle("Beta2,2 x U0,1 x U0,5") +
+        scale_colour_brewer(palette="Set1") +
+        labs(colour = "Distribution") +
+        theme(axis.line = element_line(size=1, colour = "black"),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank(),
+              plot.title=element_text(size = 20, family="xkcd"),
+              text=element_text(size = 16, family="xkcd"),
+              axis.text.x=element_text(colour="black", size = 12),
+              axis.text.y=element_text(colour="black", size = 12))
+p9
+```
+
+## Importance sampling: MC example 1 {.smaller}
+
+Let's go back to our example of calculating $\mathbb{P}(X < -4.5)$.
+
+We can substitute $v=\frac{1}{\theta}$ to obtain:
+$$\tag{05}\int_{-\infty}^{-4.5}\!\frac{1}{\sqrt{2\pi}}e^{\theta^2/2}\,d\theta=\int^{0}_{\frac{-1}{4.5}}\!\frac{\phi(1/v)}{v^2}dv=\frac{1}{4.5}\int^{0}_{\frac{-1}{4.5}}\!\frac{\phi(1/v)}{v^2}p_U(v)dv$$
+
+Since we can sample $v_i\sim U(-1/4.5,0)$, the MC approximation of (5) is:
+$$\int_{-\infty}^{-4.5}\!\frac{1}{\sqrt{2\pi}}e^{\theta^2/2}\,d\theta\approx\widehat{\Phi}^U_S(-4.5)=\frac{1}{S}\sum_{i=1}^S\frac{\phi(1/v^i)}{4.5v^{i^2}}$$
+
+## Importance sampling: MC example 1 {.smaller}
+
+```{r, echo = FALSE}
+# Define um tamanho de S e faz S retiradas de uma uniforme(-1/4.5, 0)
+S<-20
+vetor_v <- runif(S, min =(1/-4.5) , max = 0)
+
+# Calcula a aproximação
+numerador<- dnorm(1/vetor_v, mean=0, sd=1)
+denominador<- 4.5*vetor_v^2
+aproximacao<- (1/length(vetor_v))*sum(numerador/denominador)
+
+# Calcula o desvio padrão
+sigma_chapeu<-(1/length(vetor_v))*sum((vetor_v-aproximacao)^2)
+desv_pad_num<-sqrt(sigma_chapeu)/(sqrt(length(vetor_v)))
+```
+
+Calculating one time, the estimated value is `r round(aproximacao, 4)`, while the true value is $\mathbb{P}(X \leq -4.5) =$ `r pnorm(t,mean=0,sd=1)`. The numeric std. deviation is given by: $\frac{\hat{\sigma}_g}{\sqrt{S}}=$ `r round(desv_pad_num,4)`.
+
+```{r, echo = FALSE}
+# Define um tamanho de S e faz S retiradas de uma uniforme(-1/4.5, 0)
+S<-10000
+
+# Cria os vetores que vão ser usados no laço for
+vetor_v<-seq(0,S)
+numerador<-seq(0,S)
+denominador<-seq(0,S)
+estimativas<-seq(1,500)
+
+for (j in 1:length(estimativas)){
+    vetor_v <- runif(S, min =(1/-4.5) , max = 0)
+    numerador<- dnorm(1/vetor_v, mean=0, sd=1)
+    denominador<- 4.5*vetor_v^2
+    aproximacao<- (1/length(vetor_v))*sum(numerador/denominador)
+  estimativas[j]<-aproximacao
+}
+
+#mean(estimativas)
+```
+
+
+```{r, out.width = "450px", echo=FALSE, fig.align= 'center', warning = FALSE, message = FALSE}
+library(latex2exp, quietly = TRUE)
+library(ggplot2, quietly = TRUE)
+
+x<-seq(.45,.55,length.out = 5000)
+y<-estimativas
+dados<-data.frame(x,y)
+
+p <- ggplot(dados, aes(x = y)) +
+        geom_histogram(color = "black", fill="white", binwidth = .00000001)+
+        ylab(TeX("$\\hat{\\Phi}_N(z)$")) +
+        xlab("") +
+        ggtitle(TeX("Estimating $P(Z \\leq)$ using importance sampling")) +
+        scale_colour_brewer(palette="Set1") +
+        theme(axis.line = element_line(size=1, colour = "black"),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank(),
+              plot.title=element_text(size = 12),
+              text=element_text(size = 12),
+              axis.text.x=element_text(colour="black", size = 12),
+              axis.text.y=element_text(colour="black", size = 12))
+
+p <- p + geom_vline(aes(xintercept=pnorm(-4.5,mean=0,sd=1)),
+            color="red", linetype="dashed", size=1)
+
+#pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2017-01\\Materiais artigo\\Dados\\Imagens artigo\\fig-2_04.pdf")
+p
+#dev.off()
+```
+
+## IS: Basic Ideas{.smaller}
+
+Just to introduce notation, assume that we are interested in evaluating an integral of the form:
+
+\[\tag{06}
+G(\delta) = \int_\chi \varphi(x;\delta) dx,
+\]
+with $\varphi: X \times \Delta \to \mathbb{R}^*_+$, whence $\varphi$ denotes a [density kernel](https://en.wikipedia.org/wiki/Kernel_(statistics)) with support $\chi$ and one needs to compute its integrating constant $G$ as a function of $\delta$. 
+
+- Recall that the kernel is the part of density that depends on the random variable and the constant is everything else, whose role is to standardize the density in order to integrate one.
+
+- It is often the case that the statistical formulation of the model under consideration produces an initial factorization of the form:
+
+- \[\tag{07}
+\varphi(x;\delta) = g(x; \delta) \cdot p(x|\delta),
+\]
+    - where $p$ denotes a density for $x$ given $\delta$ which is directly amenable to MC simulation. It is referred in the paper as *initial sampler*.
+
+## IS: Basic Ideas{.smaller}
+
+Using MC integration, the estimator of $G(\delta)$ is given by:
+
+\[\tag{08}
+\bar{G_s}(\delta) = \frac{1}{S} \sum\limits_{i=1}^S g(\tilde{x}_i\ ; \delta),
+\]
+    - where $\{\tilde{x}_i\ ; \ i: 1 \to S \}$ denotes a set of $S$ i.i.d. draws from $p$. One drawback of MC methods is the sampling variance. If the MC sampling variance of $g$ on $p$ is large, one will need a bigger $S$ to attain a good approximation.
+    
+## IS: Basic Ideas{.smaller}
+
+The main objective of IS is to select a class of $M = \{m(x|a): a \in \mathcal{A} \}$ and a value $a(\delta) \in \mathcal{A}$ which minimizes the MC sampling variance of the ratio $\varphi/m$ on $m$. This variance will be given by:
+
+\[\tag{05}
+\bar{V_{s,m}}(\delta;a) = \frac{1}{S}  \int_\chi [\omega(x \ ; \delta,a)-G(\delta)]^2 \cdot m(x|a) dx,
+\]
+
+- Two main "problems" arise when dealing with IS: 
+    * The choice of the class of samplers, $M$;
+    * The selection of a sampler in $M$ that minimizes (05), i.e. the value of $a$ that minimizes the variance of the estimates.
+
+- EIS is an algorithm proposed by Richard and Zhang to address the second problem. 
+
+    - This means that we will assume that a parametric class $M = \{m(x|a): a \in \mathcal{A} \}$ of samplers was already chosen. 
+
+## EIS: Basic Ideas
+
+- For any given $\delta$, the objective is find the value $a(\delta)$ which minimizes the MC sampling variance of the ratio $\frac{\varphi(x;\delta)}{m(x|a)}$ on draws from $m$. 
+
+- All factors in $\varphi$ and/or $m$ which do not depend on $x$ are regrouped together in the form of a proportionality factor whose logarithm will serve as the (implicit) constant term of the auxiliary EIS regression to be estimated along with $a$.
+
+## EIS: Basic Ideas{.smaller}
+
+Since $m$ is a density, it can be written as the ratio between an efficient density kernel, $k(x\ ;\ a)$ within a preassigned class $K = \{k(x\ ;\ a): a \in \mathcal{A} \}$ and a constant as follows:
+
+\[\tag{06}
+m(x|a) = \frac{k(x\ ;\ a)}{\chi(a)} \qquad \text{with } \chi(a)^{-1} =  \int_\chi k(x\ ; a)dx
+\]
+
+We can rearrange the terms in (05) isolating everything that depends on $a$ as follows:
+
+\[\tag{07}
+\begin{align*}
+\bar{V_{s,m}}(\delta;a) &= \frac{1}{S} \int_\chi [\omega(x \ ; \delta,a)-G(\delta)]^2 \cdot m(x|a) dx \\
+&=\frac{1}{S}  G(\delta) \int_\chi \frac{[\omega(x \ ; \delta,a)-G(\delta)]^2}{G(\delta)^2} G(\delta) \cdot m(x|a) dx \\
+&= \frac{1}{S} G(\delta) \int_\chi \left[\frac{\omega(x \ ; \delta,a)-G(\delta)}{G(\delta)} \right]^2 G(\delta) \cdot m(x|a) dx \\
+&= \frac{1}{S}G(\delta) \int_\chi \left[\frac{\omega(x \ ; \delta,a)^2}{G(\delta)^2}-2\frac{\omega(x \ ; \delta,a)}{G(\delta)} +1 \right] G(\delta) \cdot m(x|a) dx
+\end{align*}
+\]
+
+## EIS: Basic Ideas{.smaller}
+
+Now we use the relation $\frac{\varphi(x \ ; \delta)}{m(x|a)} = \omega(x \ ; \delta,a) \Rightarrow m(x|a) = \frac{\varphi(x \ ; \delta)}{\omega(x \ ; \delta,a)}$ to obtain:
+
+\[\tag{08}
+\begin{align*}
+\bar{V_{s,m}}(\delta;a) &= \frac{1}{S}G(\delta) \int_\chi \left[\frac{\omega(x \ ; \delta,a)^2}{G(\delta)^2}-2\frac{\omega(x \ ; \delta,a)}{G(\delta)} +1 \right] G(\delta) \cdot \frac{\varphi(x \ ; \delta)}{\omega(x \ ; \delta,a)} dx \\
+&= \frac{1}{S}G(\delta) \int_\chi \left[\frac{\omega(x \ ; \delta,a)^2}{G(\delta)^2}-2\frac{\omega(x \ ; \delta,a)}{G(\delta)} +1 \right] \frac{G(\delta)}{\omega(x \ ; \delta,a)} \cdot \varphi(x \ ; \delta) dx \\
+&= \frac{1}{S}G(\delta) \int_\chi \left[\frac{\omega(x \ ; \delta,a)}{G(\delta)} + \frac{G(\delta)}{\omega(x \ ; \delta,a)}-2  \right] \cdot \varphi(x \ ; \delta) dx \\
+&= \frac{1}{S}G(\delta) \cdot V(a\ ;\ \delta,)
+\end{align*}
+\]
+where $V(a\ ;\ \delta,) = \int_\chi \left[\frac{\omega(x \ ; \delta,a)}{G(\delta)} + \frac{G(\delta)}{\omega(x \ ; \delta,a)}-2  \right] \cdot \varphi(x \ ; \delta) dx$ is the part of $\bar{V_{s,m}}(\delta;a)$ which depends on $a$.
+
+## EIS: Basic Ideas{.smaller}
+
+Let
+
+\[ \tag{09}
+\begin{align*}
+d(x\ ;\ a,c) &= \ln \left(\frac{\omega(x\ ;\ a)}{G(\delta)} \right) = \ln (\omega(x\ ;\ a)) - ln(G(\delta)) \\
+&= \ln \left(\frac{\varphi(x \ ; \delta)}{m(x|a)} \right) - \ln(G(\delta)) \\
+& = \ln \varphi(x \ ; \delta) - \ln m(x|a) - \ln G(\delta)\\
+& = \ln \varphi(x \ ; \delta) - \ln \left[\frac{k(x\ ;\ a)}{\chi(a)}\right] - \ln G(\delta)\\
+& = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) + \ln \chi(a) - \ln G(\delta)\\
+& = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) - (\ln G(\delta) - \chi(a)) \\
+& = \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) - c 
+\end{align*}
+\]
+
+Next, _"it is possible to show that..."_
+
+\[\tag{10}
+V(a\ ;\ \delta,) = \int_\chi h[d^2(x,a,c,\delta)]\cdot \varphi(x\ ; \ \delta)dx, 
+\]
+where $h(r) = e^{\sqrt{r}} + e^{-\sqrt{r}} -2 = 2 \sum\limits_{i=1}^\infty \frac{r^i}{(2i)!}$
+
+An optimal choice of $(a\, \ c)$ can be found through the solution of the following nonlinear minimization problem:
+
+\[
+(a^*, c^*) = \text{arg min}[{a \in \mathcal{A}, c \in \mathbb(c)}] V(x\ ;\ a)
+\]
+
+Since $c$ does not depend on $x$, only $I$, it will be trated as the intercept of the minimization problem.
+
+## EIS: Basic Ideas{.smaller}
+
+[@moura_2010]
+*Note that h(r) is a monotone and convex function on R+, and an efficient sampler will be one such that m(x; a) closely mimics the integrand g(x)f(x), implying that d(x; a) is expected to be close to zero. Therefore, an useful simplification is attained by replacing h(r) by its leading term r, which means solving the simpler problem*
+
+\[\tag{11}
+(\hat{a}, \hat{c}) = \text{arg min}[{a \in \mathcal{A}, c \in \mathbb(c)}] Q(x\ ;\ a)
+\]
+
+*where:*
+\[\tag{12}
+Q(x\ ;\ a) = \int d^2(x,a) \cdot \varphi(x\ ; \ \delta)dx, 
+\]
+
+Equations (2) and (11)-(12) can be interpreted as a (functional) generalized least squares (GLS) problem with $x$ being distributed according to the initial sampler $p$ and weight $g$. 
+
+However, MC approximations of based upon i.i.d. draws from $p$ would generally be highly inaccurate due to the typically (very) high MC sampling variance of $g$. In contrast, MC approximations based upon an efficient sampler $m(x|a)$ would be expected to be far more accurate and numerically reliable. 
+
+## EIS: Basic Ideas{.smaller}
+
+Therefore, using $m(x|a) = \frac{\varphi(x \ ; \delta)}{\omega(x \ ; \delta,a)}$ we can use the same trick of dividind and multiplying by the same term in (12) to obtain:
+
+\[\tag{13}
+\begin{align*}
+Q(x\ ;\ a) &= \int d^2(x,a) \cdot \varphi(x\ ; \ \delta) \frac{m(x|a)}{m(x|a)} dx\\
+&= \int d^2(x,a) \cdot \varphi(x\ ; \ \delta) \frac{m(x|a)}{\frac{\varphi(x \ ; \delta)}{\omega(x \ ; \delta,a)}}\\
+&= \int d^2(x,a) \cdot \varphi(x\ ; \ \delta)\frac{\omega(x \ ; \delta,a)}{\varphi(x \ ; \delta)} m(x|a)\\
+&= \int d^2(x,a) \cdot \omega(x \ ; \delta,a)\cdot m(x|a)
+\end{align*}
+\]
+
+Now we will replace $Q$ by an MC approximation. Problem is that $m$ (the auxiliary sampler) depends on $a$. This problem is solved by using a fixed point.
+
+## EIS: Basic Ideas{.smaller}
+
+If $m$ belongs to the exponential family of distributions, then $m(x|a)$ can be written as:
+
+\[ \tag{15}
+m(x|a) = \chi(a)^{-1} \cdot b(x) \cdot \exp(a' \cdot t(x))
+\]
+
+Using (06) $m(x|a) = \frac{k(x\ ;\ a)}{\chi(a)}$, we have $k(x\ ;\ a) = m(x|a)\cdot \chi(a)$. Taking the log in both sides of (15) produces:
+
+\[ \tag{16}
+\begin{align*}
+m(x|a)\chi(a) &= b(x) \cdot \exp(a' \cdot t(x))\\
+k(x\ ;\ a) &= b(x) \cdot \exp(a' \cdot t(x))\\
+\ln k(x\ ;\ a) &= \ln(b(x) \cdot \exp(a' \cdot t(x)))\\
+\ln k(x\ ;\ a) &= \ln b(x) +\ln(\exp(a' \cdot t(x)))\\
+\ln k(x\ ;\ a) &= \ln b(x) + a' \cdot t(x)\\
+\end{align*}
+\]
+
+## EIS: Basic Ideas{.smaller}
+
+We can use (16) in (09) to obtain:
+
+\[ \tag{17}
+\begin{align*}
+d(x\ ;\ a,c) &= \ln \varphi(x \ ; \delta) - \ln k(x\ ;\ a) - c \\
+&=  \ln \varphi(x \ ; \delta) - [\ln b(x) + a' \cdot t(x)] - c\\
+&=  \ln \varphi(x \ ; \delta) - \ln b(x) - a' \cdot t(x) - c\\
+\end{align*}
+\]
+
+- Note that now $d$ is linear with respect to $a$. 
+- [@richard_zhang2007] also point out that (16) implies that, subject to integrability restrictions, $\mathcal{A}$ is closed under addition (the sum of two elements in $\mathcal{A}$ will be an element of $\mathcal{A}$ too).
+
+## EIS: Functional example {.smaller}
+
+The Gamma function is defined as:
+
+$$\Gamma(z) = \int_0^{+\infty} x^{z-1}e^{-x} $$
+
+with the property that $\Gamma(z+1) = z\Gamma(z)$.
+
+Consider $G(\delta) = \Gamma(\delta + 1)$. By definition, $G(\delta) = \delta \Gamma(\delta) = \delta \int_0^{+\infty} x^{\delta-1}e^{-x}$. 
+
+Just let $\varphi$ denote a density kernel:
+
+\[\tag{18}
+\varphi(x\ ;\ \delta) = \exp(-x^{1/\delta}), \quad x>0, \ \delta > 0
+\]
+
+in which case $G(\delta) = \Gamma(\delta+1)$. Let also
+\[\tag{19}
+k(x\ ;\ a) = \exp(-ax)
+\]
+
+denote an exponential density kernel. 
+
+## EIS: Functional example {.smaller}
+
+Let's find $Q(a,c.\delta)$ and $d$ (eq 09) for this problem:
+
+\[\tag{20}
+\begin{align*}
+d(x,a,c;\delta) &= ln \ \varphi(x;\delta) - c -ln\ k(x;a)\\
+&= -x^{1\delta} - c - (-ax)\\
+&= -\frac{1}{\delta}x - c + ax\\
+&= -c +\left(-\frac{1}{\delta}+a\right)x\\
+&= \beta_0 + \beta_1 x
+\end{align*}
+\]
+
+Thus, $Q$ (eq 12) will be:
+
+\[\tag{21}
+\begin{align*}
+Q(x\ ;\ a) &= \int d^2(x,a) \cdot \varphi(x\ ; \ \delta)dx\\
+&= \int \left[-c +\left(-\frac{1}{\delta}+a\right)x\right]^2 \cdot\ \exp(-x^{1/\delta})\  dx
+\end{align*}
+\]
+
+## EIS: Functional example {.smaller}
+
+Richard and Zhang (2007): *"Under (19), the EIS auxiliary regression, as defined in equations (09)-(12), amounts to a simple LS regression of $x^{1/\delta}$ on $x$. If the $x's$ are drawn from $m(x|a)$, then the true value of the corresponding regression coefficient is given by:*"
+
+\[\tag{22}]
+\hat{a}(\delta) = a^{1-1/\delta} \cdot \frac{1}{\delta} \cdot \Gamma\left(1+\frac{1}{\delta} \right)
+\]
+
+*with a fixed point solution*:
+
+\[\tag{23}
+\hat{a}_\varphi(\delta) = \left[\frac{1}{\delta} \cdot \Gamma\left(1+\frac{1}{\delta} \right) \right]^\delta
+\]
+
+They suggest $a_\varphi = \frac{1}{\delta}$.
+
+Let's see some code...
+
+## Next steps (Dissertation)
+
+0. _Heal left arm, ~~avoid~~ stop the destruction of the other arm_
+1. **Implement EIS estimates for [@philipov_glickman2006b] model (_Econometrics II article_)**;
+2. *Find some data* and implement [@primiceri2005] model (_Macro II article_);
+3. Generalize step one for the TVP-VAR w/ Wishart MSV model combining EIS with Rao-Blackwellization;
+    * Make inferences;
+    * Develop diagnostic tools;
+    * Compare with the benchmark model from step 2.
+
+## Next steps (Econometric II)
+
+1. Finish studying [@richard_zhang2007] examples;
+2. Implement R code for EIS in [@philipov_glickman2006a]'s model;
+3. Make simulations and compare results for different specifications;
+4. Write article.
+
+## References {.smaller}
+
+\footnotesize
