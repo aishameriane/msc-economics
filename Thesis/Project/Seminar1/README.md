@@ -1,4 +1,5 @@
 # Thesis Seminars 2017/2
+## First seminar
 
 This folder contains the files for my first Thesis' Seminar. 
 This first presentation was intended for the students present their subjects and main goals.
