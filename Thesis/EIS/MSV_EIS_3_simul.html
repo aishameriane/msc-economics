@@ -11,6 +11,7 @@
 
 <meta name="author" content="A. Schmidt, C. Piazza" />
 
+<meta name="date" content="2017-12-03" />
 
 <title>EIS in MSV Wishart Models</title>
 
@@ -118,15 +119,61 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">EIS in MSV Wishart Models</h1>
 <h4 class="author"><em>A. Schmidt, C. Piazza</em></h4>
-<h4 class="date"><em>8 de novembro de 2017</em></h4>
+<h4 class="date"><em>December 03, 2017</em></h4>
 
 </div>
 
 
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { 
+      equationNumbers: {
+ 
+            autoNumber: "all",
+            formatNumber: function (n) {return '9.'+n}
+      } 
+  }
+});
+</script>
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>The aim of this code is to estimate the wishart stochastic volatility model (MSV) proposed by <span class="citation">(Philipov and Glickman 2006a)</span> and <span class="citation">(Philipov and Glickman 2006b)</span> using efficient importance sampling (EIS), proposed by <span class="citation">(Richard and Zhang 2007)</span>. <a href="https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Thesis/EIS/EIS_-_Pilot_Applications.html">Click here</a> for a pilot application of EIS in R.</p>
-<p>The code is based in Matlab code provided by Richard Schnorrenberger.</p>
+<p>The code is based in Matlab code provided by Guilherme Moura and Richard Schnorrenberger.</p>
+</div>
+<div id="open-questions" class="section level1">
+<h1>Open questions</h1>
+<ol style="list-style-type: decimal">
+<li>What’s the difference between <code>RandStream</code> (<a href="https://www.mathworks.com/help/matlab/ref/randstream.html">Matlab</a>) and <code>set.seed()</code> (<a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/Random.html">R</a>)?</li>
+</ol>
+<p><span style="color:purple">Aisha:</span> I think the first creates a sequence of numbers that are stored in the memory. For example, <code>s = RandStream('mt19937ar','Seed',semente); % fix seed;</code> plus <code>RandStream.setGlobalStream(s);</code> create a single stream and designate it as the current global stream. I’m not sure what <code>semente</code> does.</p>
+<ol start="2" style="list-style-type: decimal">
+<li><p>Por que <span class="math inline">\(\gamma\)</span> aparece <a href="https://github.com/aishameriane/msc-economics/blob/master/Thesis/EIS/EIS%20-%20vers%C3%A3o%20Guilherme.pdf">aqui</a> com e sem o subscrito <span class="math inline">\(t\)</span> (por exemplo, eq 14 está sem e na eq 15 tem <span class="math inline">\(t\)</span>)?</p></li>
+<li><p>O Guilherme mandou a seguinte mensagem: &quot; <em>Outra coisa, quando eu estava mexendo com isso, percebi que para aumentar a dimensionalidade do problema teria que conseguir simplificar um pouco a regressão em (11), mas acabei não tendo tempo de me debruçar melhor sobre o problema e acabei programando na força bruta mesmo. Porém, note da definição de <span class="math inline">\(\chi\)</span> em (18) e da definição de <span class="math inline">\(\zeta\)</span> em (15) que intuições adicionais a respeito dos parâmetros</em> <span class="math inline">\(\gamma_{1,t}\)</span>,<span class="math inline">\(\Gamma_t\)</span> <em>podem ser obtidas se calcularmos os determinantes (dos dois lados!) para perceber de onde vem a informação para a “identificação” destes no problema de regressão.</em> &quot;</p></li>
+</ol>
+<p><span style="color:purple">Aisha:</span> Vou deixar as equações aqui para depois voltar nelas:</p>
+<p>A equação (11) é o problema de minimização do algoritmo de EIS:</p>
+<p><span class="math display">\[
+\hat{\gamma}_t (\theta) = 
+\begin{aligned}
+&amp; \underset{\gamma_t}{\text{min}}
+&amp; &amp; \sum\limits_{t=1}^S \left\{ln\ \chi\left(\tilde{\Omega}_t^i; \gamma_{t+1}\right) - c_t -ln\ \zeta\left(\tilde{\Omega}_t^i; \gamma_t\right) \right\} \qquad \text{(11)}
+\end{aligned}
+\]</span></p>
+<p>A equação (18) é a expressão analítica para a constante de integração do período <span class="math inline">\(t\)</span> do amostrador EIS:</p>
+<p><span class="math display">\[\tag{18}
+\chi\left(\Omega_{t-1}; \gamma_t \right) \propto \frac{|S_{t-1}^*|^{\frac{\nu^*}{2}}}{|S_{t-1}|^{\frac{\nu}{2}}}
+\]</span></p>
+<p>E <span class="math inline">\(\zeta\)</span> é dado por:</p>
+<p><span class="math display">\[\tag{15}
+\zeta\left(\Omega_t; \gamma_t \right) \propto |\Omega_t|^{\frac{\gamma_{1,t}}{2}} \ \exp \ \left\{-\frac{1}{2}\ tr \ |\Gamma_t \cdot \Omega_t| \right\}
+\]</span></p>
+<p>Eu não entendi se o Guilherme quis dizer tirar o determinante de (18) e (15) e também não entendi como que isso ajuda na identificação dos parâmetros…</p>
+<ol start="4" style="list-style-type: decimal">
+<li>No código de <code>lik_KChi_initial</code> tem uma função <code>par()</code> que não encontrei o que ela faz, e quando tentei rodar no meu matlab ela deu erro:</li>
+</ol>
+<pre><code>d = par(1);
+v = par(2);
+&gt; Undefined function 'par' for input arguments of type 'double'.</code></pre>
 </div>
 <div id="code-initialization" class="section level1">
 <h1>Code initialization</h1>
@@ -134,12 +181,17 @@ $(document).ready(function () {
 <p>The observational density is given by</p>
 <p><span class="math display">\[p(y_t|\Sigma_t)\sim N(0,\Sigma_t)\]</span></p>
 <p>Densidade de transição dos estados</p>
-<p><span class="math display">\[p(\Sigma_{t}^{-1}|\Sigma_{t-1}^{-1},v,d,C)\sim Wishart(v,S_{t-1})\]</span> <span class="math display">\[S_{t-1}=\frac{1}{v}(C^{1/2})(\Sigma_{t-1}^{-1})^{d}(C^{1/2})^{\prime}\]</span> ## Loading packages</p>
+<p><span class="math display">\[p(\Sigma_{t}^{-1}|\Sigma_{t-1}^{-1},v,d,C)\sim Wishart(v,S_{t-1})\]</span> <span class="math display">\[S_{t-1}=\frac{1}{v}(C^{1/2})(\Sigma_{t-1}^{-1})^{d}(C^{1/2})^{\prime}\]</span> The basic idea is to assume that <span class="citation">(Philipov and Glickman 2006a)</span> have correctly predicted the data generating process (DGP) and use theis estimates to generate new data. Below are the interaction between Aisha and Richard (from October, 2017):</p>
+<p><span style="color:pink">Aisha:</span> &quot; <em>Minha primeira dúvida é quais dados você usou pra rodar o código. Eu vi que você usa uma especificação similar ao Phillipov e Zhang, com 240 variáveis, mas daí tem só 3 variáveis independentes, e no artigo deles fala em 5. Tem um código ali que faz simulação de valores, fiquei na dúvida se os seus resultados são direto com valores simulados ou se você tentou estimar usando a mesma base do artigo. Caso tenha sido a do artigo, você tem ela aí? Eu fui olhar no site que eles mencionam que pegaram, mas tem uma enormidade de bases e não achei ainda qual é a que o Phillipov pegou.</em> &quot;</p>
+<p><span style="color:green">Richard:</span> &quot; <em>1) A ideia do Guilherme é a seguinte: assumindo que o modelo estimado do Philipov e Glickman (2006) (Tabela 4 do apêndice se não me engano) é um bom modelo para aquela amostra, vamos assumir que este modelo seja o nosso processo gerador de dados. Poderíamos assumir qualquer PGD, mas aquele estimado por Philipov e Glickman (2006) parece ser uma boa representação daquela realidade, logo é uma boa pegar ele como o nosso PGD. Por isso que geramos (simulamos) as nossas realizações com base nesse PGD. Primeiramente o número de variáveis dependentes é 3 (modelo trivariado) porque o Guilherme quer ir testando a eficiência do código para este caso trivariado. Se os resultados forem positivos para o caso trivariado aumentamos para o caso de 4 e 5 variáveis, e em seguida aplica-se para dados do mercado financeiro. Por isso, de início o código só contempla a parte 3x3 da matriz invC. Portanto, a seção seguinte simula as realizações para aquele PGD, fixando uma semente de forma que as mesmas pseudo-realizações são simuladas toda vez que rodamos o código. 240 é o número de observações simuladas, o tamanho do nosso T. </em> &quot;</p>
+<div id="loading-packages" class="section level2">
+<h2>Loading packages</h2>
 <pre class="r"><code>list.of.packages &lt;- c(&quot;ggplot2&quot;, &quot;MASS&quot;)
 new.packages &lt;- list.of.packages[!(list.of.packages %in% installed.packages()[,&quot;Package&quot;])]
 if(length(new.packages)) install.packages(new.packages)
 library(ggplot2, quietly = TRUE)
 library(MASS, quietly = TRUE)</code></pre>
+</div>
 <div id="reading-phillipovs-data" class="section level2">
 <h2>Reading Phillipov’s Data</h2>
 </div>
@@ -211,8 +263,63 @@ for (t in 1:Tesao){
 <div id="eis-algorithm" class="section level2">
 <h2>EIS Algorithm</h2>
 <p>This part requires 2 main functions: <code>lik_KChi_initial()</code> and <code>lik_KChi_R()</code>.</p>
+<p><span style="color:green">Richard:</span> &quot; <em>Nesta seção queremos estimativas da verossimilhança para nosso modelo considerado. Por isso que os parâmetros são fixos, pois queremos montar uma série de verossimilhanças estimadas para o mesmo PGD. Por outro lado, mudamos as sementes para construir a série de verossimilhanças estimadas e assim poder analisar o erros-padrão de MC.</em></p>
+<p><em>O que precisa tomar cuidado nesta seção é a diferença entre as rotinas</em> &quot; lik_KChi_initial&quot; <em>e</em> “lik_KChi_R”. <em>Ambas rotinas estimam nossos parâmetros de interesse (matrizes de precisão) com a técnica EIS, mas a rotina</em> “lik_KChi_initial” <em>assume um amostrador inicial com parâmetros</em> <span class="math inline">\(\gamma_{t}=0\)</span>. <em>Isso quer dizer que o amostrador inicial assumido não explora informação de otimizações EIS (que tem como função trazer informação contemporânea sobre a volatilidade contida naquela distribuição conjunta das observáveis um passo a frente - em</em> <span class="math inline">\(t+1\)</span> <em>).</em></p>
+<p><em>Por outro lado a rotina </em>“lik_KChi_R” <em>realiza as otimizações EIS, e assim aproveita/explora informações sobre a volatilidade corrente presente naquela distribuição conjunta de um passo a frente das observáveis. Assim, o objetivo é comparar os resultados de</em> “lik_KChi_initial” <em>e</em> “lik_KChi_R” <em>para ver se a incorporação de otimizações EIS melhora as estimativas.</em> &quot;</p>
 <div id="implementation-of-lik_kchi_initial" class="section level3">
 <h3>Implementation of <code>lik_KChi_initial()</code></h3>
+<p>The following explanation was copied from Richard’s notes. OBs: Due to Markdown limitations, I couldn’t implement the <code>\ubar{}</code> in the formulaes, so I’m using <code>\bar</code> instead.</p>
+<p>In order to analyze statistical gains from using the EIS optimization method, an initial sampler can be constructed based on the kernel:</p>
+<p><span class="math display">\[k(\bar{\Omega}_t; \gamma) = g(y_t|\Omega_t;\theta) \cdot p(\Omega_t | \Omega_{t-1}; \theta) \cdot \zeta(\Omega; \gamma_t)\tag{14}\]</span> by setting <span class="math inline">\(\gamma_t = 0 \ \forall \ t\)</span>, which yields the following initial degrees of freedom and scale matrix of <span class="math inline">\(m(\cdot)\)</span>: <span class="math display">\[ 
+\begin{aligned}
+\nu^{*\text{INI}} = \nu + 1 \qquad \text{and} \qquad S_{t-1}^{*\text{INI}} = \left[y_t \cdot y_t' + S_{t-1}^{-1} \right]^{-1}
+\end{aligned}
+\]</span></p>
+<p>Note that <span class="math inline">\(S_{t-1}^{*\text{INI}}\)</span> incorporates contemporaneous information on the observables <span class="math inline">\(y_t\)</span> (through <span class="math inline">\(y_t \cdot y_t'\)</span>), but it can not explore information from EIS optimizations (<span style="color:red">why not?</span>), which are not transferred to the importance sampler <span class="math inline">\(m(\cdot)\)</span>. More specifically, the initial sampler does not incorporate information on <span class="math inline">\(\Omega_t\)</span> contained in <span class="math inline">\(y_{t+1}\)</span>, because EIS parameters <span class="math inline">\(\gamma_t\)</span> cannot transfer information related to the EIS smoother through matrix <span class="math inline">\(\Gamma_t\)</span> since <span class="math inline">\(\gamma_t = 0 \ \forall \ t\)</span>.</p>
+<p>Thus, the initial sampler is used to draw <span class="math inline">\(N\)</span> trajectories of the latent precision matrixes <span class="math inline">\(\left\{\left\{\tilde{\Omega}_t^i \right\}_{t=1}^T \right\}_{i=1}^N\)</span> which do not incorporate information on the dynamics of <span class="math inline">\(\Omega_t\)</span> contained in <span class="math inline">\(f(y_{t+1}, \Omega_{t+1}|\bar{\Omega}_t, \bar{y}_t; \theta)\)</span>. For this reason, the initial sampler is used with comparison purposes.</p>
+<p>Code <code>lik_KChi_initial</code> approximates the log-likelihood function using an approximation given by:</p>
+<p><span class="math display">\[\tag{08}
+\tilde{L}_S(\theta|\bar{y}) = \frac{1}{S} \sum\limits_{i=1}^S \left\{\prod\limits_{t=1}^T \left[\frac{f(y_t, \tilde{\Omega}_{t}^i| \tilde{\bar{\Omega}}_{t-1}^i), \bar{y}_{t-1}; \theta}{m\left(\tilde{\Omega}_t^i| \tilde{\bar{\Omega}}_{t-1}^i; \gamma_t \right)} \right] \right\}
+\]</span></p>
+<p>using the precision matrices <span class="math inline">\(\left\{\left\{\tilde{\Omega}_t^i \right\}_{t=1}^T \right\}_{i=1}^N\)</span> sampled with the initial sampler:</p>
+<ol style="list-style-type: lower-alpha">
+<li><p>The initial sampler is initialized using initial values for the precision matrix <span class="math inline">\(\Omega_0\)</span> at time <span class="math inline">\(t=1\)</span>, the lower triangular matrix <span class="math inline">\(A^{1/2}\)</span> containing the intertemporal sensitivity parameters of <span class="math inline">\(\Omega_t\)</span>, the persistence parameter <span class="math inline">\(d\)</span> and the degrees of freedom <span class="math inline">\(\nu\)</span> from the <span class="math inline">\(k\)</span>-dimensional Wishart transition density. For example, the initial sampler can use values for <span class="math inline">\(A^{1/2}\)</span>, <span class="math inline">\(d\)</span> and <span class="math inline">\(\nu\)</span> which follow the parameterization stated in Table 4 from <span class="citation">(Philipov and Glickman 2006a)</span> (<span style="color:red">colocar a tabela depois</span>);</p></li>
+<li><p><span class="math inline">\(N\)</span> draws of <span class="math inline">\(S_t\)</span>, the scale matrix of the Wishart transition density, are computed <span class="math inline">\(\forall \ t = 1,\ldots, T\)</span>, using the initial parameterization defined above. Note that for <span class="math inline">\(t=1\)</span>, the <span class="math inline">\(N\)</span> computed scale matrices are equal once the initial <span class="math inline">\(\Omega_0\)</span> is the same for the entire MC sample. Next, <span class="math inline">\(N\)</span> draws of <span class="math inline">\(S_{t-1}^{*\text{INI}}\)</span>, the scale matrix of the EIS sampler, can be computed via equation 19 (<span style="color:red">a equação 19 no PDF é lá do outro algoritmo, eu acho que ele quis dizer que era a equação que tem o <span class="math inline">\(\nu^{*\text{INI}}\)</span> e o <span class="math inline">\(S_{t-1}^{*\text{INI}}\)</span></span>).</p></li>
+<li><p>Once a sample of size <span class="math inline">\(N\)</span> of scale matrices <span class="math inline">\(S_t\)</span>, <span class="math inline">\(\left\{\left\{\tilde{S}_t^i \right\}_{t=1}^T \right\}_{i=1}^N\)</span>, are computed, the computation of <span class="math inline">\(S_{t-1}^{*\text{INI}}\)</span> is straightforward and one can sample <span class="math inline">\(N\)</span> trajectories of <span class="math inline">\(\left\{\left\{\tilde{\Omega}_t^i \right\}_{t=1}^T \right\}_{i=1}^N\)</span> from the EIS sampler <span class="math inline">\(\Omega_t|\nu^{*\text{INI}}, \Omega_{t-1} \sim \mathcal{W}_k\left(\nu^{*\text{INI}}, S_{t-1}^{*\text{INI}}\right)\)</span>;</p></li>
+<li><p>Ultimately, code <code>lik_KChi_initial</code> computes the IS-MC estimate of the log-likelihood of IS ratio <span class="math inline">\(\varphi(y_t, \Omega_t; \theta, \gamma)\)</span> for the entire sample period and through the MC sample, using:</p>
+<p>(i). <span class="math inline">\(\left\{\left\{\tilde{\Omega}_t^i \right\}_{t=1}^T \right\}_{i=1}^N\)</span> for the measurement density;</p>
+<p>(ii). <span class="math inline">\(\left\{\left\{\tilde{\Omega}_t^i \right\}_{t=1}^T \right\}_{i=1}^N, \left\{\left\{\tilde{S}_t^i \right\}_{t=1}^T \right\}_{i=1}^N\)</span> and <span class="math inline">\(\nu\)</span> for the state transition density;</p>
+<p>(iii.) <span class="math inline">\(\left\{ \left\{ \tilde{\Omega}_t^i \right\}_{t=1}^T \right\}_{i=1}^N, \ \left\{\left\{ S_{t-1}^{*\text{INI}} \right\}_{t=1}^T \right\}_{i=1}^N\)</span> and <span class="math inline">\(\nu^{*\text{INI}}\)</span> for the state transition density <span style="color:red">Aisha: Aqui eu não sei se não seria <span class="math inline">\(S_{t-1}\)</span> porque no ponto c ele diz que vai amostrar de <span class="math inline">\(\mathcal{W}_k\left(\nu^{*\text{INI}}, S_{t-1}^{*\text{INI}}\right)\)</span></span>.</p></li>
+</ol>
+<pre class="r"><code>lik_KChi_initial &lt;- function(par,yt,Vini,N,adj,semente) {
+  
+  Tesao &lt;- nrow(yt)
+  K     &lt;- ncol(yt)
+  
+  # As duas linhas abaixo estão exatamente como no Matlab, não sei o que elas fazem (ver parte de questões)
+  d  &lt;- par(1)
+  v  &lt;- par(2)
+  iv &lt;- 1/v
+  
+  # O S depende do randstream que eu não entendi como funciona ainda...
+  s  &lt;- RandStream('mt19937ar', 'Seed', semente) # Fix seed
+  RandStream.setGlobalStream(s)
+  
+  Neis   &lt;- N
+  Veis   &lt;- array(data = NA, dim = c(K,K,Neis, Tesao))
+  Seis   &lt;- Veis
+  S      &lt;- Veis
+  df_eis &lt;- v+1
+  # Same as find(tril(ones(K))) but more complicated :P
+  inds   &lt;- which(matrix(as.numeric(lower.tri(matrix(1, ncol = K, nrow = K), diag = TRUE)), ncol = K, nrow = K) != 0)
+  
+  ##################################
+  # STOPPED AT LINE 18
+  ##################################
+  
+  
+  return(loglike) # I changed from loglik to loglike because R has a function named loglik.
+}</code></pre>
 </div>
 <div id="implementation-of-lik_kchi_r" class="section level3">
 <h3>Implementation of <code>lik_KChi_R()</code></h3>
@@ -252,6 +359,16 @@ tic
       time2[j]        &lt;- toc # Not sure if this tic toc will work, maybe I'll have to make a workround using system.time later
     }
   }) # Probably this will go wrong because the tic toc in Richard's code is intended to go only until the if part and mine gets the role for() loop. I'll look into this later</code></pre>
+</div>
+</div>
+<div id="estimating-the-model-with-non-linear-optimizers" class="section level1">
+<h1>Estimating the model with non linear optimizers</h1>
+<p>The archive <code>MVS_EIS_3_simul.m</code> contains two benchmarks for the EIS algorithm.</p>
+<div id="estimate-the-model-with-fmincon" class="section level2">
+<h2>Estimate the model with fmincon</h2>
+</div>
+<div id="estimate-the-model-with-fminsearch" class="section level2">
+<h2>Estimate the model with fminsearch</h2>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
