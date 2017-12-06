@@ -69,6 +69,87 @@ E $\zeta$ é dado por:
 
 Eu não entendi se o Guilherme quis dizer tirar o determinante de (18) e (15) e também não entendi como que isso ajuda na identificação dos parâmetros...
 
+5. Tem diferença entre `repmat(matriz, [1 1 Neis])` e `repmat(matriz, [1, 1, Neis])`?
+
+6. Qual a diferença entre `[cholSeis,p]  = cholcov(Seis(:,:,i,t))` e `[cholSeis,~]  = cholcov(Seis(:,:,i,t))`?
+
+<span style="color:purple">Aisha:</span>Vide: https://www.mathworks.com/help/stats/cholcov.html (eu não entendo mesmo o papel do til).
+
+7. Qual a diferença entre `W = wishrnd(Sigma,df)` e `W = wishrnd(Sigma,df,D)`?
+
+<span style="color:purple">Aisha:</span> Vide: https://www.mathworks.com/help/stats/wishrnd.html
+_W = wishrnd(Sigma,df) generates a random matrix W having the Wishart distribution with covariance matrix Sigma and with df degrees of freedom. The inverse of W has the Inverse Wishart distribution with parameters Tau = inv(Sigma) and df degrees of freedom._
+
+_W = wishrnd(Sigma,df,D) expects D to be the Cholesky factor of Sigma. If you call wishrnd multiple times using the same value of Sigma, it's more efficient to supply D instead of computing it each time._
+
+Especificamente, não entendi a linha 42 de `lik_KChi_initial.m` que diz:
+
+```{}
+Veis(:,:,i,t) = wishrnd(Seis(:,:,i,t),df_eis,cholSeis);  % sample from EIS sampler; 
+```
+
+Estou desconfiada que apenas deixa mais rápido...
+
+8. Esse comentário está na linha 65 do código `lik_KChi_initial.m`:
+
+_Note that there is a log-likelihood function for each period t and replication i, and that *the mean of the observable multivariate data is equal to zero*_
+
+Por que a média é zero?
+
+9. Esse comentário está na linha 66 do código `lik_KChi_initial.m`:
+
+_Obs: +0.5*log(det(Veis(:,:,i,t))) = -0.5*log(det(inv(Veis(:,:,i,t)))), but the first one is faster to run_
+
+Isso acontece porque Veis é simétrica?
+
+10. Na função `lik_KChi_initial.m` na linha 74 tem
+
+```{}
+ mt(t,i)   = exp(lmt(t,i));
+```
+
+Porém essa quantidade não é usada em lugar nenhum.
+Também não entendi o que são os `lmt`, `lpt`, `lgt`.
+
+11. Não entendi bem o que isso faz:
+
+```{}
+df_eis = [bet(end,:)'+ df_p1; df_p1]
+```
+
+12. Não entendi onde que essa coisa aparece na equação (17) nem o que ela faz
+
+```{}
+Seis(:,:,i,t) = S(:,:,i,t)-1/(1+trace(EISmat*S(:,:,i,t)))*S(:,:,i,t)*EISmat*S(:,:,i,t);  
+% scale matrix of the EIS sampler. See Eq. (17). This code is faster than inv(EISmat+inv(S(:,:,i,t)));
+```
+
+13. No código `lik_KChi_initial` quando faz a decomposição de Cholesky, se usa uma matriz auxiliar `SeisSPD` (linha 37), mas no código `lik_KChi_R` isso não é feito (linha 63):
+
+`lik_KChi_initial`
+```{}
+[cholSeis,p]  = cholcov(Seis(:,:,i,t));         
+% cholesky decomposition for the scale matrix of the EIS sampler; Aisha: [T,num] = cholcov(SIGMA) returns the number num of %negative eigenvalues of SIGMA, and T is empty if num is positive. If num is zero, SIGMA is positive semi-definite. If SIGMA is %not square and symmetric, num is NaN and T is empty.
+        if p~=0                                         % logical operator which is set to logical 1 (true) when p is not equal %to 0. Note that if p==0, Seis is positive semi-definite;
+            SeisSPD = nearestSPD(Seis(:,:,i,t));        % if EIS scale matrix is not positive definite, nearestSPD pick the %closest Symmetric Positive Definite matrix to Seis;
+            [cholSeis,~]  = cholcov(SeisSPD);
+        end
+```
+
+
+`lik_KChi_R`
+```{}
+[cholSeis,p]  = cholcov(Seis(:,:,i,t));     % cholesky decomposition for the scale matrix of the EIS sampler;
+            if p~=0                         % if EIS scale matrix is not positive definite, nearestSPD pick the closest Symmetric Positive Definite matrix to Seis;
+                Seis(:,:,i,t) = nearestSPD(Seis(:,:,i,t));
+                [cholSeis,~]  = cholcov(Seis(:,:,i,t));
+            end    
+```
+
+
+
+# Solved questions
+
 4. No código de `lik_KChi_initial` tem uma função `par()` que não encontrei o que ela faz, e quando tentei rodar no meu matlab ela deu erro:
 
 ```{}
@@ -76,6 +157,14 @@ d = par(1);
 v = par(2);
 > Undefined function 'par' for input arguments of type 'double'.
 ```
+
+Depois ela aparece de novo:
+
+```{}
+cC(inds) = par(3:Nb+2);                         % form the C^{1/2} matrix built before;
+```
+
+<span style="color:purple">Aisha:</span> É um vetorzinho chamado `par` e o que está entre parênteses é a posição.
 
 # Code initialization
 
@@ -97,11 +186,13 @@ The basic idea is to assume that [@philipov2006a] have correctly predicted the d
 
 ## Loading packages
 ```{r, warning = FALSE, message= FALSE, eval = FALSE}
-list.of.packages <- c("ggplot2", "MASS")
+list.of.packages <- c("ggplot2", "MASS", "matrixcalc", "logOfGamma")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 library(ggplot2, quietly = TRUE)
 library(MASS, quietly = TRUE)
+library(matrixcalc, quietly = TRUE)
+library(logOfGamma, quietly = TRUE)
 ```
 
 
@@ -158,6 +249,7 @@ yT         <- matrix(NaN, nrow = T, ncol = K)
 # lik_ratio <- matrix(NaN, nrow = T, ncol = 1)          # This line is commented in Matlab as well
 #s          <- # I have to wait for Richard to understand the lines using RandStream
 
+jit(1)  # turn on just-in-time compilation for faster loops
 for (t in 1:Tesao){
   # Scale matrix
   S  <- cC%*% (V0^d) %*% t(cC)*iv                        # Draw from the Scale Matrix
@@ -233,6 +325,30 @@ d. Ultimately, code `lik_KChi_initial` computes the IS-MC estimate of the log-li
     (ii). $\left\{\left\{\tilde{\Omega}_t^i \right\}_{t=1}^T \right\}_{i=1}^N, \left\{\left\{\tilde{S}_t^i \right\}_{t=1}^T \right\}_{i=1}^N$ and $\nu$ for the state transition density;
     
     (iii.) $\left\{ \left\{ \tilde{\Omega}_t^i \right\}_{t=1}^T \right\}_{i=1}^N, \ \left\{\left\{ S_{t-1}^{*\text{INI}} \right\}_{t=1}^T \right\}_{i=1}^N$ and $\nu^{*\text{INI}}$ for the state transition density  <span style="color:red">Aisha: Aqui eu não sei se não seria $S_{t-1}$ porque no ponto c ele diz que vai amostrar de $\mathcal{W}_k\left(\nu^{*\text{INI}}, S_{t-1}^{*\text{INI}}\right)$</span>.
+    
+Function `logwishart.m`: see Anderson (2003) _An Introduction to Multivariate Statistics_ page 252.
+
+```{r, eval = FALSE}
+logwishart <- function(X,Omega,v) {
+  n  <- nrow(X)
+  nl <- ncol(X)
+  
+  
+  if (n != nl) {
+    stop("X must be a square matrix")
+  }
+  
+  Arg    <- (v-n+1):v
+  
+  const  <- log(det(Omega)) * (-v/2) - (v*n*0.5) * log(2) - ((n*(n-1))/4) * log(pi) - sum(gammaln(Arg/2))
+  kernel <- log(det(X)) * ((v-n-1)/2) - 0.5*sum(diag(solve(Omega, X)))
+  
+  lny <- const + kernel
+  
+  return(list(lny = lny, const = const))
+}
+
+```
  
 ```{r, eval = FALSE}
 lik_KChi_initial <- function(par,yt,Vini,N,adj,semente) {
@@ -240,9 +356,8 @@ lik_KChi_initial <- function(par,yt,Vini,N,adj,semente) {
   Tesao <- nrow(yt)
   K     <- ncol(yt)
   
-  # As duas linhas abaixo estão exatamente como no Matlab, não sei o que elas fazem (ver parte de questões)
-  d  <- par(1)
-  v  <- par(2)
+  d  <- par[1]
+  v  <- par[2]
   iv <- 1/v
   
   # O S depende do randstream que eu não entendi como funciona ainda...
@@ -250,17 +365,100 @@ lik_KChi_initial <- function(par,yt,Vini,N,adj,semente) {
   RandStream.setGlobalStream(s)
   
   Neis   <- N
-  Veis   <- array(data = NA, dim = c(K,K,Neis, Tesao))
+  # Set a space for sampling N draws of the k \times k precision matrix \Sigma_{t}^{-1} for each period t;
+  Veis   <- array(data = NA, dim = c(K,K,Neis, Tesao)) 
   Seis   <- Veis
   S      <- Veis
+  # degrees of freedom for the Wishart distribution;
   df_eis <- v+1
   # Same as find(tril(ones(K))) but more complicated :P
+  # Index from covariance matrix to EIS parameters;
   inds   <- which(matrix(as.numeric(lower.tri(matrix(1, ncol = K, nrow = K), diag = TRUE)), ncol = K, nrow = K) != 0)
+  # Number of elements to estimate from the covariance matrix;
+  Nb     <- length(inds)
+  zeroK  <- as.vector(rep(0,K))
   
-  ##################################
-  # STOPPED AT LINE 18
-  ##################################
+  # Form the C^{1/2} matrix built before;
+  cC[inds] <- par[3:(Nb+2)]  
+  # Transform the matrix cC into a matrix of size K \times K
+  cC       <- matrix(cC, ncol = K, nrow = K)
+  # Prepare the initial covariance matrix for N replications
+  VINI     <- repmat(Vini,[1,1,Neis]) ###### ESSA LINHA NÃO FUNCIONA # repmat function repeats a matrix, but I'm not sure how -- see: https://www.mathworks.com/help/matlab/ref/repmat.html
   
+  #Sample from closed form solution sampler:
+  ###### I HAVE TO COME BACK HERE LATER
+  V0 <- VINI;
+  s  <- RandStream('mt19937ar','Seed',semente);     # fix seed
+  RandStream.setGlobalStream(s);
+  
+  jit(1)  # turn on just-in-time compilation for faster loops
+  for (t in 1:T) {
+    jit(1)  # turn on just-in-time compilation for faster loops
+    for (i in 1:Neis){
+      S[,,i,t] <- cC %*% ((V0[,,i,t])^d) %*% t(cC) * iv
+      EISmat   <- t(yt[t,]) %*% yt[t,]
+      #scale matrix of the efficient importance sampler m(\cdot)
+      Seis[,,i,t]     <- solve(EISmat + solve(S[,,i,t]))
+      # I had to adapt the testing for positive definiteness, because I don't have an equivalent function to cholcov()
+      if (is.positive.definite(Seis[,,i,t], tol=1e-8)) {
+        # cholesky decomposition for the scale matrix of the EIS sampler
+        cholSeis <- chol(Seis[,,i,t])
+      } else {
+        # if EIS scale matrix is not positive definite, nearestSPD pick the closest Symmetric Positive Definite matrix to Seis
+        SeisSPD  <- nearPD(Seis[,,i,t]) #### I HAVE TO COME BACK HERE LATER AND WRITE THE FUNCTION
+        cholSeis <- chol(SEISSPD)
+      }
+   
+      Veis[,,i,t] <- rWishart(1, df_eis, Seis[,,i,t]) # Aisha: Probably I'll not need the chol decomposition from before, since it appears to only enter in line 42
+      # set the next period V0 precision matrix since the scale matrix S_{t} depends on the precision matrix of the previous period Sigma_{t-1};
+      # Why t<T? Because at time T, V0[:,:,i,t] comes from T-1, and the value of V0[:,:,i,T] is not necessary, once the scale matrix S_{T+1} is not simulated;
+      
+      if ( t < T) {
+        V0[, ,i, t+1] <- Veis[, , i, t]
+      }
+    }
+  }
+  
+  # Evaluating the EIS integrand
+  
+  ratio <- matrix(NA, nrow = T, ncol = N)
+  gt    <- ratio
+  lgt   <- gt
+  lpt   <- gt
+  #pt   <- gt # This was already commented
+  lmt   <- gt
+  mt    <- gt
+  
+  jit(1)  # turn on just-in-time compilation for faster loops
+  for (t in 1:T){
+    jit(1)  # turn on just-in-time compilation for faster loops
+    for (1 in 1:N) {
+        # Measurement Density
+        # gt(t,i)  = mvnpdf(yt(t,:),zeroK, inv(Veis(:,:,i,t))); # This was already commented
+        # lgt(t,i) = log(gt(t,i)); # This was already commented
+        # log(gt(t,i)); # This was already commented
+        
+      # Note that there is a log-likelihood function for each period t and replication i, and that the mean of the observable multivariate data is equal to zero; ### WHY?
+      # Obs: +0.5*log(det(Veis(:,:,i,t))) = -0.5*log(det(inv(Veis(:,:,i,t)))), but the first one is faster to run;
+      lgt[t,i] <- -K/2*log(2*pi) + 0.5*log(det(Veis[,,i,t])) - 0.5*yt[t,] %*% Veis[,,i,t] %*% t(yt[,t])
+      
+      # State Transition Density
+      lpt[t,i] <- logwishart(Veis[,,i,t], S[,,i,t],v)
+      # pt <- exp(lpt[t,i]) # This was already commented
+      
+      # Importance Sampler
+      lmt[t,i] <- logwishart(Veis[,,i,t], Seis[,,i,t], df_eis)
+      mt[t,i]  <- exp(lmt[t,i])
+      
+      # IS ratio
+      ratio[t,i] <- (lgt[t,i]+lpt[t,i]-lmt[t,i])
+    }
+  }
+  
+  # adj <- mean(mean(ratio)) # This was already commented
+  
+  lik    <- mean(exp(sum(ratio - adj)))
+  loglike <- log(lik) + Tesao * adj 
   
   return(loglike) # I changed from loglik to loglike because R has a function named loglik.
 }
@@ -268,6 +466,142 @@ lik_KChi_initial <- function(par,yt,Vini,N,adj,semente) {
 ```
 
 ### Implementation of `lik_KChi_R()`
+
+```{r}
+lik_Kchi_R <- function(par, yt, Vini, N, adj, semente){
+  # Parameters
+  Tesao <- nrow(yt) # number of periods;
+  K     <- ncol(yt) # number of series;
+  # Global Persistence Parameter
+  # d <- par[1]^2/(1+par[1])^2 # This line was already commented
+  d <- pa[1]
+  # Degrees of freedom
+  # v <- k + abs(par[2])
+  v <- par[2]
+  # MC sample size
+  Neis <- N
+  iv   <- 1/v
+  
+  
+  ## Define some variables:
+  # Dependent variable for EIS regression
+  Y    <- matrix(NA, nrow = Neis, ncol = 1)
+  # Array to collect draws from the importance sampler
+  Veis <- array(data = NA, dim = c(K,K,Neis, Tesao))
+  Seis   <- Veis
+  S      <- Veis
+  # degrees of freedom for the Wishart EIS initial sampler. See eq (17);
+  df_p1 <- v+1 # It is not eq (17), it is eq(19) (the equation between 18 and 20)
+  
+  # Code to recover triangular matrix cC from the vector of parameters:
+  
+  # index from covariance matrix to EIS parameters (auxiliary parameters)
+  inds   <- which(matrix(as.numeric(lower.tri(matrix(1, ncol = K, nrow = K), diag = TRUE)), ncol = K, nrow = K) != 0)
+  # index from a diagonal KxK matrix;
+  ind_   <- which(diag(K) != 0) 
+  indd   <- matrix(0, nrow = 1, ncol = K+1)
+  # number of estimated parameters from the covariance matrix or from the \Gamma matrix filled with (k^2+k)/2 auxiliary parameters
+  Nb     <- length(inds)
+  
+  jit(1)  # turn on just-in-time compilation for faster loops
+  for (i in 1:K){
+    indd[i] <- which(inds == ind_[i])
+  }
+  indd[length(indd)] <- Nb + 1
+  
+  # maps parameters to cC matrix in order to recriate matrix cC;
+  cC[inds]<- par[3:(Nb+2)]
+  # Transform the matrix cC into a matrix of size K \times K
+  cC       <- matrix(cC, ncol = K, nrow = K)
+  
+  # Parameters for EIS iterations:
+  
+  it      <- 0
+  # maximum number of iterations
+  itmax   <- 10
+  # EIS tolerance to stop iterations
+  tol     <- 0.01
+  # initial difference
+  diff    <- 100
+  # initialize vector to save EIS parameters
+  bet     <- matrix(0, nrow = Nb+1, ncol = Tesao)                 
+  # initialize EIS parameters at zero for initial sampler. See   paragraph bellow eq. (17)
+  betas_0 <- bet
+  # state at t=0. Initial condition is treated given;
+  VINI    <- repmat(Vini,[1,1,Neis]) ###### ESSA LINHA NÃO FUNCIONA # repmat function repeats a matrix, but I'm not sure how -- see: https://www.mathworks.com/help/matlab/ref/repmat.html
+  # set space for N draws of EIS parameters at each period t
+  XX      <- array(data = NA, dim = c(Neis,Nb+1,T))
+  
+  # loop for EIS iterations
+  while (diff > tol && it < itmax) {
+    # Use common random numbers
+    s = RandStream('mt19937ar','Seed',semente) # fix seed
+    RandStream.setGlobalStream(s)
+    
+    # Initialize EIS sampler. See eq.(17) --- se if it is right
+    # initial state is given in this exercise
+    V0     = VINI                                      
+    # degrees of freedom of EIS samplers from t=1 to t=T. 
+    # Note that for t=T, df_eis=df_p1, since filter estimate is equal to smoothed estimate at T
+    # df_eis = [bet(end,:)'+ df_p1; df_p1] ## NOT SURE WHAT IS HAPPENING HERE                 
+    # Sample states for EIS regressions:
+    jit(1)  # turn on just-in-time compilation for faster loops
+    for (i in 1:Tesao){
+      # BetMat will be used as the \Gamma matrix from Eq. (17), which collects (k^2+k)/2 auxiliary parameters from the scale matrix of the EIS sampler
+      BetMat       <- matrix(0, K)
+      # initial sampler starts with zero for EIS parameters;
+      BetMat[inds] <- bet[1:Nb,t]
+      # t(BetMat * lower.tri(BetMat)) complements the upper triangular part of BetMat 
+      #with the same elements below the main diagonal of BetMat
+      BetMat <- BetMat + t(BetMat * lower.tri(BetMat))
+      # part of the scale matrix of the EIS sampler: \Gamma + yt*yt';
+      # The previous part of the code stays outside the loop for N draws, 
+      # because EISmat is the same for every replication i
+      EISmat <- BetMat + t(yt[t,]) %*% yt[t,]
+      
+      jit(1)  # turn on just-in-time compilation for faster loops
+      for (i in 1:Neis) {
+        # scale matrix of the Wishart transition density
+        S[,,i,t] <- cC %*% (V0[,,i,t]^d) %*% t(cC) * iv
+        # scale matrix of the EIS sampler. See Eq. (17). This code is faster than inv(EISmat+inv(S(:,:,i,t)))
+        # wtf?
+        Seis[,,i,t] <- S[,,i,t]-1/(1+sum(diag(EISmat %*% S[,,i,t]))) %*% S[,,i,t] %*% EISmat %*% S[,,i,t]
+        if (is.positive.definite(Seis[,,i,t], tol=1e-8)) {
+          # cholesky decomposition for the scale matrix of the EIS sampler
+          cholSeis <- chol(Seis[,,i,t])
+          } else {
+          # if EIS scale matrix is not positive definite, nearestSPD pick the closest Symmetric Positive Definite matrix to Seis
+          Seis[,,i,t]  <- nearPD(Seis[,,i,t]) #### I HAVE TO COME BACK HERE LATER AND WRITE THE FUNCTION
+          cholSeis <- chol(Seis[,,i,t])
+          }
+        if (t > 1) {
+          # Compute integrating constant \Chi_{t} to smooth estimates of \Chi_{t-1}. See Eq. (18):
+          logdetStm1 <- log(det(Seis[,,i,t]))
+          logdetS    <- log(det(S[,,i,t]))
+          # log of integrating constant, which is a scalar;
+          Y[i, t-1]  <- 0.5 * (df_eis[t] * logdetStm1 - v * logdetS)
+        }
+        # Sample from EIS sampler
+        Veis[,,i,t]  <- rWishart(1, df_eis[t], Seis[,,i,t])
+        # Store precision matrices for EIS regressions
+        VV           <- Veis[,,i,t]
+        # NÃO ENTENDI A SINTAXE ABAIXO
+        #XX(i,:,t)     = [-VV(inds)' log(det(VV))];  % EIS regressors. XX is a N x Nb+1 matrix for every period t;
+        # compensate main diagonal parameters of XX and log(det(VV));
+        XX[i, indd, t] <- XX[i, indd, t]*0.5
+        # set the next period V0 precision matrix since the scale matrix S_{t} depends on the precision matrix of the previous period Sigma_{t-1};
+      # Why t<T? Because at time T, V0[:,:,i,t] comes from T-1, and the value of V0[:,:,i,T] is not necessary, once the scale matrix S_{T+1} is not simulated;
+        if ( t < T) {
+          V0[, ,i, t+1] <- Veis[, , i, t]
+        }
+      }
+    }
+    # Backward EIS loop to smooth EIS estimates of t (\Chi_{t}) with integrating constant of t+1 (\Chi_{t+1}):
+    ####### PAREI NA LINHA 84
+  }
+  
+} # End of the function
+```
 
 ## Getting everything together with `MSV_EIS_3_simul`
 
@@ -288,7 +622,7 @@ it_print    <- 1
 tm1 <- system.time(   # Mimics the usage of tic toc
 tic
   {
-    
+    jit(1)  # turn on just-in-time compilation for faster loops
     for (j in 1:MC) {
       if (j %% it_print == 0) {
         print(j)
