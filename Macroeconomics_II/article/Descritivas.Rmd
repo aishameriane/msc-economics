@@ -1,5 +1,5 @@
 ---
-title: "Teoria Macroeconômica II - Artigo"
+title: "Teoria Macroeconômica II - Artigo parte I"
 author: "Aishameriane Schmidt"
 date: "5 de janeiro de 2018"
 header-includes:
@@ -865,36 +865,38 @@ cols2 <- cbPalette[c(2,4,6)]
 # Gráfico do desvio padrão do resíduo da razão capital trabalho
 sd_ct <- parameter.draws(fit1, type = "vcv", row = 1, col = 1)
 x1 <- t(apply(sqrt(sd_ct), 2, stat.helper))
-matplot2(x = xax, y = x1, ylim = c(0.04, 0.065), col = cols1, main = "Razão Capital/Trabalho", xlab = "Tempo")
+matplot2(x = xax, y = x1, ylim = c(0.04, 0.065), col = cols1, main = "Volatilidade da Razão Capital/Trabalho", xlab = "Tempo")
 ```
 
 ```{r, eval = FALSE}
 # Gráfico do desvio padrão do resíduo da selic
 sd_selic <- parameter.draws(fit1, type = "vcv", row = 2, col = 2)
 x2 <- t(apply(sqrt(sd_selic), 2, stat.helper))
-matplot2(x = xax, y = x2, ylim = c(0.45, 0.65), col = cols1, main = "Selic", xlab = "Tempo")
+matplot2(x = xax, y = x2, ylim = c(0.45, 0.65), col = cols1, main = "Volatilidade da Selic", xlab = "Tempo")
 ```
 
 ```{r, eval = FALSE}
 # Gráfico do desvio padrão do resíduo do ibcbr
 sd_ibcbr <- parameter.draws(fit1, type = "vcv", row = 3, col = 3)
 x3 <- t(apply(sqrt(sd_ibcbr), 2, stat.helper))
-matplot2(x = xax, y = x3, col = cols1, main = "IBC-Br", xlab = "Tempo")
+matplot2(x = xax, y = x3, col = cols1, main = "Volatilidade do IBC-Br", xlab = "Tempo")
 ```
 
 ```{r, eval = FALSE}
 # Gráfico do desvio padrão do resíduo do cambio
-sd_cambio <- parameter.draws(fit1, type = "vcv", row = 3, col = 3)
+sd_cambio <- parameter.draws(fit1, type = "vcv", row = 4, col = 4)
 x4 <- t(apply(sqrt(sd_cambio), 2, stat.helper))
-matplot2(x = xax, y = x4, col = cols1, main = "Cambio", xlab = "Tempo")
+matplot2(x = xax, y = x4, col = cols1, main = "Volatilidade da Variação da Tx. de Câmbio", xlab = "Tempo")
 ```
 
 ```{r, eval = FALSE}
 # Gráfico do desvio padrão do resíduo do ipca
-sd_ipca <- parameter.draws(fit1, type = "vcv", row = 3, col = 3)
+sd_ipca <- parameter.draws(fit1, type = "vcv", row = 5, col = 5)
 x5 <- t(apply(sqrt(sd_ipca), 2, stat.helper))
-matplot2(x = xax, y = x5, col = cols1, main = "IPCA", xlab = "Tempo")
+matplot2(x = xax, y = x5, col = cols1, main = "Vol. do IPCA acum. 12 meses", xlab = "Tempo")
 ```
+
+Função Impulso resposta da Selic na razão Capital/Trabalho.
 
 ```{r, eval = FALSE}
 # Função Impulso resposta
