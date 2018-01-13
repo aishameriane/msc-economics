@@ -7,3 +7,5 @@ _"When the grass changes its color, the little donkey starves to death." (common
 </p>
 
 Repository for the course's final article.
+
+Use this site to visualize html files: https://htmlpreview.github.io/
