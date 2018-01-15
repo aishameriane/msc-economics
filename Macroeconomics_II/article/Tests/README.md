@@ -1,5 +1,9 @@
 # Tests
 
+<p align = "left">
+    <img src="https://imgs.xkcd.com/comics/automation.png" alt="Programming." width="400" align = "right">
+</p>
+
 This folder contains all the Var specifications I have tried.
 
 Because the algorithm is a little slow, I ran each model separately and saved the graphs (and the markdown file is loading the images).
@@ -13,6 +17,8 @@ All models have monthly measured variables, with some changes in the period and 
 (the algorithm uses OLS in the first _n_ observations and then discard then in the bayesian estimation part).
 
 As usual, use this site to visualize html files: https://htmlpreview.github.io
+
+Cartoon credits: [XKCD](https://xkcd.com/1319/)
 
 ## Variables
 
