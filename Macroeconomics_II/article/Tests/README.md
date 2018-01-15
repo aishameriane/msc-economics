@@ -89,14 +89,14 @@ I used 48 observations to estimate the prior hyperparameters, 2 lag in the VAR s
     
 ## Specifications of the `bvar.sv.tvp()` function:
 
-* $p$ is the lag of the variables in the var model;
-* $\tau$ is the number of observations used to obtain the hyperparameters using OLS. Default is 40;
-* $nf$ is the number of periods used to prediction;
-* $pdrift* is a parameter for drift. Default is `TRUE`;
+* <a href="https://www.codecogs.com/eqnedit.php?latex=p" target="_blank"><img src="https://latex.codecogs.com/gif.latex?p" title="p" /></a> is the lag of the variables in the var model;
+* <a href="https://www.codecogs.com/eqnedit.php?latex=\tau" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\tau" title="\tau" /></a> is the number of observations used to obtain the hyperparameters using OLS. Default is 40;
+* <a href="https://www.codecogs.com/eqnedit.php?latex=nf" target="_blank"><img src="https://latex.codecogs.com/gif.latex?nf" title="nf" /></a> is the number of periods used to prediction;
+* <a href="https://www.codecogs.com/eqnedit.php?latex=pdrift" target="_blank"><img src="https://latex.codecogs.com/gif.latex?pdrift" title="pdrift" /></a> is a parameter for drift. Default is `TRUE`;
 * Prior distributions are the same used in [Primiceri (2005)](http://faculty.wcas.northwestern.edu/~gep575/tvsvar_final_july_04.pdf):
-    * $B_0$ are the initial betas and follow a normal distribution with parameters obtained via OLS regressions;
-    * $A_0$ is the initial covariance, also following a normal distribution (**I need to check this because covariances cannot be negative**. The variances of $A_0$ and $B_0$ are multiplied by $4$;
-    * $log \ \sigma_0$ is the initial log volatility, also following a normal distribution with unitary variance and mean obtained via OLS;
-    * $Q$ is $B_t$ covariance matrix following an Inverse Wishart distribution and some weird parameters (https://github.com/FK83/bvarsv/blob/master/bvarsv_Nov2015_website.pdf - see page 2)
-    * $W$ is the covariance matrix of the shocks in $log\ \sigma_0$
-    * $S_j$ is the covariance matrix of $A_t$
+    * <a href="https://www.codecogs.com/eqnedit.php?latex=B_0" target="_blank"><img src="https://latex.codecogs.com/gif.latex?B_0" title="B_0" /></a> are the initial betas and follow a normal distribution with parameters obtained via OLS regressions;
+    * <a href="https://www.codecogs.com/eqnedit.php?latex=A_0" target="_blank"><img src="https://latex.codecogs.com/gif.latex?A_0" title="A_0" /></a> is the initial covariance, also following a normal distribution (**I need to check this because covariances cannot be negative**. The variances of $A_0$ and $B_0$ are multiplied by $4$;
+    * <a href="https://www.codecogs.com/eqnedit.php?latex=log&space;\&space;\sigma_0" target="_blank"><img src="https://latex.codecogs.com/gif.latex?log&space;\&space;\sigma_0" title="log \ \sigma_0" /></a> is the initial log volatility, also following a normal distribution with unitary variance and mean obtained via OLS;
+    * <a href="https://www.codecogs.com/eqnedit.php?latex=Q&space;\text{&space;is&space;}&space;B_t" target="_blank"><img src="https://latex.codecogs.com/gif.latex?Q&space;\text{&space;is&space;}&space;B_t" title="Q \text{ is } B_t" /></a> covariance matrix following an Inverse Wishart distribution and some weird parameters (https://github.com/FK83/bvarsv/blob/master/bvarsv_Nov2015_website.pdf - see page 2)
+    * <a href="https://www.codecogs.com/eqnedit.php?latex=W" target="_blank"><img src="https://latex.codecogs.com/gif.latex?W" title="W" /></a> is the covariance matrix of the shocks in  <a href="https://www.codecogs.com/eqnedit.php?latex=log&space;\&space;\sigma_0" target="_blank"><img src="https://latex.codecogs.com/gif.latex?log&space;\&space;\sigma_0" title="log \ \sigma_0" /></a>
+    * <a href="https://www.codecogs.com/eqnedit.php?latex=S_j" target="_blank"><img src="https://latex.codecogs.com/gif.latex?S_j" title="S_j" /></a> is the covariance matrix of <a href="https://www.codecogs.com/eqnedit.php?latex=A_t" target="_blank"><img src="https://latex.codecogs.com/gif.latex?A_t" title="A_t" /></a>
