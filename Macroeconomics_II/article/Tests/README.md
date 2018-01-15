@@ -87,7 +87,7 @@ I used 48 observations to estimate the prior hyperparameters and 1 lag in the VA
     * IPCA
 I used 48 observations to estimate the prior hyperparameters, 2 lag in the VAR series and 1 period forecasting.
 
-5. **Experiment 5** ([Var 4](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var5.html)) is a 4 variable model, from **January, 1999** to **November, 2017** (227 obs.) containing the following variables:
+5. **Experiment 5** ([Var 5](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var5.html)) is a 4 variable model, from **January, 1999** to **November, 2017** (227 obs.) containing the following variables:
    * Capital/Labor Ratio
     * Selic
     * PIB
