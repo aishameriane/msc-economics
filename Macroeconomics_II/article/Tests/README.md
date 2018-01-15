@@ -78,3 +78,16 @@ I used 48 observations to estimate the prior hyperparameters and 1 lag in the VA
     * IPCA
 I used 48 observations to estimate the prior hyperparameters and 1 lag in the VAR series.
     
+## Specifications of the `bvar.sv.tvp()` function:
+
+* $p$ is the lag of the variables in the var model;
+* $\tau$ is the number of observations used to obtain the hyperparameters using OLS. Default is 40;
+* $nf$ is the number of periods used to prediction;
+* $pdrift* is a parameter for drift. Default is `TRUE`;
+* Prior distributions are the same used in [Primiceri (2005)](http://faculty.wcas.northwestern.edu/~gep575/tvsvar_final_july_04.pdf):
+    * $B_0$ are the initial betas and follow a normal distribution with parameters obtained via OLS regressions;
+    * $A_0$ is the initial covariance, also following a normal distribution (**I need to check this because covariances cannot be negative**. The variances of $A_0$ and $B_0$ are multiplied by $4$;
+    * $log \ \sigma_0$ is the initial log volatility, also following a normal distribution with unitary variance and mean obtained via OLS;
+    * $Q$ is $B_t$ covariance matrix following an Inverse Wishart distribution and some weird parameters (https://github.com/FK83/bvarsv/blob/master/bvarsv_Nov2015_website.pdf - see page 2)
+    * $W$ is the covariance matrix of the shocks in $log\ \sigma_0$
+    * $S_j$ is the covariance matrix of $A_t$
