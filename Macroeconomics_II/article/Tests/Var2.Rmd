@@ -1,0 +1,390 @@
+---
+title: "Teoria Macroeconômica II - Artigo parte II - Segundo Var"
+author: "Aishameriane Schmidt"
+date: "5 de janeiro de 2018"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+output: html_document
+---
+
+# Introdução
+
+Este documento contém a segunda especificação do VAR que eu testei.
+
+Para fazer o BVar utilizei o pacote [`bvarsv`](https://cran.r-project.org/web/packages/bvarsv/index.html) do [Fabian Kruger](https://sites.google.com/site/fk83research/papers). Em particular, esses dois arquivos me ajudaram muito: [bvarsv: An R implementation of the Primiceri (2005) model for macroeconomic time series](https://github.com/FK83/bvarsv/blob/master/bvarsv_Nov2015_website.pdf) e [Replication of figures in Del Negro and Primiceri (2015)](https://github.com/FK83/bvarsv/blob/master/bvarsv_replication.pdf).
+
+## Download de pacotes e dependências
+
+```{r, warning = FALSE, message = FALSE}
+list.of.packages <- c("ggplot2", "forecast", "BETS", "seasonal", "seasonalview", "bvarsv", "lubridate", "zoo", "stargazer", "gridExtra", "reshape2", "ggfortify", "RColorBrewer")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+library(ggplot2, quietly = TRUE)
+library(forecast, quietly = TRUE)
+library(BETS, quietly = TRUE)
+library(seasonal, quietly = TRUE)
+library(seasonalview, quietly = TRUE)
+library(bvarsv, quietly = TRUE)
+library(lubridate, quietly = TRUE)
+library(zoo, quietly = TRUE)
+library(stargazer, quietly = TRUE)
+library(gridExtra, quietly = TRUE)
+library(reshape2, quietly = TRUE)
+library(ggfortify, quietly = TRUE)
+library(RColorBrewer, quietly = TRUE)
+library(scales, quietly = TRUE)
+```
+
+<span style="color:red">Aisha:</span>  Caso o BETS não esteja instalado, retirar o `eval=FALSE` do chunk abaixo e rodar ele.
+
+```{r, eval = FALSE, warning = FALSE, message = FALSE}
+library(devtools)
+devtools::install_github("pedrocostaferreira/BETS", force= TRUE)
+```
+
+Algumas funções auxiliares:
+
+```{r}
+## Peguei essa função pronta
+matplot2 <- function(...){
+  matplot(..., type = 'l', lty = 1, lwd = 2, bty = "n", ylab = "")
+}
+
+# Essa função calcula os quantis e organiza 1 quantil, média, 3 quantil.
+stat.helper <- function(z) c(mean(z), quantile(z, c(0.16, 0.84)))[c(2,1,3)]
+
+# Paleta de cores
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+cols1 <- cbPalette[c(2,4,2)]
+cols2 <- cbPalette[c(2,4,6)]
+```
+
+# Especificação 2: 5 variáveis, 1996-2017
+
+## Tentativa 1
+
+A segunda tentativa foi com dados de **janeiro de 1996** a **outubro de 2017** incluiu as seguintes variáveis:
+
+1. Razão capital-trabalho, calculada a partir das seguintes séries:
+    * `Receitas tributárias - Regime de competência - Imposto de renda - Retido na fonte - Rendimento do trabalho (7620)`
+    * `Receitas tributárias - Regime de competência - Imposto de renda - Retido na fonte - Rendimento do capital (7621)`
+
+Passei um filtro para tirar sazonalidade, sem transformação prévia nos dados (ajuste default na função `seas` exceto no `transformation` que ficou igual a `NONE`).
+
+2. Taxa Selic calculada a partir da série:
+    * `Taxa de juros - Selic acumulada no mês (4390)`. Passei de taxa mensal para anual usando a fórmula: $\left((1+tx/100)^12 -1\right)*100$ e passei um filtro para tirar sazonalidade, sem transformação prévia nos dados (ajuste default na função `seas` exceto no `transformation` que ficou igual a `NONE`).
+
+3. IPCA (para inflação), utilizando a seguinte série:
+    * `Índice nacional de preços ao consumidor-amplo (IPCA) (433)`. Como ele está em variação percentual mensal, foi necessário transformar para acumulado dos últimos 12 meses utilizando a fórmula: $$IPCA_i = \left[\left(\prod\limits_{j=i-11}^i \left(\frac{IPCA_j}{100}+1\right) \right) -1\right]*100$$
+
+4. PIB mensal, utilizando a seguinte série:
+    * `PIB mensal` do IPEA Data.
+    Eu deflacionei no próprio site usando como deflator o IPCA de novembro de 2017. Depois tirei o log e calculei a primeira diferença e tirei sazonalidade.
+
+5. Crescimento da taxa de câmbio (para _growth of the nominal effective exchange rate_). Usei a série:
+    * `Taxa de câmbio - Livre - Dólar americano (venda) - Fim de período - mensal (3696)`. Como o Mumtaz disse que usou log diferença, eu calculei o log e tirei primeira diferença nessa série.
+
+### Download dos dados
+
+```{r, message = FALSE, warning = FALSE}
+rm(list = ls())
+
+# Auxiliary variables, so I don't need to bother when something changes
+inicio <- "1994-07-01"
+fim    <- "2017-11-30"
+
+# Don't mess with this code
+inicio_cambio <- paste(seq(as.Date(inicio), length = 2, by = "-1 month")[2]) # 1 mês antes do início das outras séries
+inicio_ipca   <- paste(seq(as.Date(inicio), length = 12, by = "-1 month")[12]) # 12 meses antes do início das outras séries
+
+trabalho <- BETS.get("7620", from = inicio, to = fim)
+capital  <- BETS.get("7621", from = inicio, to = fim)
+capital_trabalho <- capital/trabalho
+
+# Usando ndiffs(PIBmensal_raw,test="adf",alpha = 0.1) se encontra que o ibcbr é não estacionário.
+# Como todas as outras séries são estacionárias, eu vou fazer também a diferença do log, igual no câmbio
+PIBmensal_raw <- read.csv("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\PIBmensal.csv", header = T, sep = ";", dec = ",")
+ano <- as.numeric(substr(inicio_cambio, start = 1, stop = 4))
+mes <- as.numeric(substr(inicio_cambio, start = 6, stop = 7))
+dia <- as.numeric(substr(inicio_cambio, start = 9, stop = 10))
+PIBmensal_raw <- ts(PIBmensal_raw,  start = c(ano, mes, dia), frequency = 12)
+PIBmensal <- diff(log(PIBmensal_raw), 1)
+
+cambio_raw <- BETS.get("3696", from = inicio_cambio, to = fim)
+cambio     <- diff(log(cambio_raw), 1)
+
+selic_4390 <- BETS.get("4390", from = inicio, to = fim) 
+selic <- ((1+selic_4390/100)^(12)-1)*100
+
+ipca_raw <- BETS.get("433", from = inicio_ipca, to = fim) 
+ipca_acum <- ipca_raw/100 + 1
+ipca <- vector()
+
+final <- length(ipca_acum)
+for (i in 12:final){
+  ipca[(i-11)] <- (prod(ipca_acum[(i-11):i])-1)*100
+}
+
+ano <- as.numeric(substr(inicio, start = 1, stop = 4))
+mes <- as.numeric(substr(inicio, start = 6, stop = 7))
+dia <- as.numeric(substr(inicio, start = 9, stop = 10))
+
+ipca <- ts(ipca,  start = c(ano, mes, dia), frequency = 12) # Date format YYYY MM DD
+
+m <- seas(x = capital_trabalho)
+capital_trabalho2 <- final(m)
+
+m <- seas(x = selic, transform.function = "none")
+selic2 <- final(m)
+
+m <- seas(x = PIBmensal, transform.function = "none")
+PIBmensal2 <- final(m)
+
+df1 <- data.frame(seq(as.Date(inicio), length = length(ipca), by = "1 month"), capital_trabalho2, selic2, PIBmensal2, cambio, ipca)
+names(df1) <- c("Data", "Capital_trabalho", "Selic", "PIBmensal", "Cambio", "IPCA")
+df2 <- melt(data = df1, id.vars = "Data")
+
+cores <- brewer.pal(5, "Dark2")
+
+# Gráficos individuais
+p1 <- ggplot(df2[which(df2$variable == "Capital_trabalho"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[1])+
+        scale_y_continuous(name="Capital trabalho") +
+        scale_x_date(date_breaks = "12 months")+ 
+        theme_bw()
+p1 <- p1 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p2 <- ggplot(df2[which(df2$variable == "Selic"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[2])+
+        scale_y_continuous(name="Selic (%a.a.)") +
+        scale_x_date(date_breaks = "12 months")+ 
+        theme_bw()
+p2 <- p2 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p3 <- ggplot(df2[which(df2$variable == "PIBmensal"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[3])+
+        scale_y_continuous(name="PIB mensal (var)") +
+        scale_x_date(date_breaks = "12 months")+
+        theme_bw()
+p3 <- p3 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p4 <- ggplot(df2[which(df2$variable == "Cambio"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[4])+
+        scale_y_continuous(name="Tx. Câmbio (var)") +
+        scale_x_date(date_breaks = "12 months")+
+        theme_bw()
+p4 <- p4 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p5 <- ggplot(df2[which(df2$variable == "IPCA"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[5])+
+        scale_y_continuous(name="IPCA (acum. 12m.)") +
+        scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%Y"))+
+        theme_bw()
+p5 <- p5 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+grid.arrange(p1, p2, p3, p4, p5, ncol=1, nrow = 5)
+```
+
+Ficou meio zoadinho até $1995$, então vou tentar cortar as séries para ver se melhora.
+
+```{r}
+capital_trabalho2 <- window(capital_trabalho2, start = 1996)
+selic2            <- window(selic2, start = 1996)
+PIBmensal2        <- window(PIBmensal2, start = 1996)
+cambio            <- window(cambio, start = 1996)
+ipca              <- window(ipca, start = 1996)
+
+df1 <- data.frame(seq(as.Date(inicio), length = length(ipca), by = "1 month"), capital_trabalho2, selic2, PIBmensal2, cambio, ipca)
+names(df1) <- c("Data", "Capital_trabalho", "Selic", "PIBmensal", "Cambio", "IPCA")
+df2 <- melt(data = df1, id.vars = "Data")
+
+# Gráficos individuais
+p1 <- ggplot(df2[which(df2$variable == "Capital_trabalho"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[1])+
+        scale_y_continuous(name="Capital trabalho") +
+        scale_x_date(date_breaks = "12 months")+ 
+        theme_bw()
+p1 <- p1 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p2 <- ggplot(df2[which(df2$variable == "Selic"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[2])+
+        scale_y_continuous(name="Selic (%a.a.)") +
+        scale_x_date(date_breaks = "12 months")+ 
+        theme_bw()
+p2 <- p2 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p3 <- ggplot(df2[which(df2$variable == "PIBmensal"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[3])+
+        scale_y_continuous(name="PIB mensal (var)") +
+        scale_x_date(date_breaks = "12 months")+
+        theme_bw()
+p3 <- p3 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p4 <- ggplot(df2[which(df2$variable == "Cambio"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[4])+
+        scale_y_continuous(name="Tx. Câmbio (var)") +
+        scale_x_date(date_breaks = "12 months")+
+        theme_bw()
+p4 <- p4 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p5 <- ggplot(df2[which(df2$variable == "IPCA"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[5])+
+        scale_y_continuous(name="IPCA (acum. 12m.)") +
+        scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%Y"))+
+        theme_bw()
+p5 <- p5 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+grid.arrange(p1, p2, p3, p4, p5, ncol=1, nrow = 5)
+
+```
+
+Eu vou é ignorar que o câmbio está sem batimentos cardíacos e ver o que sai do VAR.
+
+## Ajustando um modelo BVar
+
+Inicialmente ajustei um modelo com uma defasagem e que utiliza as primeiras 24 observações para fazer a estimativa de MQO para jogar na priori.
+  
+```{r, eval = FALSE}
+var1 <- cbind(capital_trabalho2, selic2, ibcbr, cambio, ipca) # The bvar function does not allows data.frames
+
+set.seed(1)
+
+nburn. <- 5000
+nrep. <- 50000
+
+fit1 <- bvar.sv.tvp(var1, p=1, tau = 24, nburn = nburn., nrep = nrep.)
+```
+
+## Alguns gráficos
+
+```{r, eval = FALSE}
+## Colocando as datas como strings
+tm1 <- as.yearmon(time(var1))
+
+# Eixo x
+xax <- time(var1)
+# Perde uma observação pelo lag e outras 24 pela amostra para estimar por MQO, então começa no tempo 26
+xax <- xax[26:177]
+
+# Marcas verticais
+gp <- seq(1999, 2017, 1)
+```
+
+Os gráficos abaixo contém o desvio padrão dos resíduos do modelo ao longo do tempo, com o 16o e o 68o percentis (como foi feito no artigo do Primiceri).  
+
+```{r, eval = FALSE}
+## Colocando as datas como strings
+tm1 <- as.yearmon(time(var1))
+
+# Eixo x
+xax <- time(var1)
+# Perde uma observação pelo lag e outras 48 pela amostra para estimar por MQO, então começa no tempo 26
+xax <- xax[50:263]
+
+# Marcas verticais
+gp <- seq(1996, 2017, 1)
+```
+
+```{r, eval = FALSE}
+# Gráfico do desvio padrão do resíduo da razão capital trabalho
+sd_ct <- parameter.draws(fit1, type = "vcv", row = 1, col = 1)
+x1 <- t(apply(sqrt(sd_ct), 2, stat.helper))
+matplot2(x = xax, y = x1, col = cols1, main = "Volatilidade da Razão Capital/Trabalho", xlab = "Tempo")
+```
+
+![Volatilidade capital-trabalho](C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\Var2\\01.png)
+
+```{r, eval = FALSE}
+# Gráfico do desvio padrão do resíduo da selic
+sd_selic <- parameter.draws(fit1, type = "vcv", row = 2, col = 2)
+x2 <- t(apply(sqrt(sd_selic), 2, stat.helper))
+matplot2(x = xax, y = x2, col = cols1, main = "Volatilidade da Selic", xlab = "Tempo")
+```
+
+![Volatilidade selic](C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\Var2\\02.png)
+
+```{r, eval = FALSE}
+# Gráfico do desvio padrão do resíduo do ibcbr
+sd_pib <- parameter.draws(fit1, type = "vcv", row = 3, col = 3)
+x3 <- t(apply(sqrt(sd_pib), 2, stat.helper))
+matplot2(x = xax, y = x3, col = cols1, main = "Volatilidade do PIB", xlab = "Tempo")
+```
+
+![Volatilidade PIB](C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\Var2\\03.png)
+
+```{r, eval = FALSE}
+# Gráfico do desvio padrão do resíduo do cambio
+sd_cambio <- parameter.draws(fit1, type = "vcv", row = 4, col = 4)
+x4 <- t(apply(sqrt(sd_cambio), 2, stat.helper))
+matplot2(x = xax, y = x4, col = cols1, main = "Volatilidade da Variação da Tx. de Câmbio", xlab = "Tempo")
+```
+
+![Volatilidade Câmbio](C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\Var2\\04.png)
+
+```{r, eval = FALSE}
+# Gráfico do desvio padrão do resíduo do ipca
+sd_ipca <- parameter.draws(fit1, type = "vcv", row = 5, col = 5)
+x5 <- t(apply(sqrt(sd_ipca), 2, stat.helper))
+matplot2(x = xax, y = x5, col = cols1, main = "Vol. do IPCA acum. 12 meses", xlab = "Tempo")
+```
+
+![Volatilidade IPCA](C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\Var2\\05.png)
+
+### Funções impulso resposta
+
+Peguei a explicação daqui [daqui](https://github.com/FK83/bvarsv/blob/master/bvarsv_Nov2015_website.pdf):
+A FIR estima o impacto de um choque unitário em algum elemento de $\varepsilon_t$. Os elementos de $c_t$, $B_{j,t}$, $A_t$ e $\Sigma_t$ em (1) são mantidos fixos em seus valores em $t$. Note que a ordem das variáveis importa e deve ser justificada por argumentos econômicos. As FIR contém os percentis 5, 25, 50, 75 e 95.
+
+```{r, eval = FALSE}
+# Função Impulso resposta
+ira <- impulse.responses(fit1, impulse.variable = 2, response.variable = 1)
+```
+
+![FIR da Selic na razão capital-trabalho](C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\Var2\\ir_01_selic_ct.png)
+
+```{r, eval = FALSE}
+# Função Impulso resposta
+ira <- impulse.responses(fit1, impulse.variable = 2, response.variable = 3)
+```
+
+![FIR da Selic no PIB](C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\Var2\\ir_02_selic_pib.png)
+
+```{r, eval = FALSE}
+# Função Impulso resposta
+ira <- impulse.responses(fit1, impulse.variable = 2, response.variable = 4)
+```
+
+![FIR da Selic no câmbio](C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\Var2\\ir_03_selic_cambio.png)
+
+```{r, eval = FALSE}
+# Função Impulso resposta
+ira <- impulse.responses(fit1, impulse.variable = 2, response.variable = 5)
+```
+
+![FIR da Selic no IPCA](C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\Var2\\ir_04_selic_ipca.png)
+
+```{r, eval = FALSE}
+# Função Impulso resposta
+ira <- impulse.responses(fit1, impulse.variable = 3, response.variable = 1)
+```
+
+![FIR do IBC-Br na razão capital-trabalho](C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\Var2\\ir_06_pib_ct.png)
+
+```{r, eval = FALSE}
+# Função Impulso resposta
+ira <- impulse.responses(fit1, impulse.variable = 4, response.variable = 1)
+```
+
+![FIR do câmbio na razão capital-trabalho](C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\Var2\\ir_07_cambio_ct.png)
+
+```{r, eval = FALSE}
+# Função Impulso resposta
+ira <- impulse.responses(fit1, impulse.variable = 5, response.variable = 1)
+```
+
+![FIR do IPCA na razão capital-trabalho](C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\Var2\\ir_08_ipca_ct.png)
