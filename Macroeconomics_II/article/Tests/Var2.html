@@ -354,14 +354,14 @@ grid.arrange(p1, p2, p3, p4, p5, ncol=1, nrow = 5)</code></pre>
 <div id="ajustando-um-modelo-bvar" class="section level2">
 <h2>Ajustando um modelo BVar</h2>
 <p>Inicialmente ajustei um modelo com uma defasagem e que utiliza as primeiras 24 observações para fazer a estimativa de MQO para jogar na priori.</p>
-<pre class="r"><code>var1 &lt;- cbind(capital_trabalho2, selic2, ibcbr, cambio, ipca) # The bvar function does not allows data.frames
+<pre class="r"><code>var1 &lt;- cbind(capital_trabalho2, selic2, PIBmensal2, cambio, ipca) # The bvar function does not allows data.frames
 
 set.seed(1)
 
 nburn. &lt;- 5000
 nrep. &lt;- 50000
-
-fit1 &lt;- bvar.sv.tvp(var1, p=1, tau = 24, nburn = nburn., nrep = nrep.)</code></pre>
+# com tau = 24 dá ruim
+fit1 &lt;- bvar.sv.tvp(var1, p=1, tau = 48, nburn = nburn., nrep = nrep.)</code></pre>
 </div>
 <div id="alguns-graficos" class="section level2">
 <h2>Alguns gráficos</h2>
@@ -370,11 +370,11 @@ tm1 &lt;- as.yearmon(time(var1))
 
 # Eixo x
 xax &lt;- time(var1)
-# Perde uma observação pelo lag e outras 24 pela amostra para estimar por MQO, então começa no tempo 26
-xax &lt;- xax[26:177]
+# Perde uma observação pelo lag e outras 48 pela amostra para estimar por MQO, então começa no tempo 26
+xax &lt;- xax[50:263]
 
 # Marcas verticais
-gp &lt;- seq(1999, 2017, 1)</code></pre>
+gp &lt;- seq(1996, 2017, 1)</code></pre>
 <p>Os gráficos abaixo contém o desvio padrão dos resíduos do modelo ao longo do tempo, com o 16o e o 68o percentis (como foi feito no artigo do Primiceri).</p>
 <pre class="r"><code>## Colocando as datas como strings
 tm1 &lt;- as.yearmon(time(var1))

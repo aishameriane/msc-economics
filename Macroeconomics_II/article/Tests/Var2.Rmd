@@ -250,14 +250,14 @@ Eu vou é ignorar que o câmbio está sem batimentos cardíacos e ver o que sai do V
 Inicialmente ajustei um modelo com uma defasagem e que utiliza as primeiras 24 observações para fazer a estimativa de MQO para jogar na priori.
   
 ```{r, eval = FALSE}
-var1 <- cbind(capital_trabalho2, selic2, ibcbr, cambio, ipca) # The bvar function does not allows data.frames
+var1 <- cbind(capital_trabalho2, selic2, PIBmensal2, cambio, ipca) # The bvar function does not allows data.frames
 
 set.seed(1)
 
 nburn. <- 5000
 nrep. <- 50000
-
-fit1 <- bvar.sv.tvp(var1, p=1, tau = 24, nburn = nburn., nrep = nrep.)
+# com tau = 24 dá ruim
+fit1 <- bvar.sv.tvp(var1, p=1, tau = 48, nburn = nburn., nrep = nrep.)
 ```
 
 ## Alguns gráficos
@@ -268,11 +268,11 @@ tm1 <- as.yearmon(time(var1))
 
 # Eixo x
 xax <- time(var1)
-# Perde uma observação pelo lag e outras 24 pela amostra para estimar por MQO, então começa no tempo 26
-xax <- xax[26:177]
+# Perde uma observação pelo lag e outras 48 pela amostra para estimar por MQO, então começa no tempo 26
+xax <- xax[50:263]
 
 # Marcas verticais
-gp <- seq(1999, 2017, 1)
+gp <- seq(1996, 2017, 1)
 ```
 
 Os gráficos abaixo contém o desvio padrão dos resíduos do modelo ao longo do tempo, com o 16o e o 68o percentis (como foi feito no artigo do Primiceri).  
