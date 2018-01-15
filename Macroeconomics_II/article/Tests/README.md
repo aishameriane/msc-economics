@@ -55,6 +55,8 @@ Like IBC-Br, I calculated the log and took the first difference.
 
 ## Experiments description
 
+![Var specifications](https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Testes.png)
+
 1. **Experiment 1** ([Var 1](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var1.html)) is a 5 variable model, from **January, 2003** to **October, 2017** (181 obs.) containing the following variables:
     * Capital/Labor Ratio
     * Selic
