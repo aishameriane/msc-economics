@@ -63,7 +63,7 @@ Like IBC-Br, I calculated the log and took the first difference.
     * IPCA
 I used 24 observations to estimate the prior hyperparameters and 1 lag in the VAR series.
 
-2. **Experiment 2** ([Var 2](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var2.html)) is a 5 variable model, from **January, 1996** to **October, 2017** (263 obs.) containing the following variables:
+2. **Experiment 2** ([Var 2](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var2.html)) is a 5 variable model, from **January, 1996** to **November, 2017** (263 obs.) containing the following variables:
     * Capital/Labor Ratio
     * Selic
     * PIB
@@ -71,14 +71,14 @@ I used 24 observations to estimate the prior hyperparameters and 1 lag in the VA
     * IPCA
 I used 48 observations to estimate the prior hyperparameters and 1 lag in the VAR series.
     
-3. **Experiment 3** ([Var 3](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var3.html)) is a 4 variable model, from **January, 1996** to **October, 2017** (263 obs.) containing the following variables:
+3. **Experiment 3** ([Var 3](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var3.html)) is a 4 variable model, from **January, 1996** to **November, 2017** (263 obs.) containing the following variables:
     * Capital/Labor Ratio
     * Selic
     * PIB
     * IPCA
 I used 48 observations to estimate the prior hyperparameters and 1 lag in the VAR series.
 
-3. **Experiment 4** ([Var 4](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var4.html)) is a 4 variable model, from **January, 1996** to **October, 2017** (263 obs.) containing the following variables:
+3. **Experiment 4** ([Var 4](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var4.html)) is a 4 variable model, from **January, 1996** to **November, 2017** (263 obs.) containing the following variables:
     * Capital/Labor Ratio
     * Selic
     * PIB
