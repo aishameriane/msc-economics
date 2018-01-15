@@ -49,7 +49,7 @@ Like IBC-Br, I calculated the log and took the first difference.
 
 ## Experiments description
 
-1. **Experiment 1** ([Var 1]()) is a 5 variable model, from **January, 2003** to **October, 2017** (181 obs.) containing the following variables:
+1. **Experiment 1** ([Var 1](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var1.html)) is a 5 variable model, from **January, 2003** to **October, 2017** (181 obs.) containing the following variables:
     * Capital/Labor Ratio
     * Selic
     * IBC-Br
@@ -57,7 +57,7 @@ Like IBC-Br, I calculated the log and took the first difference.
     * IPCA
 I used 24 observations to estimate the prior hyperparameters and 1 lag in the VAR series.
 
-2. **Experiment 2** ([Var 2]()) is a 5 variable model, from **January, 1996** to **October, 2017** (263 obs.) containing the following variables:
+2. **Experiment 2** ([Var 2](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var2.html)) is a 5 variable model, from **January, 1996** to **October, 2017** (263 obs.) containing the following variables:
     * Capital/Labor Ratio
     * Selic
     * PIB
