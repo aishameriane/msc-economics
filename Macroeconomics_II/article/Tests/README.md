@@ -60,50 +60,56 @@ Like IBC-Br, I calculated the log and took the first difference.
 ![Var specifications](https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Testes.png)
 
 1. **Experiment 1** ([Var 1](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var1.html)) is a 5 variable model, from **January, 2003** to **October, 2017** (181 obs.) containing the following variables:
-    * Capital/Labor Ratio
-    * Selic
-    * IBC-Br
-    * Exchange Rate
-    * IPCA
+    * _Capital/Labor Ratio_
+    * _Selic_
+    * _IBC-Br_
+    * _Exchange Rate_
+    * _IPCA_
+    
 I used 24 observations to estimate the prior hyperparameters and 1 lag in the VAR series.
 
 2. **Experiment 2** ([Var 2](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var2.html)) is a 5 variable model, from **January, 1996** to **November, 2017** (263 obs.) containing the following variables:
-    * Capital/Labor Ratio
-    * Selic
-    * PIB
-    * Exchange Rate
-    * IPCA
+    * _Capital/Labor Ratio_
+    * _Selic_
+    * _PIB_
+    * _Exchange Rate_
+    * _IPCA_
+    
 I used 48 observations to estimate the prior hyperparameters and 1 lag in the VAR series.
     
 3. **Experiment 3** ([Var 3](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var3.html)) is a 4 variable model, from **January, 1996** to **November, 2017** (263 obs.) containing the following variables:
-    * Capital/Labor Ratio
-    * Selic
-    * PIB
-    * IPCA
+    * _Capital/Labor Ratio_
+    * _Selic_
+    * _PIB_
+    * _IPCA_
+    
 I used 48 observations to estimate the prior hyperparameters and 1 lag in the VAR series.
 
 4. **Experiment 4** ([Var 4](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var4.html)) is a 4 variable model, from **January, 1996** to **November, 2017** (263 obs.) containing the following variables:
-    * Capital/Labor Ratio
-    * Selic
-    * PIB
-    * IPCA
+    * _Capital/Labor Ratio_
+    * _Selic_
+    * _PIB_
+    * _IPCA_
+    
 I used 48 observations to estimate the prior hyperparameters, 2 lag in the VAR series and 1 period forecasting.
 
 5. **Experiment 5** ([Var 5](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var5.html)) is a 5 variable model, from **January, 1999** to **November, 2017** (227 obs.) containing the following variables:
-    * Capital/Labor Ratio
-    * Selic
-    * PIB
-    * Exchange Rate
-    * IPCA
+    * _Capital/Labor Ratio_
+    * _Selic_
+    * _PIB_
+    * _Exchange Rate_
+    * _IPCA_
+    
 I used 48 observations to estimate the prior hyperparameters and 2 lag in the VAR series.
 
 6. **Experiment 6** ([Var 6](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var6.html)) is a 6 variable model, from **January, 1996** to **November, 2017** (263 obs.) containing the following variables:
-   * Capital/Labor Ratio
-    * Selic
-    * PIB
-    * Exchange Rate
-    * IPCA
-    * Ibovespa
+    * _Capital/Labor Ratio_
+    * _Selic_
+    * _PIB_
+    * _Exchange Rate_
+    * _IPCA_
+    * _Ibovespa_
+    
 I used 48 observations to estimate the prior hyperparameters and 1 lag in the VAR series.
     
 ## Specifications of the `bvar.sv.tvp()` function:
