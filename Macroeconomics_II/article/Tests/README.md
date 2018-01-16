@@ -49,9 +49,11 @@ I calculated the log and then took the first difference.
         * 	`Produto interno bruto (PIB)`
 I used IPEA series because I tried to deflate the GDP without success. :(
 
-5. Growth of the nominal effective exchange rate (Ex. rate). USed the series:
+5. Growth of the nominal effective exchange rate (Ex. rate). Used the series:
     * `Taxa de câmbio - Livre - Dólar americano (venda) - Fim de período - mensal (3696)`. ]
 Like IBC-Br, I calculated the log and took the first difference.
+
+6. Log monthly returns of Ibovespa Index (Ibovespa). Used the series from [Yahoo Finance](https://finance.yahoo.com/quote/%5EBVSP/history?period1=820461600&period2=1515981600&interval=1mo&filter=history&frequency=1mo) downloded using `getSymbols()` from `quantmod` package.
 
 ## Experiments description
 
@@ -87,13 +89,22 @@ I used 48 observations to estimate the prior hyperparameters and 1 lag in the VA
     * IPCA
 I used 48 observations to estimate the prior hyperparameters, 2 lag in the VAR series and 1 period forecasting.
 
-5. **Experiment 5** ([Var 5](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var5.html)) is a 4 variable model, from **January, 1999** to **November, 2017** (227 obs.) containing the following variables:
-   * Capital/Labor Ratio
+5. **Experiment 5** ([Var 5](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var5.html)) is a 5 variable model, from **January, 1999** to **November, 2017** (227 obs.) containing the following variables:
+    * Capital/Labor Ratio
     * Selic
     * PIB
     * Exchange Rate
     * IPCA
 I used 48 observations to estimate the prior hyperparameters and 2 lag in the VAR series.
+
+6. **Experiment 6** ([Var 6](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Macroeconomics_II/article/Tests/Var6.html)) is a 6 variable model, from **January, 1996** to **November, 2017** (263 obs.) containing the following variables:
+   * Capital/Labor Ratio
+    * Selic
+    * PIB
+    * Exchange Rate
+    * IPCA
+    * Ibovespa
+I used 48 observations to estimate the prior hyperparameters and 1 lag in the VAR series.
     
 ## Specifications of the `bvar.sv.tvp()` function:
 
