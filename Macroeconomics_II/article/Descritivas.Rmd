@@ -27,7 +27,7 @@ bibliography: references.bib
 
 4. **Quais outras variáveis adicionar no modelo?**
 
-<span style="color:purple">Aisha:</span> _Olhar o que o Muntaz usou no VAR dele. Basicamente procurar por produto, inflação, câmbio (talvez)..._
+<span style="color:purple">Aisha:</span> _Olhar o que o Mumtaz usou no VAR dele. Basicamente procurar por produto, inflação, câmbio (talvez)..._
 
 5. **Qual a temporalidade dos dados?**
 
@@ -35,7 +35,7 @@ bibliography: references.bib
 
 6. **O que é o equivalente tupiniquim de _three month treasury bill rate_?**
 
-<span style="color:purple">Aisha:</span>  Dá para usar isso? https://cran.r-project.org/web/packages/GetTDData/vignettes/gtdd-vignette_GetTDData.html . <span style="color:blue">Update:</span> O Portela disse o seguinte <span style="color:grey"> " _Oi Aisha, Você poderia usar a taxa do swap DI-Pré de 3 meses. Dá pra baixar do banco central ou então pelo BETS. Um abraço_".</span> No banco central, a série é `7818`- _Taxa referencial de swaps DI pré-fixada (BM&F) - Prazo de 90 dias (fim de período)_. **Mas eu não entendi que trem é esse... como que isso se relaciona com política monetária? E qual seria a justificativa para usar isso e não a taxa de juros da economia para colocar no VAR do Muntaz?**
+<span style="color:purple">Aisha:</span>  Dá para usar isso? https://cran.r-project.org/web/packages/GetTDData/vignettes/gtdd-vignette_GetTDData.html . <span style="color:blue">Update:</span> O Portela disse o seguinte <span style="color:grey"> " _Oi Aisha, Você poderia usar a taxa do swap DI-Pré de 3 meses. Dá pra baixar do banco central ou então pelo BETS. Um abraço_".</span> No banco central, a série é `7818`- _Taxa referencial de swaps DI pré-fixada (BM&F) - Prazo de 90 dias (fim de período)_. **Mas eu não entendi que trem é esse... como que isso se relaciona com política monetária? E qual seria a justificativa para usar isso e não a taxa de juros da economia para colocar no VAR do Mumtaz?**
 
 7. **Log differences é a diferença dos logs ou o log da diferença?**
 
@@ -43,23 +43,18 @@ bibliography: references.bib
 
 8. **Como calcular a taxa de crescimento da taxa de câmbio efetiva nominal?**
 
-<span style="color:purple">Aisha:</span> Sei lá. O Muntaz usa _growth of the nominal effective exchange rate_, mas aí não sei se ele faz a diferença dos logs e por isso chama assim ou se ele calcula a taxa de crescimento e depois faz a diferença dos logs. <span style="color:red">**Eu posso dar uma olhada no código deles depois**.</span>
+<span style="color:purple">Aisha:</span> Sei lá. O Mumtaz usa _growth of the nominal effective exchange rate_, mas aí não sei se ele faz a diferença dos logs e por isso chama assim ou se ele calcula a taxa de crescimento e depois faz a diferença dos logs. <span style="color:red">**Eu posso dar uma olhada no código deles depois**.</span>
 
 # Baixando os dados
 
 ## Dependências dos pacotes
 
 ```{r, warning = FALSE, message = FALSE}
-list.of.packages <- c("ggplot2", "forecast", "BETS", "seasonal", "seasonalview", "bvarsv", "lubridate", "zoo", "stargazer", "gridExtra", "reshape2", "ggfortify", "RColorBrewer")
-new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
-
 library(ggplot2, quietly = TRUE)
 library(forecast, quietly = TRUE)
 library(BETS, quietly = TRUE)
 library(seasonal, quietly = TRUE)
 library(seasonalview, quietly = TRUE)
-library(bvarsv, quietly = TRUE)
 library(lubridate, quietly = TRUE)
 library(zoo, quietly = TRUE)
 library(stargazer, quietly = TRUE)
@@ -68,6 +63,9 @@ library(reshape2, quietly = TRUE)
 library(ggfortify, quietly = TRUE)
 library(RColorBrewer, quietly = TRUE)
 library(scales, quietly = TRUE)
+library(quantmod, quietly = TRUE)
+library(PerformanceAnalytics, quietly = TRUE)
+library(strucchange, quietly = TRUE)
 ```
 
 <span style="color:red">Aisha:</span>  Caso o BETS não esteja instalado, retirar o `eval=FALSE` do chunk abaixo e rodar ele.
@@ -254,27 +252,27 @@ p5 <- ggplot(df2, aes(Data, Selic)) +
 p5
 ```
 
-Os valores do início da série estão meio ruins, mas depois eu me preocupo com isso se for o caso. Tem outra coisa me incomodando que os valores estão meio diferentes do que tem no site do Bacen: https://www.bcb.gov.br/Pec/Copom/Port/taxaSelic.asp. Aí não sei se eu não fiz merda na hora de converter a taxa.
+Os valores do início da série estão meio ruins, mas depois eu me preocupo com isso se for o caso. Tem outra coisa me incomodando que os valores estão meio diferentes do que tem no site do Bacen: https://www.bcb.gov.br/Pec/Copom/Port/taxaSelic.asp. _**Aí não sei se eu não fiz merda na hora de converter a taxa.**_
 
 **Fim da digressão sobre a SELIC**
 
 ## Pegando os outros dados
 
-As variáveis do modelo do Muntaz são:
+As variáveis do modelo do Mumtaz são:
 
-* PIB per capita (_real GDP per capita_) - peguei IBC-Br `24364` que já tem ajuste sazonal (problema é que a série começa em janeiro de 2003 e acaba em outubro de 2017);
+* PIB per capita (_real GDP per capita_) - peguei IBC-Br `24364` que já tem ajuste sazonal (problema é que a série começa em janeiro de 2003 e acaba em outubro de 2017). Depois acabei pegando o `PIB Mensal` do [Ipea Data](http://www.ipeadata.gov.br/Default.aspx) deflacionado usando o IPCA de novembro de 2017. Essa deflação é feita com alguma bruxaria que não consegui identificar e por isso estou carregando o arquivo csv - não deu para baixar as séries do Bacen e deflacionar eu mesma e achar a mesma coisa.
 * Inflação (_CPI inflation_) - peguei IPCA `433` que já está em variação percentual mensal;
-* _Three month treasury bill rate_ - falei com o Portela e ele sugeriu usar a série `7818` _Taxa referencial de swaps DI pré-fixada (BM&F) - Prazo de 90 dias (fim de período)_ (ela tem valores de 30/09/1999 a desembro de 2017);
+* _Three month treasury bill rate_ - falei com o Portela e ele sugeriu usar a série `7818` _Taxa referencial de swaps DI pré-fixada (BM&F) - Prazo de 90 dias (fim de período)_ (ela tem valores de 30/09/1999 a desembro de 2017). Depois comparei com a selic e como são praticamente iguais, fiquei com a Selic, mas fiz um teste com ela.
 * Taxa de crescimento da taxa de câmbio efetiva nominal (_growth of the nominal effective exchange rate_) - mínima ideia de como calcular isso também. Peguei a série que o Portela usava em séries temporais: `3696` - taxa de câmbio livre - dólar americano (venda) fim de período mensal.
 
-Todas as variáveis exceto as de desigualdade e a taxa de juros estão em _log differences_ (aqui não sei se é o log da diferença ou a diferença dos logs - <span style="color:red">**tenho que pensar**</span>).
+Todas as variáveis exceto as de desigualdade, inflação e a taxa de juros estão em _log differences_ (diferença dos logaritmos).
 
 ### PIB Per capita
 
 Bom, não tem PIB per capita, então tem que ser IBC-Br.
 
 ```{r, message = FALSE, warning = FALSE}
-ibcbr <- BETS.get("24364", from = "1994-07-01", to = "2017-12-31") 
+ibcbr <- BETS.get("24364", from = "2003-09-01", to = "2017-12-31") 
 
 df3 <- data.frame(time(ibcbr), as.numeric(ibcbr))
 names(df3) <- c("Data", "IBCBr")
@@ -291,6 +289,123 @@ p6
 <span style="color:red">LEMBRETE:</span> ~~Esse trem tem uma tendência monstra, depois tem que ver isso.~~ Tirei a diferença da série em log.
 
 <span style="color:red">LEMBRETE:</span> **A série começa em janeiro de 2003... Daí fica com 178 dados... tem que ver com o Guilherme depois.**
+
+#### PIB Mensal
+
+Fuçando no site do Banco Central, eu achei uma série chamada `PIB mensal - Valores correntes (R$ milhões)` (4380).
+
+Vou dar uma olhada nela:
+
+```{r}
+PIBmensal <- BETS.get("4380", from = "1994-07-01", to = "2017-12-31") 
+data1 <- seq(as.Date("1994-07-01"), length = length(PIBmensal), by = "1 month")
+
+df3 <- data.frame(data1, as.numeric(PIBmensal))
+
+p6 <- ggplot(df3, aes(data1, PIBmensal)) +
+        geom_line() +
+        xlab("Data") +
+        ylab("PIB Mensal (R$ milhões)") +
+        ggtitle("PIB mensal - Valores correntes")
+
+p6
+
+# Como eu estou com preguiça de calcular o PIB deflacionado, peguei a série do site do IPEA pronta deflacionada pelo IPCA bonitinha
+
+PIBmensal2 <- read.csv("C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Teoria Macroeconômica II - 2017-2\\Artigo\\Aplicação\\PIBmensal.csv", header = T, sep = ";", dec = ",")
+data1 <- seq(as.Date("1994-07-01"), length = length(PIBmensal2), by = "1 month")
+
+df3 <- data.frame(data1, as.numeric(PIBmensal))
+names(df3) <- c("Data", "PIBmensal")
+
+p6 <- ggplot(df3, aes(Data, PIBmensal)) +
+        geom_line() +
+        xlab("Data") +
+        ylab("PIB Mensal (R$ milhões)") +
+        ggtitle("PIB mensal - Valores reais (base IPCA 11/2017)")
+
+p6 + scale_y_continuous(labels = comma)
+
+# Agora preciso transformar em índice
+PIBmensal_in <- (PIBmensal/PIBmensal[1])*100
+df3 <- data.frame(data1, as.numeric(PIBmensal_in))
+names(df3) <- c("Data", "PIBmensal")
+
+p6 <- ggplot(df3, aes(Data, PIBmensal)) +
+        geom_line() +
+        xlab("Data") +
+        ylab("PIB Mensal") +
+        ggtitle("PIB mensal índice - base = 2004/07")
+
+p6
+
+ibcbr <- BETS.get("24364", from = "2003-01-01", to = "2017-10-31")
+data2 <- seq(as.Date("2003-01-01"), length = length(ibcbr), by = "1 month")
+
+df4 <- data.frame(data2, as.numeric(ibcbr))
+names(df4) <- c("Data", "IBCBr")
+
+# Tentando juntar os pontos
+test1 <- melt(data = df3, id.vars = "Data")
+test2 <- melt(data = df4, id.vars = "Data")
+
+test <- rbind(test1, test2)
+
+ggplot(test, aes(Data, value, colour = variable)) +
+  geom_line(alpha = 1)+
+  labs(title="IBC-Br x PIB mensal", y = "", x= "Tempo", color = "Variável") +
+  scale_colour_brewer(palette = "Dark2") +
+  theme_bw()
+
+PIBmensal_in <- ts(PIBmensal_in,  start = c(1994, 07, 01), frequency = 12) 
+
+```
+
+<span style="color:blue">Update:</span> Eu fiz alguns testes e o VAR com o PIB mensal "deu bom". Como _é importante saber fazer o que um aluno graduado em economia faz_ (MOURA, 2018), vou refazer as coisas em cima deflacionando eu mesma a série. Peguei um tutorial [aqui](https://analisemacro.com.br/economia/inflacao/como-deflacionar-uma-serie/). <span style="color:blue">Update:</span> ~~**Essa merda não funciona, vou continuar na ignorância mesmo, aff.**~~ <span style="color:blue">Update:</span> Havia um erro na merda da série do IPCA do IPEA data e aí os resultados entre o que eu calculava no Excel e o que tinha no Bacen davam diferentes. Eu e o Cássio mandamos um e-mail pro IPEA avisando. E agora eu consigo fazer tudo sem usar um csv. :D
+
+Pra Aisha do futuro, eu tentei usar a fórmula e os valores deram diferentes do site do IPEA. Aí lendo as [notas metodológicas](http://www.ipeadata.gov.br/iframe_transformacao.aspx?width=1474&height=701#Deflacionamento), fala isso aqui: " _Os índices IPCA, INPC e IGP-DI refletem o nível de preços médios de cada período, sendo inadequados para deflacionar séries referentes ao final do período. Visando minimizar tal problema, o sistema calcula esses índices de preço no final de cada período através do cálculo da média geométrica entre o índice do período e o índice do período seguinte._" Calcular a média geométrica é tirar a raiz quadrada do produto, ~~mas quando o índice dá negativo, dá ruim. Aí tentei fazer a média geométrica do IPCA acumulado, também não deu e eu desisti porque não tá sobrando tanto tempo assim.~~ Agora deu.
+
+```{r, eval = FALSE}
+PIBmensal <- BETS.get("4380", from = "1999-06-01", to = "2017-11-30") 
+data1 <- seq(as.Date("1994-07-01"), length = length(PIBmensal), by = "1 month")
+df3 <- data.frame(data1, as.numeric(PIBmensal))
+names(df3) <- c("Data", "PIBmensal")
+
+p6 <- ggplot(df3, aes(Data, PIBmensal)) +
+        geom_line() +
+        xlab("Data") +
+        ylab("PIB Mensal (R$ milhões)") +
+        ggtitle("PIB mensal - Valores correntes")
+p6
+
+# O IPCA tem que ser pego desde 1993 caso queira confrontar com os valores do IPEA Data
+ipca <- BETS.get("433", from = "1993-12-31", to = "2017-12-31") 
+ipca2 <- ipca
+ipca2[1] <- 100
+
+# Transformar em índice
+for (i in 2:length(ipca2)){
+  ipca2[i] <- round(ipca2[(i-1)]*(1+ipca2[(i)]/100),2)
+}
+
+# Média geométrica
+for (i in 1:(length(ipca2)-1)){
+  ipca2[i] <- sqrt(ipca2[i]*ipca2[(i+1)])
+}
+
+ipca2 <- ipca2[1:(length(ipca2)-1)]
+
+# Mudança para base de nov/2017
+for (i in 1:length(ipca2)) {
+  ipca2[i] <- tail(ipca2, n=1)/ipca2[i]
+}
+
+# Tirando as observações que não quero
+ipca2 <- ts(ipca2,  start = c(1993, 12, 31), frequency = 12)
+ipca2 <- window(ipca2, c(1996, 6))
+
+PIBmensal <- PIBmensal*ipca2
+```
 
 ### Inflação
 
@@ -333,7 +448,7 @@ p8
 
 ```
 
-Eu conferi os valores com [isso aqui](http://www.valor.com.br/brasil/5110008/ipca-desacelera-em-agosto-e-completa-12-meses-consecutivos-de-queda) e bateu. <span style="color:grey">_Já posso pedir a carteirinha de economista, yay!_</span>
+Eu conferi os valores com [isso aqui](http://www.valor.com.br/brasil/5110008/ipca-desacelera-em-agosto-e-completa-12-meses-consecutivos-de-queda) e bateu. <span style="color:grey">~~Já posso pedir a carteirinha de economista, yay!~~</span> ~~Posso nada, não consegui deflacionar o PIB.~~ CONSEGUI, mwahahah.
 
 <span style="color:purple">Aisha:</span>  **De novo tem aquelas valores ruins no início da série, acho que vou ter mesmo que eliminar uns valores.**
 
@@ -386,7 +501,7 @@ ggplot(df9, aes(Data, value, colour = variable)) +
 
 ```
 
-Elas são praticamente iguais, então vou ficar com a Selic.
+~~Elas são praticamente iguais, então vou ficar com a Selic.~~ <span style="color:blue"> Update (18/01/2018) </span> Guilherme mandou ficar com o swap DI.  <span style="color:blue"> Update (22/01/2018) </span> Agora que vi que essa coisa começa só em 99.
 
 ### Câmbio
 
@@ -431,7 +546,34 @@ p9 <- ggplot(df6, aes(Data, Cambio)) +
 p9
 ```
 
-De fato vai ter que tirar fora a parte antes de 1999.
+### Ibovespa
+
+Aí como estava com tempo sobrando, pensei em pegar o Ibovespa. Teoricamente teria alguma relação entre preço dos ativos e taxa de juros (esse é um dos canais de desigualdade).
+
+```{r}
+symbols <- c("^BVSP")
+getSymbols(symbols, src = 'yahoo', from = "1996-01-01", 
+             auto.assign = TRUE, warnings = FALSE) 
+prices <- merge(BVSP)
+prices <- prices[,grepl( "Close" , names(prices) )]
+colnames(prices) <- symbols
+returns <- na.omit(monthlyReturn(prices, type = "log"))
+plot.xts(returns)
+
+ibovespa <- ts(returns, start = c(1996,1,1), frequency = 12)
+
+df1 <- data.frame(seq(as.Date("1996-01-01"), length = length(ibovespa), by = "1 month"), ibovespa)
+names(df1) <- c("Data", "Ibovespa")
+
+p9 <- ggplot(df1, aes(Data, Ibovespa)) +
+        geom_line() +
+        xlab("Data") +
+        ylab("Ibovespa") +
+        scale_x_date(date_breaks = "12 months")+
+        ggtitle("Log retornos mensais do Ibovespa")
+
+p9 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+```
 
 ## Todos os dados juntos
 
@@ -444,21 +586,27 @@ Não foi feita nenhuma transformação nos dados.
 
 2. Taxa Selic (em substituição à _three month treasury bill rate_) calculada a partir da série:
     * `Taxa de juros - Selic acumulada no mês (4390)`
-Eu comparei com a taxa referencial de swaps DI pré-fixada e ambas são praticamente a mesma coisa, então fiquei com a Selic mesmo. A única transformação feita (até agora) foi passar de taxa mensal para anual usando a fórmula: $\left((1+tx/100)^12 -1\right)*100$.
+Eu comparei com a taxa referencial de swaps DI pré-fixada e ambas são praticamente a mesma coisa, ~~então fiquei com a Selic mesmo~~. A única transformação feita (até agora) foi passar de taxa mensal para anual usando a fórmula: $\left((1+tx/100)^12 -1\right)*100$.
+
+    *  `Taxa referencial de swaps DI pré-fixada (BM&F) - Prazo de 90 dias (fim de período) (7818)` Sem transformação (a taxa já é ao ano). O problema é que essa série começa apenas em 1999.
 
 3. IPCA (para inflação), utilizando a seguinte série:
     * `Índice nacional de preços ao consumidor-amplo (IPCA) (433)`
 Como ele está em variação percentual mensal, foi necessário transformar para acumulado dos últimos 12 meses utilizando a fórmula: $$IPCA_i = \left[\left(\prod\limits_{j=i-11}^i \left(\frac{IPCA_j}{100}+1\right) \right) -1\right]*100$$
 
-4. IBC-Br (para o PIB per capita), utilizando a seguinte série:
-    * `	Índice de Atividade Econômica do Banco Central (IBC-Br) - com ajuste sazonal (24364)`
+4. Para o PIB per capita
+    * IBC-Br (para o PIB per capita), utilizando a seguinte série:
+          * `	Índice de Atividade Econômica do Banco Central (IBC-Br) - com ajuste sazonal (24364)`
 ~~Não fiz nenhuma transformação por enquanto, mas o bicho tem uma baita tendência.~~ Fiz a diferença da série em log, igual o câmbio.
+
+    * PIB mensal (retirado do site do IPEA) deflacionado usando o IPCA de novembro de 2017.
+Fiz a diferença da série em log, igual o câmbio.
 
 5. Crescimento da taxa de câmbio (para _growth of the nominal effective exchange rate_). Usei a série:
     * `Taxa de câmbio - Livre - Dólar americano (venda) - Fim de período - mensal (3696)`
-Como o Muntaz disse que usou log diferença, eu calculei o log e tirei primeira diferença nessa série. ~~As outras eu ainda não fiz, porque o IBC-Br é índice e a inflação também...~~
+Como o Mumtaz disse que usou log diferença, eu calculei o log e tirei primeira diferença nessa série. ~~As outras eu ainda não fiz, porque o IBC-Br é índice e a inflação também...~~
 
-```{r, message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
 rm(list = ls())
 
 # Auxiliary variables, so I don't need to bother when something changes
@@ -553,6 +701,151 @@ p5 <- p5 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), axis
 grid.arrange(p1, p2, p3, p4, p5, ncol=1, nrow = 5)
 ```
 
+Acrescentando o PIB e o Swap DI 3 meses:
+
+```{r, message = FALSE, warning = FALSE}
+rm(list = ls())
+
+# Auxiliary variables, so I don't need to bother when something changes
+inicio <- "1996-01-01"
+fim    <- "2017-11-30"
+inicio_deflator <- "1993-12-31"
+
+# Don't mess with this code
+inicio_cambio <- paste(seq(as.Date(inicio), length = 2, by = "-1 month")[2]) # 1 mês antes do início das outras séries
+inicio_ipca2   <- paste(seq(as.Date(inicio), length = 12, by = "-1 month")[12]) # 12 meses antes do início das outras séries
+fim_ipca      <- paste(seq(as.Date(fim), length = 2, by = "1 month")[2]) # 1 mês depois do fim das outras séries
+
+trabalho <- BETS.get("7620", from = inicio, to = fim)
+capital  <- BETS.get("7621", from = inicio, to = fim)
+capital_trabalho <- capital/trabalho
+
+ipca_raw <- BETS.get("433", from = inicio_deflator, to = fim_ipca) 
+ipca2 <- ipca_raw
+ipca2[1] <- 100
+
+# Transformar em índice
+for (i in 2:length(ipca2)){
+  ipca2[i] <- round(ipca2[(i-1)]*(1+ipca2[(i)]/100),2)
+}
+
+# Média geométrica
+for (i in 1:(length(ipca2)-1)){
+  ipca2[i] <- sqrt(ipca2[i]*ipca2[(i+1)])
+}
+
+# Mudança para base de nov/2017
+for (i in 1:length(ipca2)) {
+  ipca2[i] <- tail(ipca2, n=2)[1]/ipca2[i]
+}
+
+# Tirando as observações que não quero
+ipca2 <- ts(ipca2,  start = c(1993, 12, 31), frequency = 12)
+ano_ipca <- as.numeric(substr(inicio_cambio, start = 1, stop = 4))
+mes_ipca <- as.numeric(substr(inicio_cambio, start = 6, stop = 7))
+ipca2 <- window(ipca2, c(ano_ipca, mes_ipca))
+
+ano_ipca <- as.numeric(substr(inicio_ipca2, start = 1, stop = 4))
+mes_ipca <- as.numeric(substr(inicio_ipca2, start = 6, stop = 7))
+ipca_raw <- window(ipca_raw, c(ano_ipca, mes_ipca))
+# Tira dezembro 2017
+ipca_raw <- ipca_raw[1:(length(ipca_raw)-1)]
+
+ipca_acum <- ipca_raw/100 + 1
+ipca <- vector()
+
+final <- length(ipca_acum)
+for (i in 12:final){
+  ipca[(i-11)] <- (prod(ipca_acum[(i-11):i])-1)*100
+}
+
+ano <- as.numeric(substr(inicio, start = 1, stop = 4))
+mes <- as.numeric(substr(inicio, start = 6, stop = 7))
+dia <- as.numeric(substr(inicio, start = 9, stop = 10))
+
+ipca <- ts(ipca,  start = c(ano, mes, dia), frequency = 12) # Date format YYYY MM DD
+
+# Usando ndiffs(PIBmensal,test="adf",alpha = 0.05) se encontra que o PIBmensal é não estacionário.
+# Como todas as outras séries são estacionárias, eu vou fazer também a diferença do log, igual no câmbio
+PIBmensal <- BETS.get("4380", from = inicio_cambio, to = fim)
+PIBmensal <- PIBmensal * ipca2 
+PIB <- diff(log(PIBmensal), 1)
+
+cambio_raw <- BETS.get("3696", from = inicio_cambio, to = fim)
+cambio     <- diff(log(cambio_raw), 1)
+
+swap90 <- BETS.get("7818", from = inicio, to = fim)
+swap90 <- ts.union(swap90, ipca)
+swap90 <- swap90[,1]
+
+selic_4390 <- BETS.get("4390", from = inicio, to = fim) 
+selic <- ((1+selic_4390/100)^(12)-1)*100
+
+# Plotting some nice graphs
+
+df1 <- data.frame(seq(as.Date(inicio), length = length(ipca), by = "1 month"), capital_trabalho, swap90, PIB, cambio, selic, ipca)
+names(df1) <- c("Data", "Capital_trabalho", "Swap90", "PIB", "Cambio", "selic", "IPCA")
+df2 <- melt(data = df1, id.vars = "Data")
+
+ggplot(df2, aes(Data, value, colour = variable)) +
+  geom_line(alpha = 1)+
+  labs(title="Variáveis do modelo", y = "", x= "Time", color = "Variável") +
+  scale_colour_brewer(palette = "Dark2") +
+  theme_bw()
+
+cores <- brewer.pal(6, "Dark2")
+
+# Gráficos individuais
+p1 <- ggplot(df2[which(df2$variable == "Capital_trabalho"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[1])+
+        scale_y_continuous(name="Capital trabalho") +
+        scale_x_date(date_breaks = "12 months")+ 
+        theme_bw()
+p1 <- p1 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 8))
+
+p2 <- ggplot(df2[which(df2$variable == "Swap90"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[2])+
+        scale_y_continuous(name="SwapDI90 (%a.a.)") +
+        scale_x_date(date_breaks = "12 months")+ 
+        theme_bw()
+p2 <- p2 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 8))
+
+p3 <- ggplot(df2[which(df2$variable == "PIB"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[3])+
+        scale_y_continuous(name="PIB mensal (tx.cresc)") +
+        scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%Y"))+
+        theme_bw()
+p3 <- p3 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 8))
+p3 <- p3 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), axis.title.x = element_blank(), axis.title.y = element_text(size = 8))
+
+p4 <- ggplot(df2[which(df2$variable == "Cambio"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[4])+
+        scale_y_continuous(name="Tx. Câmbio (var)") +
+        scale_x_date(date_breaks = "12 months")+
+        theme_bw()
+p4 <- p4 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 8))
+
+p5 <- ggplot(df2[which(df2$variable == "selic"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[5])+
+        scale_y_continuous(name="Selic (%a.a)") +
+        scale_x_date(date_breaks = "12 months")+
+        theme_bw()
+p5 <- p5 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 8))
+
+p6 <- ggplot(df2[which(df2$variable == "IPCA"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[6])+
+        scale_y_continuous(name="IPCA") +
+        scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%Y"))+
+        theme_bw()
+p6 <- p6 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), axis.title.x = element_blank(), axis.title.y = element_text(size = 8))
+
+grid.arrange(p1, p2, p4, p5, p3, p6, ncol=2, nrow = 3)
+
+grid.arrange(p1, p4, p3, ncol=1, nrow = 3)
+
+grid.arrange(p2, p5, p6, ncol = 1, nrow = 3)
+```
+
 # A sazonalidade
 
 Agora começa outro problema para tratar os dados: para a razão capital trabalho original, tem 30 observações de antes do plano real que tem valores muito altos. Depois de eliminar elas, tem duas séries com tendência e sazonalidade. A razão entre elas não aparenta ter tendência (fiz um teste que indicou que a série precisaria de uma diferença para ficar estacionária), porém parece ter uma componente sazonal persistente.
@@ -603,7 +896,6 @@ Vamos calcular o "random noise" usando $Resíduo = Série - Sazonalidade - Tendênc
 
 ```{r, eval = FALSE}
 residuo = capital_trabalho - seasonal_capital_trabalho - trend_capital_trabalho
-
 plot(as.ts(residuo))
 ```
 
@@ -613,13 +905,37 @@ Ainda assim está meio estranho... Vou tentar usar um filtro automático.
 
 O X-13ARIMA-SEATS é um algoritmo de ajuste sazonal desenvolvido pelo United States Census Bureau. Sua implementação no R é feita pelo pacote `seasonal`. Um manual pode ser visto aqui: https://cran.r-project.org/web/packages/seasonal/vignettes/seas.pdf.
 
+ <span style="color:blue"> Update (18/01/2018) </span> O Guilherme sugeriu passar um filtro na quebra da razão capital trabalho em 1999. Primeiro vou tirar a sazonalidade da série toda, ver como fica o gráfico, quebrar em dois períodos a série original, depois ajudar o filtro sazonal para cada uma das séries.
+
 ```{r}
 #######################
 # Capital trabalho    #
 #######################
-m <- seas(x = capital_trabalho)
-#plot(m)
-#summary(m)
+cores <- brewer.pal(6, "Dark2")
+
+# Fazendo um teste incluindo os dados desde 1996 (que depois quero fazer o VAR com isso)
+trabalho <- BETS.get("7620", from = "1996-01-01", to = "2017-11-01")
+capital <- BETS.get("7621", from = "1996-01-01", to = "2017-11-01")
+capital_trabalho <- capital/trabalho
+
+m <- seas(x = capital_trabalho, transform.function = "none", regression.aictest = NULL)
+qs(m)
+plot(m)
+summary(m)
+sliding <- series(m, "sfs")
+sum(sliding[,"Max_._DIFF"] > 3, na.rm = T)/length(na.omit(sliding[,"Max_._DIFF"])) * 100
+
+ggmonthplot(capital_trabalho) + 
+  theme_bw() +
+  scale_y_continuous(name = "Razão Capital/Trabalho (% - média)") +
+  labs(title = "Média diária e mensal da razão capital-trabalho", x = "Mês", subtitle = "Nenhuma transformação")
+
+# Gráfico por ano e mês
+ggseasonplot(capital_trabalho, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "Razão Capital/Trabalho (% - média)") +
+  labs(title = "Média mensal da razão capital-trabalho", x = "Mês", subtitle = "Nenhuma transformação")
 
 # Usa a interface gráfica
 #view(m)
@@ -629,7 +945,7 @@ capital_trabalho2 <- final(m)
 #plot(capital_trabalho2)
 
 # Compara a série ajustada com a série original
-df <- data.frame(seq(as.Date(inicio), length = length(capital_trabalho2), by = "1 month"), capital_trabalho, capital_trabalho2)
+df <- data.frame(seq(as.Date("1996-01-01"), length = length(capital_trabalho2), by = "1 month"), capital_trabalho, capital_trabalho2)
 names(df) <- c("Data", "Original", "Série Filtrada")
 p1 <- ggplot(df, aes(Data)) +
   geom_line(aes(y = capital_trabalho, colour = "Original")) +
@@ -637,19 +953,187 @@ p1 <- ggplot(df, aes(Data)) +
   scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%Y"))+
   scale_y_continuous(name = "Capital/Trabalho")+
   labs(color="Variável") +
-  theme_bw()
+  theme_bw() + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 9))
 p1
 
+# Dividindo a série em pedaços distintos: 
+# pega os pontos de quebras
+bp_ts <- breakpoints(capital_trabalho ~ 1)
+# o valor com o menor BIC é o escolhido
+summary(bp_ts)
+# Calcula o intervalo de confiança
+ci_ts <- confint(bp_ts)
+# Monta o dataframe
+Data <- seq(as.Date("1996-01-01"), length = length(capital_trabalho), by = "1 month")
+df1 <- melt(data.frame(Data,capital_trabalho), id.vars = "Data")
+names(df1) <- c("Data", "Variavel", "Valor")
+
+p1 <- ggplot(df1[which(df1$Variavel == "capital_trabalho"),], aes(Data, Valor, colour = Variavel)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[1])+
+        scale_y_continuous(name="Razão Capital/Trabalho") +
+        scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+ 
+        geom_vline(xintercept = Data[bp_ts$breakpoints], linetype="longdash")+
+        geom_segment(aes(x = Data[ci_ts$confint[1]], y = min(capital_trabalho), xend = Data[ci_ts$confint[3]], yend = min(capital_trabalho)))+
+        theme_bw()
+p1 <- p1 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), legend.position = "none")
+p1
+
+# Salvando duas séries para passar o seasonal
+capital_trabalho_a <- capital_trabalho[1:bp_ts$breakpoints]
+capital_trabalho_b <- capital_trabalho[(bp_ts$breakpoints+1):length(capital_trabalho)]
+capital_trabalho_a <- ts(capital_trabalho_a,  start = c(1996, 01, 01), frequency = 12)
+capital_trabalho_b <- ts(capital_trabalho_b,  start = c(2004, 02, 01), frequency = 12)
+
+m <- seas(x = capital_trabalho_a, transform.function = "none", regression.aictest = NULL)
+qs(m)
+plot(m)
+summary(m)
+sliding <- series(m, "sfs")
+sum(sliding[,"Max_._DIFF"] > 3, na.rm = T)/length(na.omit(sliding[,"Max_._DIFF"])) * 100
+#view(m)
+
+capital_trabalho_2a <- final(m)
+
+ggmonthplot(capital_trabalho_2a) + 
+  theme_bw() +
+  scale_y_continuous(name = "Razão Capital/Trabalho (% - média)") +
+  labs(title = "Média diária e mensal da razão capital-trabalho", x = "Mês", subtitle = "De Jan/96 a Jan/04")
+
+# Gráfico por ano e mês
+ggseasonplot(capital_trabalho_2a, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "Razão Capital/Trabalho (% - média)") +
+  labs(title = "Média mensal da razão capital-trabalho", x = "Mês", subtitle = "De Jan/96 a Jan/04")
+
+# Compara a série ajustada com a série original
+df <- data.frame(seq(as.Date("1996-01-01"), length = length(capital_trabalho_a), by = "1 month"), capital_trabalho_a, capital_trabalho_2a)
+names(df) <- c("Data", "Original", "Série Filtrada")
+p1 <- ggplot(df, aes(Data)) +
+  geom_line(aes(y = capital_trabalho_a, colour = "Original")) +
+  geom_line(aes(y = capital_trabalho_2a, colour = "Filtrada")) + 
+  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+
+  scale_y_continuous(name = "Capital/Trabalho")+
+  labs(color="Variável") +
+  theme_bw() + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 9))
+p1
+
+# Dividindo a série em pedaços distintos: 
+# pega os pontos de quebras
+bp_ts <- breakpoints(capital_trabalho_a ~ 1)
+# o valor com o menor BIC é o escolhido
+summary(bp_ts)
+# Calcula o intervalo de confiança
+ci_ts <- confint(bp_ts)
+
+
+#############
+m <- seas(x = capital_trabalho_b, transform.function = "none", regression.aictest = NULL)
+qs(m)
+plot(m)
+summary(m)
+sliding <- series(m, "sfs")
+sum(sliding[,"Max_._DIFF"] > 3, na.rm = T)/length(na.omit(sliding[,"Max_._DIFF"])) * 100
+#view(m)
+capital_trabalho_2b <- final(m)
+
+ggmonthplot(capital_trabalho_2b) + 
+  theme_bw() +
+  scale_y_continuous(name = "Razão Capital/Trabalho (% - média)") +
+  labs(title = "Média diária e mensal da razão capital-trabalho", x = "Mês", subtitle = "De Fev/04 a Nov/17")
+
+# Gráfico por ano e mês
+ggseasonplot(capital_trabalho_2b, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "Razão Capital/Trabalho (% - média)") +
+  labs(title = "Média mensal da razão capital-trabalho", x = "Mês", subtitle = "De Fev/04 a Nov/17")
+
+# Compara a série ajustada com a série original
+df <- data.frame(seq(as.Date("2004-02-01"), length = length(capital_trabalho_b), by = "1 month"), capital_trabalho_b, capital_trabalho_2b)
+names(df) <- c("Data", "Original", "Série Filtrada")
+p1 <- ggplot(df, aes(Data)) +
+  geom_line(aes(y = capital_trabalho_b, colour = "Original")) +
+  geom_line(aes(y = capital_trabalho_2b, colour = "Filtrada")) + 
+  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+
+  scale_y_continuous(name = "Capital/Trabalho")+
+  labs(color="Variável") +
+  theme_bw() + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 9))
+p1
+
+# Dividindo a série em pedaços distintos: 
+# pega os pontos de quebras
+bp_ts <- breakpoints(capital_trabalho_b ~ 1)
+# o valor com o menor BIC é o escolhido
+summary(bp_ts)
+# Calcula o intervalo de confiança
+#ci_ts <- confint(bp_ts)
+
+###############
+# Juntando novamente as duas séries
+###############
+
+comb <- ts.union(capital_trabalho_2a, capital_trabalho_2b)
+capital_trabalho_final <- pmin(comb[,1], comb[,2], na.rm = TRUE)
+
+# Compara a série ajustada com a série original
+df <- data.frame(seq(as.Date("1996-01-01"), length = length(capital_trabalho_final), by = "1 month"), capital_trabalho, capital_trabalho_final)
+names(df) <- c("Data", "Original", "Série Filtrada")
+p1 <- ggplot(df, aes(Data)) +
+  geom_line(aes(y = capital_trabalho, colour = "Original")) +
+  geom_line(aes(y = capital_trabalho_final, colour = "Filtrada")) + 
+  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+
+  scale_y_continuous(name = "Razão Capital/Trabalho")+
+  labs(color="Variável") +
+  theme_bw() + theme(axis.text.x = element_text(angle=30, hjust = 1, size = 7))
+p1
+
+
+df <- data.frame(seq(as.Date("1996-01-01"), length = length(capital_trabalho2), by = "1 month"), capital_trabalho,  capital_trabalho2, capital_trabalho_final)
+names(df) <- c("Data", "capital_trabalho", "capital_trabalho2", "capital_trabalho_final")
+p1 <- ggplot(df, aes(Data)) +
+  geom_line(aes(y = capital_trabalho, colour = "Original")) +
+  geom_line(aes(y = capital_trabalho2, colour = "Automático")) +
+  geom_line(aes(y = capital_trabalho_final, colour = "Manual")) + 
+  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+
+  scale_y_continuous(name = "Razão Capital/Trabalho")+
+  labs(color="Método") +
+  theme_bw() + theme(axis.text.x = element_text(angle=30, hjust = 1, size = 7))
+p1
+```
+
+```{r}
 #######################
 # Selic               #
 #######################
+cores <- brewer.pal(6, "Dark2")
+selic_4390 <- BETS.get("4390", from = "1996-01-01", to = "2017-11-30") 
 
-m <- seas(x = selic, transform.function = "none")
+## Transformando em série anual
+selic <- ((1+selic_4390/100)^(12)-1)*100
+
+ggmonthplot(selic) + 
+  theme_bw() +
+  scale_y_continuous(name = "Selic (%a.a - média)") +
+  labs(title = "Média diária e mensal da taxa Selic", x = "Mês", subtitle = "Nenhuma transformação")
+
+# Gráfico por ano e mês
+ggseasonplot(selic, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "Selic (%a.a. - média)") +
+  labs(title = "Média mensal da taxa Selic", x = "Mês", subtitle = "Nenhuma transformação")
+
+m <- seas(x = selic, transform.function = "none", regression.aictest = NULL) 
 #plot(m)
-#summary(m)
+summary(m)
+qs(m)
+#summary(m) diz Series should not be a candidate for seasonal adjustment because the spectrum of the prior adjusted series (Table B1) has no visually significant seasonal peaks se for a série a partir de 99
 
 # Usa a interface gráfica
 #view(m)
+sliding <- series(m, "sfs")
+sum(sliding[,"Max_._DIFF"] > 3, na.rm = T)/length(na.omit(sliding[,"Max_._DIFF"])) * 100
 
 # Salva a série final em uma nova variável
 selic2 <- final(m)
@@ -660,13 +1144,208 @@ names(df) <- c("Data", "Original", "Série Filtrada")
 p2 <- ggplot(df, aes(Data)) +
   geom_line(aes(y = selic, colour = "Original")) +
   geom_line(aes(y = selic2, colour = "Filtrada")) + 
-  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%Y"))+
+  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+
   scale_y_continuous(name = "Selic (%a.a.)")+
   labs(color="Variável") +
-  theme_bw()
+  theme_bw()+theme(axis.text.x = element_text(angle=30, hjust = 1, size = 7))
 p2
 
+# Dividindo a série em pedaços distintos: 
+# pega os pontos de quebras
+bp_ts <- breakpoints(selic ~ 1)
+# o valor com o menor BIC é o escolhido
+summary(bp_ts)
+# Calcula o intervalo de confiança
+ci_ts <- confint(bp_ts)
 
+Data <- seq(as.Date("1996-01-01"), length = length(selic), by = "1 month")
+df1 <- melt(data.frame(Data,selic), id.vars = "Data")
+names(df1) <- c("Data", "Variavel", "Valor")
+
+p1 <- ggplot(df1[which(df1$Variavel == "selic"),], aes(Data, Valor, colour = Variavel)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[1])+
+        scale_y_continuous(name="Selic (%a.a.)") +
+        scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+ 
+        geom_vline(xintercept = Data[bp_ts$breakpoints], linetype="longdash")+
+        geom_segment(aes(x = Data[ci_ts$confint[1]], y = min(selic), xend = Data[ci_ts$confint[5]], yend = min(selic)))+
+        geom_segment(aes(x = Data[ci_ts$confint[2]], y = min(selic), xend = Data[ci_ts$confint[6]], yend = min(selic)))+
+        theme_bw()
+p1 <- p1 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), legend.position = "none")
+p1
+
+###########
+# Dividindo a selic em três pedaços
+##########
+
+# Salvando três séries para passar o seasonal
+selic_a <- selic[1:(bp_ts$breakpoints[1]-1)]
+selic_b <- selic[(bp_ts$breakpoints[1]):(bp_ts$breakpoints[2]-1)]
+selic_c <- selic[(bp_ts$breakpoints[2]):(length(selic))]
+selic_a <- ts(selic_a,  start = c(1996, 01, 01), frequency = 12)
+selic_b <- ts(selic_b,  start = c(1999, 05, 01), frequency = 12)
+selic_c <- ts(selic_c,  start = c(2006, 08, 01), frequency = 12)
+
+#######
+# Primeiro pedaço
+#########
+
+ggmonthplot(selic_a) + 
+  theme_bw() +
+  scale_y_continuous(name = "Selic (%a.a - média)") +
+  labs(title = "Média diária e mensal da taxa Selic", x = "Mês", subtitle = "Jan/96 a Abr/99")
+
+# Gráfico por ano e mês
+ggseasonplot(selic_a, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "Selic (%a.a. - média)") +
+  labs(title = "Média mensal da taxa Selic", x = "Mês", subtitle = "Jan/96 a Abr/99")
+
+m <- seas(x = selic_a, transform.function = "none", regression.aictest = NULL) 
+plot(m)
+summary(m)
+qs(m)
+#summary(m) #diz Series should not be a candidate for seasonal adjustment because the spectrum of the prior adjusted series (Table B1) has no visually significant seasonal peaks
+
+# Deixei ela como está
+
+selic_2a <- selic_a
+
+#######
+# Segundo pedaço
+#########
+
+ggmonthplot(selic_b) + 
+  theme_bw() +
+  scale_y_continuous(name = "Selic (%a.a - média)") +
+  labs(title = "Média diária e mensal da taxa Selic", x = "Mês", subtitle = "Mai/99 a Jul/06")
+
+# Gráfico por ano e mês
+ggseasonplot(selic_b, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "Selic (%a.a. - média)") +
+  labs(title = "Média mensal da taxa Selic", x = "Mês", subtitle = "Mai/99 a Jul/06")
+
+m <- seas(x = selic_b, transform.function = "none", regression.aictest = NULL) 
+plot(m)
+summary(m)
+qs(m)
+summary(m)
+
+selic_2b <- final(m)
+
+ggmonthplot(selic_2b) + 
+  theme_bw() +
+  scale_y_continuous(name = "Selic (%a.a. - média)") +
+  labs(title = "Média diária e mensal da Taxa Selic", x = "Mês", subtitle = "Mai/99 a Jul/06")
+
+# Gráfico por ano e mês
+ggseasonplot(selic_2b, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "Selic (%a.a. - média)") +
+  labs(title = "Média mensal da Taxa Selic", x = "Mês", subtitle = "Mai/99 a Jul/06")
+
+selic_2b <- final(m)
+
+# Compara a série ajustada com a série original
+df <- data.frame(seq(as.Date("1999-05-01"), length = length(selic_b), by = "1 month"), selic_b, selic_2b)
+names(df) <- c("Data", "Original", "Série Filtrada")
+p1 <- ggplot(df, aes(Data)) +
+  geom_line(aes(y = selic_b, colour = "Original")) +
+  geom_line(aes(y = selic_2b, colour = "Filtrada")) + 
+  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+
+  scale_y_continuous(name = "Selic (%a.a.)")+
+  labs(color="Série") +
+  theme_bw() + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 9))
+p1
+
+#############
+# Terceiro pedaço
+#############
+
+ggmonthplot(selic_c) + 
+  theme_bw() +
+  scale_y_continuous(name = "Selic (%a.a - média)") +
+  labs(title = "Média diária e mensal da taxa Selic", x = "Mês", subtitle = "Ago/06 a Nov/17")
+
+# Gráfico por ano e mês
+ggseasonplot(selic_c, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "Selic (%a.a. - média)") +
+  labs(title = "Média mensal da taxa Selic", x = "Mês", subtitle = "Ago/06 a Nov/17")
+
+m <- seas(x = selic_c, transform.function = "none", regression.aictest = NULL) 
+plot(m)
+summary(m)
+qs(m)
+
+selic_2c <- final(m)
+
+ggmonthplot(selic_2c) + 
+  theme_bw() +
+  scale_y_continuous(name = "Selic (%a.a. - média)") +
+  labs(title = "Média diária e mensal da Taxa Selic", x = "Mês", subtitle = "Ago/06 a Nov/17")
+
+# Gráfico por ano e mês
+ggseasonplot(selic_2c, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "Selic (%a.a. - média)") +
+  labs(title = "Média mensal da Taxa Selic", x = "Mês", subtitle = "Ago/06 a Nov/17")
+
+# Compara a série ajustada com a série original
+df <- data.frame(seq(as.Date("2006-08-01"), length = length(selic_c), by = "1 month"), selic_c, selic_2c)
+names(df) <- c("Data", "Original", "Série Filtrada")
+p1 <- ggplot(df, aes(Data)) +
+  geom_line(aes(y = selic_c, colour = "Original")) +
+  geom_line(aes(y = selic_2c, colour = "Filtrada")) + 
+  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+
+  scale_y_continuous(name = "Selic (%a.a.)")+
+  labs(color="Série") +
+  theme_bw() + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 9))
+p1
+
+
+###############
+# Juntando novamente as três séries
+###############
+
+comb <- ts.union(selic_2a, selic_2b, selic_2c)
+selic_final <- pmin(comb[,1], comb[,2], comb[,3], na.rm = TRUE)
+
+# Compara a série ajustada com a série original
+df <- data.frame(seq(as.Date("1996-01-01"), length = length(selic_final), by = "1 month"), selic, selic_final)
+names(df) <- c("Data", "Original", "Série Filtrada")
+p1 <- ggplot(df, aes(Data)) +
+  geom_line(aes(y = selic, colour = "Original")) +
+  geom_line(aes(y = selic_final, colour = "Filtrada")) + 
+  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+
+  scale_y_continuous(name = "Selic (%a.a.)")+
+  labs(color="Série") +
+  theme_bw() + theme(axis.text.x = element_text(angle=30, hjust = 1, size = 7))
+p1
+
+m <- seas(x = selic, transform.function = "none", regression.aictest = NULL)
+summary(m)
+selic2 <- final(m)
+
+df <- data.frame(seq(as.Date("1996-01-01"), length = length(capital_trabalho2), by = "1 month"), selic,  selic2, selic_final)
+names(df) <- c("Data", "selic", "selic2", "selic_final")
+p1 <- ggplot(df, aes(Data)) +
+  geom_line(aes(y = selic, colour = "Original")) +
+  geom_line(aes(y = selic2, colour = "Automático")) +
+  geom_line(aes(y = selic_final, colour = "Manual")) + 
+  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+
+  scale_y_continuous(name = "Selic (%a.a.)")+
+  labs(color="Método") +
+  theme_bw() + theme(axis.text.x = element_text(angle=30, hjust = 1, size = 7))
+p1
+```
+
+```{r, eval = FALSE}
 #######################
 # IBC-Br              #
 #######################
@@ -679,34 +1358,101 @@ m <- seas(x = ibcbr)
 #view(m)
 
 # Como ficou igual, também não mexi nele.
+```
 
+```{r}
+#######################
+# PIB Mensal          #
+#######################
+cores <- brewer.pal(6, "Dark2")
+ggmonthplot(PIB) + 
+  theme_bw() +
+  scale_y_continuous(name = "PIB (log-dif - média)") +
+  labs(title = "Média diária e mensal da variação do PIB", x = "Mês", subtitle = "Nenhuma transformação")
+
+# Gráfico por ano e mês
+ggseasonplot(PIB, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "PIB (log-dif - média)") +
+  labs(title = "Média mensal da da variação do PIB", x = "Mês", subtitle = "Nenhuma transformação")
+
+m <- seas(x = PIB, transform.function = "none", regression.aictest = NULL)
+plot(m)
+summary(m)
+
+# Usa a interface gráfica
+#view(m)
+
+# Salva a série final em uma nova variável
+PIB2 <- final(m)
+
+# Compara a série ajustada com a série original
+df <- data.frame(seq(as.Date("1996-01-01"), length = length(PIB), by = "1 month"), PIB, PIB2)
+names(df) <- c("Data", "Original", "Série Filtrada")
+p2 <- ggplot(df, aes(Data)) +
+  geom_line(aes(y = PIB, colour = "Original")) +
+  geom_line(aes(y = PIB2, colour = "Filtrada")) + 
+  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+
+  scale_y_continuous(name = "PIB Mensal (variação mensal do índice, base = 11/17)")+
+  labs(color="Variável") +
+  theme_bw()
+p2 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 8))
+```
+
+```{r}
 #######################
 # Câmbio              #
 #######################
+cores <- brewer.pal(6, "Dark2")
+ggmonthplot(cambio) + 
+  theme_bw() +
+  scale_y_continuous(name = "Tx. Cambio (log-dif - média)") +
+  labs(title = "Média diária e mensal da variação do Câmbio", x = "Mês", subtitle = "Nenhuma transformação")
 
-m <- seas(x = cambio)
-#plot(m)
-#summary(m)
+# Gráfico por ano e mês
+ggseasonplot(PIB, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "Tx. Cambio (log-dif - média)") +
+  labs(title = "Média mensal da variação do Câmbio", x = "Mês", subtitle = "Nenhuma transformação")
+
+m <- seas(x = cambio, transform.function = "none", regression.aictest = NULL)
+plot(m)
+summary(m) # Summary diz que não deve fazer ajuste sazonal
 
 # Usa a interface gráfica
 #view(m)
+```
 
-# Como ficou igual, também não mexi nele.
 
-
+```{r}
 #######################
 # IPCA                #
 #######################
+cores <- brewer.pal(6, "Dark2")
+ggmonthplot(ipca) + 
+  theme_bw() +
+  scale_y_continuous(name = "IPCA (% Acum. 12 meses - média)") +
+  labs(title = "Média diária e mensal do IPCA acum. 12 meses", x = "Mês", subtitle = "Nenhuma transformação")
 
-m <- seas(x = ipca, transform.function = "none")
+# Gráfico por ano e mês
+ggseasonplot(ipca, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "IPCA (% Acum. 12 meses - média)") +
+  labs(title = "Média mensal do IPCA acum. 12 meses", x = "Mês", subtitle = "Nenhuma transformação")
+
+m <- seas(x = ipca, transform.function = "none", regression.aictest = NULL)
 #plot(m)
+#summary(m) # Series should not be a candidate for seasonal adjustment because the spectrum of the prior adjusted series (Table B1) has no visually significant seasonal peaks.
 
 # Usa a interface gráfica
 #view(m)
+```
 
-# Como o IPCA ficou igual, deixei assim mesmo
 
-
+```{r, eval = FALSE}
 # Repete o mesmo gráfico de antes, mas com as variáveis dessazonalizadas
 
 df1 <- data.frame(seq(as.Date(inicio), length = length(ipca), by = "1 month"), capital_trabalho2, selic2, ibcbr, cambio, ipca)
@@ -753,12 +1499,62 @@ grid.arrange(p1, p2, p3, p4, p5, ncol=1, nrow = 5)
 
 ```
 
+
+```{r}
+# Repete o mesmo gráfico de antes, mas com as variáveis dessazonalizadas
+cores <- brewer.pal(6, "Dark2")
+df1 <- data.frame(seq(as.Date(inicio), length = length(ipca), by = "1 month"), capital_trabalho_final, selic_final, PIB2, cambio, ipca)
+names(df1) <- c("Data", "Capital_trabalho", "Selic", "PIB", "Cambio", "IPCA")
+df2 <- melt(data = df1, id.vars = "Data")
+
+# Gráficos individuais
+p1a <- ggplot(df2[which(df2$variable == "Capital_trabalho"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[1])+
+        scale_y_continuous(name="Capital trabalho") +
+        scale_x_date(date_breaks = "12 months")+ 
+        theme_bw()
+p1a <- p1a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p2a <- ggplot(df2[which(df2$variable == "Selic"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[2])+
+        scale_y_continuous(name="Selic (%a.a.)") +
+        scale_x_date(date_breaks = "12 months")+ 
+        theme_bw()
+p2a <- p2a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p3a <- ggplot(df2[which(df2$variable == "PIB"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[3])+
+        scale_y_continuous(name="PIB") +
+        scale_x_date(date_breaks = "12 months")+
+        theme_bw()
+p3a <- p3a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p4a <- ggplot(df2[which(df2$variable == "Cambio"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[4])+
+        scale_y_continuous(name="Tx. Câmbio (var)") +
+        scale_x_date(date_breaks = "12 months")+
+        theme_bw()
+p4a <- p4a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p5a <- ggplot(df2[which(df2$variable == "IPCA"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[5])+
+        scale_y_continuous(name="IPCA (acum. 12m.)") +
+        scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%Y"))+
+        theme_bw()
+p5a <- p5a + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+grid.arrange(p1a, p2a, p3a, p4a, p5a, ncol=1, nrow = 5)
+
+```
+
+
 ~~Parece que o X-13ARIMA fez um trabalho melhorzinho, então vou continuar com a série `capital_trabalho_adj`.~~
 
 ## Descritivas
 
 ~~Fiz as descritivas para a série original e depois para a série trabalhada manualmente e pelo X-13ARIMA.~~
-Fiz as descritivas das variáveis que vão entrar no VAR.
+Fiz as descritivas das variáveis que vão entrar no VAR. **Depois tem que lembrar de fazer das que efetivamente ficaram**
+Uma ideia é colocar naqueles arquivos dos VAR individuais. Acho que vou fazer isso depois...
 
 ```{r, results='asis'}
 ### Descriptives
@@ -820,106 +1616,7 @@ Especificações da função `bvar.sv.tvp`:
     * $Q$ matriz de variância covariância de $B_t$, tem distribuição inversa-wishart e uns parâmetros meio esquisitos (https://github.com/FK83/bvarsv/blob/master/bvarsv_Nov2015_website.pdf - ver página 2)
     * $W$ é a matriz decovariância dos choques em $log\ \sigma_0$
     * $S_j$ é a matriz de covariância de $A_t$
-  
-```{r, eval = FALSE}
-var1 <- cbind(capital_trabalho2, selic2, ibcbr, cambio, ipca)
 
-set.seed(1)
-
-nburn. <- 5000
-nrep. <- 50000
-
-fit1 <- bvar.sv.tvp(var1, p=1, tau = 24, nburn = nburn., nrep = nrep.)
-
-# Plots
-
-## Colocando as datas como strings
-
-tm1 <- as.yearmon(time(var1))
-
-## Peguei essa função pronta
-
-matplot2 <- function(...){
-  matplot(..., type = 'l', lty = 1, lwd = 2, bty = "n", ylab = "")
-}
-
-# Essa função calcula os quantis e organiza 1 quantil, média, 3 quantil.
-stat.helper <- function(z) c(mean(z), quantile(z, c(0.16, 0.84)))[c(2,1,3)]
-
-# Eixo x
-xax <- time(var1)
-# Perde uma observação pelo lag e outras 24 pela amostra para estimar por MQO, então começa no tempo 26
-xax <- xax[26:177]
-
-# Marcas verticais
-gp <- seq(1999, 2017, 1)
-
-# Paleta de cores
-cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
-cols1 <- cbPalette[c(2,4,2)]
-cols2 <- cbPalette[c(2,4,6)]
-```
-
-```{r, eval = FALSE}
-# Gráfico do desvio padrão do resíduo da razão capital trabalho
-sd_ct <- parameter.draws(fit1, type = "vcv", row = 1, col = 1)
-x1 <- t(apply(sqrt(sd_ct), 2, stat.helper))
-matplot2(x = xax, y = x1, ylim = c(0.04, 0.065), col = cols1, main = "Volatilidade da Razão Capital/Trabalho", xlab = "Tempo")
-```
-
-```{r, eval = FALSE}
-# Gráfico do desvio padrão do resíduo da selic
-sd_selic <- parameter.draws(fit1, type = "vcv", row = 2, col = 2)
-x2 <- t(apply(sqrt(sd_selic), 2, stat.helper))
-matplot2(x = xax, y = x2, ylim = c(0.45, 0.65), col = cols1, main = "Volatilidade da Selic", xlab = "Tempo")
-```
-
-```{r, eval = FALSE}
-# Gráfico do desvio padrão do resíduo do ibcbr
-sd_ibcbr <- parameter.draws(fit1, type = "vcv", row = 3, col = 3)
-x3 <- t(apply(sqrt(sd_ibcbr), 2, stat.helper))
-matplot2(x = xax, y = x3, col = cols1, main = "Volatilidade do IBC-Br", xlab = "Tempo")
-```
-
-```{r, eval = FALSE}
-# Gráfico do desvio padrão do resíduo do cambio
-sd_cambio <- parameter.draws(fit1, type = "vcv", row = 4, col = 4)
-x4 <- t(apply(sqrt(sd_cambio), 2, stat.helper))
-matplot2(x = xax, y = x4, col = cols1, main = "Volatilidade da Variação da Tx. de Câmbio", xlab = "Tempo")
-```
-
-```{r, eval = FALSE}
-# Gráfico do desvio padrão do resíduo do ipca
-sd_ipca <- parameter.draws(fit1, type = "vcv", row = 5, col = 5)
-x5 <- t(apply(sqrt(sd_ipca), 2, stat.helper))
-matplot2(x = xax, y = x5, col = cols1, main = "Vol. do IPCA acum. 12 meses", xlab = "Tempo")
-```
-
-Função Impulso resposta da Selic na razão Capital/Trabalho.
-
-```{r, eval = FALSE}
-# Função Impulso resposta
-ira <- impulse.responses(fit1, impulse.variable = 2, response.variable = 1)
-```
-
-```{r, eval = FALSE}
-ira <- impulse.responses(fit1, impulse.variable = 2, response.variable = 3)
-```
-
-```{r, eval = FALSE}
-ira <- impulse.responses(fit1, impulse.variable = 2, response.variable = 4)
-```
-
-```{r, eval = FALSE}
-ira <- impulse.responses(fit1, impulse.variable = 2, response.variable = 5)
-```
-
-```{r, eval = FALSE}
-ira <- impulse.responses(fit1, impulse.variable = 5, response.variable = 2)
-```
-
-As variáveis com o modelo completo apresentam menor variação no desvio padrão dos resíduos do que quando fiz um var so com selic e razão capital trabalho (se bem que quando eu fiz isso, era com dados desde 1994). É possível que as coisas tenham ficado relativamente estáveis a partir do ano que eu estou analisando.
 
 # Coisas a serem pensadas
 
