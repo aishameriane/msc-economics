@@ -22,17 +22,17 @@ Para fazer o diagnóstico da cadeia de Markov (algo que não estava presente nos o
 
 ## Download de pacotes e dependências
 
-Se o mirror 10 (UFRJ) estiver fora do ar, tente mudar `ind = 10` para `ind = 1`.
+Se o mirror 10 (UFRJ) estiver fora do ar, tente mudar `ind = 10` para `ind = 1`. Mesma coisa se o BETS não instalar.
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
 chooseCRANmirror(graphics = FALSE, ind = 10)
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(ggplot2, forecast, BETS, seasonal, seasonalview, bvarsv, lubridate, zoo, stargazer, gridExtra, reshape2, ggfortify, RColorBrewer, scales, coda)
+pacman::p_load(ggplot2, forecast, BETS, seasonal, seasonalview, bvarsv, lubridate, zoo, stargazer, gridExtra, reshape2, ggfortify, RColorBrewer, scales, coda, foreach, doParallel) 
 ```
 
 Algumas funções auxiliares:
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
 ## Peguei essa função pronta
 matplot2 <- function(...){
   matplot(..., type = 'l', lty = 1, lwd = 2, bty = "n", ylab = "")
@@ -52,7 +52,7 @@ cols2 <- cbPalette[c(2,4,6)]
 
 ## Tentativa 1
 
-A primeira tentativa foi com dados de **janeiro de 2003** a **outubro de 2017** incluiu as seguintes variáveis:
+A primeira tentativa foi com dados de **janeiro de 2003** a **outubro de 2017** e é igual à especificação do primeiro VAR. Minha intenção era testar os diagnósticos e ver se o computador consegue salvar a séries completas do amostrados de Gibbs.
 
 1. Razão capital-trabalho, calculada a partir das seguintes séries:
     * `Receitas tributárias - Regime de competência - Imposto de renda - Retido na fonte - Rendimento do trabalho (7620)`
@@ -74,7 +74,7 @@ Passei um filtro para tirar sazonalidade, sem transformação prévia nos dados (aj
 
 ### Download dos dados
 
-```{r, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, message = FALSE, warning = FALSE}
 #rm(list = ls())
 
 # Auxiliary variables, so I don't need to bother when something changes
@@ -164,9 +164,12 @@ p5 <- ggplot(df2[which(df2$variable == "IPCA"),], aes(Data, value, colour = vari
 p5 <- p5 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
 
 grid.arrange(p1, p2, p3, p4, p5, ncol=1, nrow = 5)
+
+rm(capital, capital_trabalho, trabalho, ipca_acum, ipca_raw, ibcbr_raw, selic_4390, selic, cambio_raw)
+rm(p1, p2, p3, p4, p5, df2)
 ```
 
-```{r, results='asis', eval = FALSE}
+```{r, results='asis'}
 ### Descriptives
 
 descriptives     <- matrix(NA, nrow = 8, ncol = (ncol(df1)-1))
@@ -203,13 +206,15 @@ descriptives <- data.frame(descriptives)
 
 stargazer(descriptives, summary=FALSE, header = TRUE, type = 'html')
 #stargazer(descriptives, summary=FALSE, header = TRUE, type = 'latex')
+
+rm(descriptives, df1)
 ```
 
 ## Ajustando um modelo BVar
 
 Inicialmente ajustei um modelo com uma defasagem e que utiliza as primeiras 24 observações para fazer a estimativa de MQO para jogar na priori.
   
-```{r, eval = FALSE}
+```{r}
 var1 <- cbind(capital_trabalho2, selic2, ibcbr, cambio, ipca) # The bvar function does not allows data.frames
 
 set.seed(1)
@@ -217,12 +222,12 @@ set.seed(1)
 nburn. <- 5000
 nrep. <- 50000
 
-fit1 <- bvar.sv.tvp(var1, p=1, tau = 24, nburn = nburn., nrep = nrep.)
+fit1 <- bvar.sv.tvp(var1, p=1, tau = 24, nburn = nburn., nrep = nrep., nf = 1, thinfac = 1)
 ```
 
 ## Alguns gráficos
 
-```{r, eval = FALSE}
+```{r}
 ## Colocando as datas como strings
 tm1 <- as.yearmon(time(var1))
 
@@ -235,81 +240,183 @@ xax <- xax[26:177]
 gp <- seq(1999, 2017, 1)
 ```
 
-Os gráficos abaixo contém o desvio padrão dos resíduos do modelo ao longo do tempo, com o 16o e o 68o percentis (como foi feito no artigo do Primiceri).  
-
-```{r, eval = FALSE}
-# Gráfico do desvio padrão do resíduo da razão capital trabalho
-sd_ct <- parameter.draws(fit1, type = "vcv", row = 1, col = 1)
-x1 <- t(apply(sqrt(sd_ct), 2, stat.helper))
-matplot2(x = xax, y = x1, ylim = c(0.04, 0.065), col = cols1, main = "Volatilidade da Razão Capital/Trabalho", xlab = "Tempo")
-```
-
-```{r, eval = FALSE}
-# Gráfico do desvio padrão do resíduo da selic
-sd_selic <- parameter.draws(fit1, type = "vcv", row = 2, col = 2)
-x2 <- t(apply(sqrt(sd_selic), 2, stat.helper))
-matplot2(x = xax, y = x2, ylim = c(0.45, 0.65), col = cols1, main = "Volatilidade da Selic", xlab = "Tempo")
-```
-
-```{r, eval = FALSE}
-# Gráfico do desvio padrão do resíduo do ibcbr
-sd_ibcbr <- parameter.draws(fit1, type = "vcv", row = 3, col = 3)
-x3 <- t(apply(sqrt(sd_ibcbr), 2, stat.helper))
-matplot2(x = xax, y = x3, col = cols1, main = "Volatilidade do IBC-Br", xlab = "Tempo")
-```
-
-
-```{r, eval = FALSE}
-# Gráfico do desvio padrão do resíduo do cambio
-sd_cambio <- parameter.draws(fit1, type = "vcv", row = 4, col = 4)
-x4 <- t(apply(sqrt(sd_cambio), 2, stat.helper))
-matplot2(x = xax, y = x4, col = cols1, main = "Volatilidade da Variação da Tx. de Câmbio", xlab = "Tempo")
-```
-
-```{r, eval = FALSE}
-# Gráfico do desvio padrão do resíduo do ipca
-sd_ipca <- parameter.draws(fit1, type = "vcv", row = 5, col = 5)
-x5 <- t(apply(sqrt(sd_ipca), 2, stat.helper))
-matplot2(x = xax, y = x5, col = cols1, main = "Vol. do IPCA acum. 12 meses", xlab = "Tempo")
-```
-
 ### Funções impulso resposta
 
 Peguei a explicação daqui [daqui](https://github.com/FK83/bvarsv/blob/master/bvarsv_Nov2015_website.pdf):
 A FIR estima o impacto de um choque unitário em algum elemento de $\varepsilon_t$. Os elementos de $c_t$, $B_{j,t}$, $A_t$ e $\Sigma_t$ em (1) são mantidos fixos em seus valores em $t$. Note que a ordem das variáveis importa e deve ser justificada por argumentos econômicos. As FIR contém os percentis 5, 25, 50, 75 e 95.
 
-```{r, eval = FALSE}
+```{r}
 # Função Impulso resposta da Selic na razão capital-trabalho
 ira <- impulse.responses(fit1, impulse.variable = 2, response.variable = 1)
 ```
 
-```{r, eval = FALSE}
+```{r}
 # Função Impulso resposta da Selic no IBC-Br
 ira <- impulse.responses(fit1, impulse.variable = 2, response.variable = 3)
 ```
 
-```{r, eval = FALSE}
+```{r}
 # Função Impulso resposta da Selic no câmbio
 ira <- impulse.responses(fit1, impulse.variable = 2, response.variable = 4)
 ```
 
-```{r, eval = FALSE}
+```{r}
 # Função Impulso resposta Selic no IPCA
 ira <- impulse.responses(fit1, impulse.variable = 2, response.variable = 5)
 ```
 
-```{r, eval = FALSE}
+```{r}
 # Função Impulso resposta do IBC-Br na razão capital trabalho
 ira <- impulse.responses(fit1, impulse.variable = 3, response.variable = 1)
 ```
 
-```{r, eval = FALSE}
+```{r}
 # Função Impulso resposta do Cambio na razão capital trabalho
 ira <- impulse.responses(fit1, impulse.variable = 4, response.variable = 1)
 ```
 
-```{r, eval = FALSE}
+```{r}
 # Função Impulso resposta do IPCA na razão capital trabalho
 ira <- impulse.responses(fit1, impulse.variable = 5, response.variable = 1)
 ```
 
+## Avaliando os parâmetros
+
+```{r, message = FALSE, warning = FALSE}
+rm(var1, ira)
+
+# Saving parameters
+beta_ct     <- parameter.draws(fit1, type = "lag1", row = 1, col = 1)
+beta_selic  <- parameter.draws(fit1, type = "lag1", row = 2, col = 2)
+beta_ibcbr  <- parameter.draws(fit1, type = "lag1", row = 3, col = 3)
+beta_cambio <- parameter.draws(fit1, type = "lag1", row = 4, col = 4)
+beta_ipca   <- parameter.draws(fit1, type = "lag1", row = 5, col = 5)
+
+sd_ct       <- parameter.draws(fit1, type = "vcv", row = 1, col = 1)
+sd_selic    <- parameter.draws(fit1, type = "vcv", row = 2, col = 2)
+sd_ibcbr    <- parameter.draws(fit1, type = "vcv", row = 3, col = 3)
+sd_cambio   <- parameter.draws(fit1, type = "vcv", row = 4, col = 4)
+sd_ipca     <- parameter.draws(fit1, type = "vcv", row = 5, col = 5)
+
+# salva o fit em um csv e limpa da memória
+saveRDS(fit1, "C:\\Users\\aisha\\Documents\\Var da Aisha\\Var7\\fit1.rds")
+#fit1 <- readRDS("C:\\Users\\aisha\\Documents\\Var da Aisha\\Var7\\fit1.rds")
+rm(fit1)
+
+# Convert stuff into mcmc objects
+mcmc_beta_ct       <- mcmc(beta_ct, start = 1, end = 50000)
+mcmc_beta_selic    <- mcmc(beta_selic, start = 1, end = 50000)
+mcmc_beta_ibcbr    <- mcmc(beta_ibcbr, start = 1, end = 50000)
+mcmc_beta_cambio   <- mcmc(beta_cambio, start = 1, end = 50000)
+mcmc_beta_ipca     <- mcmc(beta_ipca, start = 1, end = 50000)
+
+mcmc_sd_ct         <- mcmc(sd_ct, start = 1, end = 50000)
+mcmc_sd_selic      <- mcmc(sd_selic, start = 1, end = 50000)
+mcmc_sd_ibcbr      <- mcmc(sd_ibcbr, start = 1, end = 50000)
+mcmc_sd_cambio     <- mcmc(sd_cambio, start = 1, end = 50000)
+mcmc_sd_ipca       <- mcmc(sd_ipca, start = 1, end = 50000)
+```
+
+Os gráficos abaixo contém os betas (esq) e volatilidade (dir) ao longo do tempo, com o 16o e o 68o percentis (como foi feito no artigo do Primiceri).  
+
+```{r}
+# Gráfico do desvio padrão do resíduo da razão capital trabalho
+x1     <- t(apply(sqrt(sd_ct), 2, stat.helper))
+x1betact <- t(apply(beta_ct, 2, stat.helper))
+#x1beta <- cbind(desc_betact$quantiles[,1], desc_betact$statistics[,1], desc_betact$quantiles[,5]) # ficou muito amplo mas meu coração não deixou eu apagar essa linha
+desc_betact <- summary(mcmc_beta_ct)
+desc_sdct   <- summary(mcmc_sd_ct)
+
+old.par <- par(mfrow=c(1,2))
+matplot2(x = xax, y = x1betact, ylim = c(min(desc_betact$quantiles[,1]), max(desc_betact$quantiles[,5])), col = cols1, main = "Betas da Razão Capital/Trabalho", xlab = "Tempo")
+matplot2(x = xax, y = x1, ylim = c(sqrt(min(desc_sdct$quantiles[,1])), sqrt(max(desc_sdct$quantiles[,5]))), col = cols1, main = "Volatilidade da Razão Capital/Trabalho", xlab = "Tempo")
+#matplot2(x = xax, y = x1, ylim = c(0.04, 0.065), col = cols1, main = "Volatilidade da Razão Capital/Trabalho", xlab = "Tempo")
+#matplot2(x = xax, y = x1, ylim = c(min(x1[,1])-2*sd(x1[,1]), max(x1[,3])+2*sd(x1[,3])), col = cols1, main = "Volatilidade da Razão Capital/Trabalho", xlab = "Tempo")
+par(old.par) # resets par()
+
+rm(desc_betact, desc_sdct)
+```
+
+```{r}
+# Gráfico do desvio padrão do resíduo da selic
+x2 <- t(apply(sqrt(sd_selic), 2, stat.helper))
+x2betaselic <- t(apply(beta_selic, 2, stat.helper))
+desc_betaselic <- summary(mcmc_beta_selic)
+desc_sdselic   <- summary(mcmc_sd_selic)
+
+old.par <- par(mfrow=c(1,2))
+matplot2(x = xax, y = x2betaselic, ylim = c(min(desc_betaselic$quantiles[,1]), max(desc_betaselic$quantiles[,5])), col = cols1, main = "Betas da Selic", xlab = "Tempo")
+matplot2(x = xax, y = x2, ylim = c(sqrt(min(desc_sdselic$quantiles[,1])), sqrt(max(desc_sdselic$quantiles[,5]))), col = cols1, main = "Volatilidade da Selic", xlab = "Tempo")
+par(old.par) # resets par()
+
+rm(desc_betaselic, desc_sdselic)
+```
+
+```{r}
+# Gráfico do desvio padrão do resíduo do ibcbr
+x3 <- t(apply(sqrt(sd_ibcbr), 2, stat.helper))
+x3betaibcbr <- t(apply(beta_ibcbr, 2, stat.helper))
+desc_betaibcbr <- summary(mcmc_beta_ibcbr)
+desc_sdibcbr   <- summary(mcmc_sd_ibcbr)
+
+old.par <- par(mfrow=c(1,2))
+matplot2(x = xax, y = x3betaibcbr, ylim = c(min(desc_betaibcbr$quantiles[,1]), max(desc_betaibcbr$quantiles[,5])), col = cols1, main = "Betas do IBC-Br", xlab = "Tempo")
+matplot2(x = xax, y = x3, ylim = c(sqrt(min(desc_sdibcbr$quantiles[,1])), sqrt(max(desc_sdibcbr$quantiles[,5]))), col = cols1, main = "Volatilidade do IBC-Br", xlab = "Tempo")
+par(old.par) # resets par()
+
+rm(desc_betaibcbr, desc_sdibcbr)
+```
+
+```{r}
+# Gráfico do desvio padrão do resíduo do cambio
+x4 <- t(apply(sqrt(sd_cambio), 2, stat.helper))
+x4betacambio <- t(apply(beta_cambio, 2, stat.helper))
+desc_betacambio <- summary(mcmc_beta_cambio)
+desc_sdcambio   <- summary(mcmc_sd_cambio)
+
+old.par <- par(mfrow=c(1,2))
+matplot2(x = xax, y = x4betacambio, ylim = c(min(desc_betacambio$quantiles[,1]), max(desc_betacambio$quantiles[,5])), col = cols1, main = "Betas da Variação da Tx. de Câmbio", xlab = "Tempo")
+matplot2(x = xax, y = x4, ylim = c(sqrt(min(desc_sdcambio$quantiles[,1])), sqrt(max(desc_sdcambio$quantiles[,5]))), col = cols1, main = "Volatilidade da Variação da Tx. de Câmbio", xlab = "Tempo")
+par(old.par) # resets par()
+
+rm(desc_betacambio, desc_sdcambio)
+```
+
+```{r}
+# Gráfico do desvio padrão do resíduo do ipca
+x5 <- t(apply(sqrt(sd_ipca), 2, stat.helper))
+x5betaipca <- t(apply(beta_ipca, 2, stat.helper))
+desc_betaipca <- summary(mcmc_beta_ipca)
+desc_sdipca   <- summary(mcmc_sd_ipca)
+
+old.par <- par(mfrow=c(1,2))
+matplot2(x = xax, y = x5betaipca, ylim = c(min(desc_betaipca$quantiles[,1]), max(desc_betaipca$quantiles[,5])), col = cols1, main = "Betas do IPCA acum. 12 meses", xlab = "Tempo")
+matplot2(x = xax, y = x5, ylim = c(sqrt(min(desc_sdipca$quantiles[,1])), sqrt(max(desc_sdipca$quantiles[,5]))), col = cols1, main = "Vol. do IPCA acum. 12 meses", xlab = "Tempo")
+par(old.par)
+
+rm(desc_betaipca, desc_sdipca)
+```
+
+## Diagnóstico
+
+```{r, eval = FALSE}
+old.par <- par(mfrow=c(5,3))
+for (i in seq(10,150,10)){
+  plot(mcmc_beta_ct[,i])
+}
+par(old.par)  
+
+
+for (i in seq(10,150,10)){
+  df1 <- data.frame(seq(1:50000),mcmc_beta_ct[,1])
+  names(df1) <- c("Iteracao", "Beta")
+  ggplot(df1, aes(Iteracao, Beta)) +
+    geom_line(aes(y = rollmean(Beta, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = "Média do Beta_1 da Razão cap/trab")
+    theme_bw()
+} 
+
+# Calcular a 20-ésima autocorrelação (ver se parcial ou não) e fazer o gráfico tipo do primiceri
+# ver se tem como fazer um grid dos gráficos ali em cima
+# Estimar outroS 4 modelos guardando apenas as últimas 200 observações e fazer uma anova não paramétrica
+```
