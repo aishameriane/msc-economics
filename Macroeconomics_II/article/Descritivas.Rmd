@@ -903,7 +903,7 @@ Ainda assim está meio estranho... Vou tentar usar um filtro automático.
 
 ## X-13ARIMA-SEATS
 
-O X-13ARIMA-SEATS é um algoritmo de ajuste sazonal desenvolvido pelo United States Census Bureau. Sua implementação no R é feita pelo pacote `seasonal`. Um manual pode ser visto aqui: https://cran.r-project.org/web/packages/seasonal/vignettes/seas.pdf.
+O X-13ARIMA-SEATS é um algoritmo de ajuste sazonal desenvolvido pelo United States Census Bureau. Sua implementação no R é feita pelo pacote `seasonal`. Um manual pode ser visto aqui: https://cran.r-project.org/web/packages/seasonal/vignettes/seas.pdf. Usei muito este documento aqui: file:///C:/Users/Aishameriane/Desktop/Ferreira_Mattos_2016.pdf e também o teste de quebra estrutural que tem aqui https://pythonandr.com/2016/11/08/endogenously-detecting-structural-breaks-in-a-time-series-implementation-in-r/ .
 
  <span style="color:blue"> Update (18/01/2018) </span> O Guilherme sugeriu passar um filtro na quebra da razão capital trabalho em 1999. Primeiro vou tirar a sazonalidade da série toda, ver como fica o gráfico, quebrar em dois períodos a série original, depois ajudar o filtro sazonal para cada uma das séries.
 
@@ -1591,7 +1591,7 @@ descriptives[1,] <- as.integer(descriptives[1,])
 
 descriptives <- data.frame(descriptives)
 
-stargazer(descriptives, summary=FALSE, header = TRUE, type = 'html')
+#stargazer(descriptives, summary=FALSE, header = TRUE, type = 'html')
 stargazer(descriptives, summary=FALSE, header = TRUE, type = 'latex')
 ```
 
