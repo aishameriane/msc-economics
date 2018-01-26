@@ -27,7 +27,7 @@ Se o mirror 10 (UFRJ) estiver fora do ar, tente mudar `ind = 10` para `ind = 1`.
 ```{r, warning = FALSE, message = FALSE}
 chooseCRANmirror(graphics = FALSE, ind = 10)
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(ggplot2, forecast, BETS, seasonal, seasonalview, bvarsv, lubridate, zoo, stargazer, gridExtra, reshape2, ggfortify, RColorBrewer, scales, coda, foreach, doParallel) 
+pacman::p_load(ggplot2, forecast, BETS, seasonal, seasonalview, bvarsv, lubridate, zoo, stargazer, gridExtra, reshape2, ggfortify, RColorBrewer, scales, coda, foreach, doParallel, knitr, grid, ggpubr) 
 ```
 
 Algumas funções auxiliares:
@@ -399,24 +399,744 @@ rm(desc_betaipca, desc_sdipca)
 
 ## Diagnóstico
 
-```{r, eval = FALSE}
+Estou me baseando nos seguintes linkis:
+* www.patricklam.org/teaching/convergence_print.pdf para traceplot, density plot, running mean plot (é o plot da iteração contra a média das observações até a iteração (ele está indo de 10 em 10 para frente na média))
+* https://theoreticalecology.wordpress.com/2011/12/09/mcmc-chain-analysis-and-convergence-diagnostics-with-coda-in-r/
+
+### Diagnósticos para as médias
+
+Um dos diagnósticos é plotar a cadeia (usando `plot(mcmc_object)`). Ele retorna o gráfico dos valores (um gráfico de linha - quanto mais ruidoso melhor) e um traceplot que é o gráfico da distribuição. Se eu não estou enganada, os meus Betas tem distribuição à posteriori normal e falta ver a distribuição dos sigmas. Se a densidade das matrizes é inversa wishart eles tem distribuição gamma, **mas acho que não tem fórmula fechada para $\Sigma$ - preciso ver no artigo do Primeri depois.**
+
+Outro diagnóstico das médias envolve fazer o gráfico da média usando uma janela móvel para ver se a posteriori cai em alguma região e fica empacada.
+
+Como eu tenho muitos instantes de tempo (e portanto uma quantidade enorme de betas e de sigmas), eu selecionei arbitrariamente 15 betas (que é a divisão inteira de `t` por 10 - então estou plotando 10% dos parâmetros para cada $y$).
+
+```{r, warning = FALSE, message = FALSE}
+sequencia <- seq(10, dim(beta_ct)[2], 10)
+sequencia2 <- seq(1:dim(beta_ct)[1])
+
+#####################################
+# Para a razão capital trabalho
+#####################################
+
+#############
+# Betas
+#############
+
+# Traceplot e density plots
 old.par <- par(mfrow=c(5,3))
-for (i in seq(10,150,10)){
-  plot(mcmc_beta_ct[,i])
+for (i in sequencia){
+  plot(mcmc_beta_ct[,i], auto.layout = T, main = paste("Beta em t=", as.character(i), "da Razão Cap./Trab."))
 }
 par(old.par)  
 
-
-for (i in seq(10,150,10)){
-  df1 <- data.frame(seq(1:50000),mcmc_beta_ct[,1])
+# Gráfico da média com janela móvel
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,mcmc_beta_ct[,i])
   names(df1) <- c("Iteracao", "Beta")
   ggplot(df1, aes(Iteracao, Beta)) +
     geom_line(aes(y = rollmean(Beta, 10, na.pad = TRUE))) +
-    scale_y_continuous(name = "Média do Beta_1 da Razão cap/trab")
+    scale_y_continuous(name = paste("Média móvel (10 valores) de Beta para t=", as.character(i))) +
     theme_bw()
 } 
+par(old.par)
 
-# Calcular a 20-ésima autocorrelação (ver se parcial ou não) e fazer o gráfico tipo do primiceri
-# ver se tem como fazer um grid dos gráficos ali em cima
+##############
+# Volatilidade
+##############
+
+# Traceplot e density plots
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_sd_ct[,i], auto.layout = T, main = paste("D.P. em t=", as.character(i), "da Razão Cap./Trab."))
+}
+par(old.par)  
+
+# Gráfico da média com janela móvel
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,sqrt(mcmc_sd_ct[,i]))
+  names(df1) <- c("Iteracao", "DP")
+  ggplot(df1, aes(Iteracao, DP)) +
+    geom_line(aes(y = rollmean(DP, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) do desvio padrão para t=", as.character(i))) +
+    theme_bw()
+} 
+par(old.par)
+
+#####################################
+# Para a Selic
+#####################################
+
+#############
+# Betas
+#############
+
+# Traceplot e density plots
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_beta_selic[,i], auto.layout = T, main = paste("Beta em t=", as.character(i), "da Selic"))
+}
+par(old.par)  
+
+# Gráfico da média com janela móvel
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,mcmc_beta_selic[,i])
+  names(df1) <- c("Iteracao", "Beta")
+  ggplot(df1, aes(Iteracao, Beta)) +
+    geom_line(aes(y = rollmean(Beta, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) de Beta para t=", as.character(i))) +
+    theme_bw()
+} 
+par(old.par)
+
+##############
+# Volatilidade
+##############
+
+# Traceplot e density plots
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_sd_selic[,i], auto.layout = T, main = paste("D.P. em t=", as.character(i), "da Selic"))
+}
+par(old.par)  
+
+# Gráfico da média com janela móvel
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,sqrt(mcmc_sd_selic[,i]))
+  names(df1) <- c("Iteracao", "DP")
+  ggplot(df1, aes(Iteracao, DP)) +
+    geom_line(aes(y = rollmean(DP, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) do desvio padrão para t=", as.character(i))) +
+    theme_bw()
+} 
+par(old.par)
+
+
+#####################################
+# Para o IBC-Br
+#####################################
+
+#############
+# Betas
+#############
+
+# Traceplot e density plots
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_beta_ibcbr[,i], auto.layout = T, main = paste("Beta em t=", as.character(i), "do IBC-Br"))
+}
+par(old.par)  
+
+# Gráfico da média com janela móvel
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,mcmc_beta_ibcbr[,i])
+  names(df1) <- c("Iteracao", "Beta")
+  ggplot(df1, aes(Iteracao, Beta)) +
+    geom_line(aes(y = rollmean(Beta, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) de Beta para t=", as.character(i))) +
+    theme_bw()
+} 
+par(old.par)
+
+##############
+# Volatilidade
+##############
+
+# Traceplot e density plots
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_sd_ibcbr[,i], auto.layout = T, main = paste("D.P. em t=", as.character(i), "da Selic"))
+}
+par(old.par)  
+
+# Gráfico da média com janela móvel
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,sqrt(mcmc_sd_ibcbr[,i]))
+  names(df1) <- c("Iteracao", "DP")
+  ggplot(df1, aes(Iteracao, DP)) +
+    geom_line(aes(y = rollmean(DP, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) do desvio padrão para t=", as.character(i))) +
+    theme_bw()
+} 
+par(old.par)
+
+#####################################
+# Para o Câmbio
+#####################################
+
+#############
+# Betas
+#############
+
+# Traceplot e density plots
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_beta_cambio[,i], auto.layout = T, main = paste("Beta em t=", as.character(i), "do Câmbio"))
+}
+par(old.par)  
+
+# Gráfico da média com janela móvel
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,mcmc_beta_cambio[,i])
+  names(df1) <- c("Iteracao", "Beta")
+  ggplot(df1, aes(Iteracao, Beta)) +
+    geom_line(aes(y = rollmean(Beta, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) de Beta para t=", as.character(i))) +
+    theme_bw()
+} 
+par(old.par)
+
+##############
+# Volatilidade
+##############
+
+# Traceplot e density plots
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_sd_cambio[,i], auto.layout = T, main = paste("D.P. em t=", as.character(i), "da Selic"))
+}
+par(old.par)  
+
+# Gráfico da média com janela móvel
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,sqrt(mcmc_sd_cambio[,i]))
+  names(df1) <- c("Iteracao", "DP")
+  ggplot(df1, aes(Iteracao, DP)) +
+    geom_line(aes(y = rollmean(DP, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) do desvio padrão para t=", as.character(i))) +
+    theme_bw()
+} 
+par(old.par)
+
+
+#####################################
+# Para a IPCA
+#####################################
+
+#############
+# Betas
+#############
+
+# Traceplot e density plots
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_beta_ipca[,i], auto.layout = T, main = paste("Beta em t=", as.character(i), "do IPCA"))
+}
+par(old.par)  
+
+# Gráfico da média com janela móvel
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,mcmc_beta_ipca[,i])
+  names(df1) <- c("Iteracao", "Beta")
+  ggplot(df1, aes(Iteracao, Beta)) +
+    geom_line(aes(y = rollmean(Beta, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) de Beta para t=", as.character(i))) +
+    theme_bw()
+} 
+par(old.par)
+
+##############
+# Volatilidade
+##############
+
+# Traceplot e density plots
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_sd_ipca[,i], auto.layout = T, main = paste("D.P. em t=", as.character(i), "do IPCA"))
+}
+par(old.par)  
+
+# Gráfico da média com janela móvel
+old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,sqrt(mcmc_sd_ipca[,i]))
+  names(df1) <- c("Iteracao", "DP")
+  ggplot(df1, aes(Iteracao, DP)) +
+    geom_line(aes(y = rollmean(DP, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) do desvio padrão para t=", as.character(i))) +
+    theme_bw()
+} 
+par(old.par)
+
+```
+
+Agora tem o `cumuplot()` que faz o gráfico dos quantis da cadeia (de forma acumulada). O default é 0.025, 0.5, 0.975. **Se eu tiver tempo depois, vou mexer no layout desses gráficos pois são feiosos demais.**
+
+```{r}
+#####################################
+# Para a razão capital trabalho
+#####################################
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_beta_ct[1:50000,i], auto.layout = F, main = paste("Quantis de Beta em t=", as.character(i), "da Razão Cap./Trab."))
+}
+#par(old.par) 
+
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_sd_ct[1:50000,i], auto.layout = F, main = paste("Quantis do D.P. em t=", as.character(i), "da Razão Cap./Trab."))
+}
+#par(old.par) 
+
+#####################################
+# Para a selic
+#####################################
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_beta_selic[1:50000,i], auto.layout = F, main = paste("Quantis de Beta em t=", as.character(i), "da Selic"))
+}
+#par(old.par) 
+
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_sd_selic[1:50000,i], auto.layout = F, main = paste("Quantis do D.P. em t=", as.character(i), "da Selic"))
+}
+#par(old.par) 
+
+#####################################
+# Para o IBC-Br
+#####################################
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_beta_ibcbr[1:50000,i], auto.layout = F, main = paste("Quantis de Beta em t=", as.character(i), "do IBC-Br"))
+}
+#par(old.par) 
+
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_sd_ibcbr[1:50000,i], auto.layout = F, main = paste("Quantis do D.P. em t=", as.character(i), "do IBC-Br"))
+}
+#par(old.par)
+
+#####################################
+# Para o Câmbio
+#####################################
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_beta_cambio[1:50000,i], auto.layout = F, main = paste("Quantis de Beta em t=", as.character(i), "do Câmbio"))
+}
+#par(old.par) 
+
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_sd_cambio[1:50000,i], auto.layout = F, main = paste("Quantis do D.P. em t=", as.character(i), "do Câmbio"))
+}
+#par(old.par)
+
+#####################################
+# Para o IPCA
+#####################################
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_beta_ipca[1:50000,i], auto.layout = F, main = paste("Quantis de Beta em t=", as.character(i), "do IPCA"))
+}
+#par(old.par) 
+
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_sd_ipca[1:50000,i], auto.layout = F, main = paste("Quantis do D.P. em t=", as.character(i), "do IPCA"))
+}
+#par(old.par)
+
+```
+
+
+Por fim, tem o diagnóstico do Geweke, que calcula uma estatística com distribuição normal e que compara o início e o final da distribuição. De novo vou plotar só uma parte para não ficar muito grande
+
+```{r}
+geweke.plot(mcmc_beta_ct[,sequencia], frac1 = .10, frac2 = .10, pvalue = 0.05)
+geweke.plot(mcmc_beta_selic[,sequencia], frac1 = .10, frac2 = .10, pvalue = 0.05)
+geweke.plot(mcmc_beta_ibcbr[,sequencia], frac1 = .10, frac2 = .10, pvalue = 0.05)
+geweke.plot(mcmc_beta_cambio[,sequencia], frac1 = .10, frac2 = .10, pvalue = 0.05)
+geweke.plot(mcmc_beta_ipca[,sequencia], frac1 = .10, frac2 = .10, pvalue = 0.05)
+
+geweke.plot(mcmc_sd_ct[,sequencia], frac1 = .10, frac2 = .10, pvalue = 0.05)
+geweke.plot(mcmc_sd_selic[,sequencia], frac1 = .10, frac2 = .10, pvalue = 0.05)
+geweke.plot(mcmc_sd_ibcbr[,sequencia], frac1 = .10, frac2 = .10, pvalue = 0.05)
+geweke.plot(mcmc_sd_cambio[,sequencia], frac1 = .10, frac2 = .10, pvalue = 0.05)
+geweke.plot(mcmc_sd_ipca[,sequencia], frac1 = .10, frac2 = .10, pvalue = 0.05)
+```
+
+### Diagnóstico da autocorrelação
+
+O bloco abaixo eu montei para entender melhor o que a `autocorr()` do pacote `coda` faz. No fim, vou ficar com a função de autocorrelação (não a parcial) pois ela avalia o efeito até o instante `j`.
+
+```{r, eval = FALSE}
+# Tentando descobrir o que as coisas são
+# Esse é o do coda, ele é o mais parecido com a acf, mas não chega a ser igual.
+autocorr(mcmc_sd_ct[,i], lags = c(20,100,1000))
+
+c(acf(mcmc_sd_ct[,1], lag.max = 20, plot = F)[20]$acf,acf(mcmc_sd_ct[,1], lag.max = 100, plot = F)[100]$acf, acf(mcmc_sd_ct[,1], lag.max = 1000, plot = F)[1000]$acf)
+c(Acf(mcmc_sd_ct[,1], lag.max = 20, plot = F, type = "correlation")[20]$acf, Acf(mcmc_sd_ct[,1], lag.max = 100, plot = F, type = "correlation")[100]$acf, Acf(mcmc_sd_ct[,1], lag.max = 1000, plot = F, type = "correlation")[1000]$acf)
+
+# Esse não é parecido com ninguém
+c(Acf(mcmc_sd_ct[,1], lag.max = 20, plot = F, type = "covariance")[20]$acf, Acf(mcmc_sd_ct[,1], lag.max = 100, plot = F, type = "covariance")[100]$acf, Acf(mcmc_sd_ct[,1], lag.max = 1000, plot = F, type = "covariance")[1000]$acf)
+
+
+# Esses 3 são iguais
+# Function Pacf computes (and by default plots) an estimate of the partial autocorrelation function of a (possibly multivariate) time series
+# Aviso sobre as funções Acf e Pacf: The functions improve the acf, pacf and ccf functions. The main differences are that Acf does not plot a spike at lag 0 when type=="correlation" (which is redundant) and the horizontal axes show lags in time units rather than seasonal units..
+c(pacf(mcmc_sd_ct[,1], lag.max = 20, plot = F)[20]$acf,pacf(mcmc_sd_ct[,1], lag.max = 100, plot = F)[100]$acf, pacf(mcmc_sd_ct[,1], lag.max = 1000, plot = F)[1000]$acf)
+c(Acf(mcmc_sd_ct[,1], lag.max = 20, plot = F, type = "partial")[20]$acf, Acf(mcmc_sd_ct[,1], lag.max = 100, plot = F, type = "partial")[100]$acf, Acf(mcmc_sd_ct[,1], lag.max = 1000, plot = F, type = "partial")[1000]$acf)
+c(Pacf(mcmc_sd_ct[,1], lag.max = 20, plot = F)[20]$acf, Pacf(mcmc_sd_ct[,1], lag.max = 100, plot = F)[100]$acf, Pacf(mcmc_sd_ct[,1], lag.max = 1000, plot = F)[1000]$acf)
+```
+
+Agora estou calculando a função te autocorrelação para depois fazer uns fancy graphs.
+
+```{r}
+autocorrelacao_beta_ct <- vector()
+autocorrelacao_beta_selic <- vector()
+autocorrelacao_beta_ibcbr <- vector()
+autocorrelacao_beta_cambio <- vector()
+autocorrelacao_beta_ipca <- vector()
+
+autocorrelacao_sd_ct <- vector()
+autocorrelacao_sd_selic <- vector()
+autocorrelacao_sd_ibcbr <- vector()
+autocorrelacao_sd_cambio <- vector()
+autocorrelacao_sd_ipca <- vector()
+
+pm <- proc.time()
+for (i in 1:dim(mcmc_beta_ct)[2]) {
+    autocorrelacao_beta_ct <- cbind(autocorrelacao_beta_ct, autocorr(mcmc_beta_ct[,i], lags = c(20,100,1000)))
+    autocorrelacao_beta_selic <- cbind(autocorrelacao_beta_selic, autocorr(mcmc_beta_selic[,i], lags = c(20,100,1000)))
+    autocorrelacao_beta_ibcbr <- cbind(autocorrelacao_beta_ibcbr, autocorr(mcmc_beta_ibcbr[,i], lags = c(20,100,1000)))
+    autocorrelacao_beta_cambio <- cbind(autocorrelacao_beta_cambio, autocorr(mcmc_beta_cambio[,i], lags = c(20,100,1000)))
+    autocorrelacao_beta_ipca <- cbind(autocorrelacao_beta_ipca, autocorr(mcmc_sd_ipca[,i], lags = c(20,100,1000)))
+    autocorrelacao_sd_ct <- cbind(autocorrelacao_sd_ct, autocorr(mcmc_sd_ct[,i], lags = c(20,100,1000)))
+    autocorrelacao_sd_selic <- cbind(autocorrelacao_sd_selic, autocorr(mcmc_sd_selic[,i], lags = c(20,100,1000)))
+    autocorrelacao_sd_ibcbr <- cbind(autocorrelacao_sd_ibcbr, autocorr(mcmc_sd_ibcbr[,i], lags = c(20,100,1000)))
+    autocorrelacao_sd_cambio <- cbind(autocorrelacao_sd_cambio, autocorr(mcmc_sd_cambio[,i], lags = c(20,100,1000)))
+    autocorrelacao_sd_ipca <- cbind(autocorrelacao_sd_ipca, autocorr(mcmc_sd_ipca[,i], lags = c(20,100,1000)))
+}
+proc.time() - pm
+```
+
+Agora vamos para os gráficos.... a ideia é fazer algo como o Primiceri tem no anexo B (figura 9 - topo), porém dividindo por variável do VAR.
+
+```{r}
+# Montando os data frames
+
+#############################################
+#############################################
+# Betas
+#############################################
+#############################################
+autocorrelacao_beta_ct <- data.frame(1:152, t(autocorrelacao_beta_ct))
+names(autocorrelacao_beta_ct) <- c("tempo", "20", "100", "1000")
+autocorrelacao_beta_ct <- melt(autocorrelacao_beta_ct, id.vars = "tempo")
+autocorrelacao_beta_ct[,2] <- factor(autocorrelacao_beta_ct[,2])
+
+autocorrelacao_beta_selic1 <- data.frame(1:152, t(autocorrelacao_beta_selic))
+names(autocorrelacao_beta_selic1) <- c("tempo", "20", "100", "1000")
+autocorrelacao_beta_selic1 <- melt(autocorrelacao_beta_selic1, id.vars = "tempo")
+autocorrelacao_beta_selic1[,2] <- factor(autocorrelacao_beta_selic1[,2])
+
+autocorrelacao_beta_ibcbr <- data.frame(1:152, t(autocorrelacao_beta_ibcbr)) 
+names(autocorrelacao_beta_ibcbr) <- c("tempo", "20", "100", "1000")
+autocorrelacao_beta_ibcbr <- melt(autocorrelacao_beta_ibcbr, id.vars = "tempo")
+autocorrelacao_beta_ibcbr[,2] <- factor(autocorrelacao_beta_ibcbr[,2])
+
+
+autocorrelacao_beta_cambio <- data.frame(1:152, t(autocorrelacao_beta_cambio))
+names(autocorrelacao_beta_cambio) <- c("tempo", "20", "100", "1000")
+autocorrelacao_beta_cambio <- melt(autocorrelacao_beta_cambio, id.vars = "tempo")
+autocorrelacao_beta_cambio[,2] <- factor(autocorrelacao_beta_cambio[,2])
+
+autocorrelacao_beta_ipca <- data.frame(1:152, t(autocorrelacao_beta_ipca))
+names(autocorrelacao_beta_ipca) <- c("tempo", "20", "100", "1000")
+autocorrelacao_beta_ipca <- melt(autocorrelacao_beta_ipca, id.vars = "tempo")
+autocorrelacao_beta_ipca[,2] <- factor(autocorrelacao_beta_ipca[,2])
+
+#############################################
+#############################################
+# Volatilidade
+#############################################
+#############################################
+autocorrelacao_sd_ct <- data.frame(1:152, t(autocorrelacao_sd_ct))
+names(autocorrelacao_sd_ct) <- c("tempo", "20", "100", "1000")
+autocorrelacao_sd_ct <- melt(autocorrelacao_sd_ct, id.vars = "tempo")
+autocorrelacao_sd_ct[,2] <- factor(autocorrelacao_sd_ct[,2])
+
+autocorrelacao_sd_selic <- data.frame(1:152, t(autocorrelacao_sd_selic))
+names(autocorrelacao_sd_selic) <- c("tempo", "20", "100", "1000")
+autocorrelacao_sd_selic <- melt(autocorrelacao_sd_selic, id.vars = "tempo")
+autocorrelacao_sd_selic[,2] <- factor(autocorrelacao_sd_selic[,2])
+
+autocorrelacao_sd_ibcbr <- data.frame(1:152, t(autocorrelacao_sd_ibcbr)) 
+names(autocorrelacao_sd_ibcbr) <- c("tempo", "20", "100", "1000")
+autocorrelacao_sd_ibcbr <- melt(autocorrelacao_sd_ibcbr, id.vars = "tempo")
+autocorrelacao_sd_ibcbr[,2] <- factor(autocorrelacao_sd_ibcbr[,2])
+
+autocorrelacao_sd_cambio <- data.frame(1:152, t(autocorrelacao_sd_cambio))
+names(autocorrelacao_sd_cambio) <- c("tempo", "20", "100", "1000")
+autocorrelacao_sd_cambio <- melt(autocorrelacao_sd_cambio, id.vars = "tempo")
+autocorrelacao_sd_cambio[,2] <- factor(autocorrelacao_sd_cambio[,2])
+
+autocorrelacao_sd_ipca <- data.frame(1:152, t(autocorrelacao_sd_ipca))
+names(autocorrelacao_sd_ipca) <- c("tempo", "20", "100", "1000")
+autocorrelacao_sd_ipca <- melt(autocorrelacao_sd_ipca, id.vars = "tempo")
+autocorrelacao_sd_ipca[,2] <- factor(autocorrelacao_sd_ipca[,2])
+
+#############################################
+#############################################
+# Gráficos
+#############################################
+#############################################
+
+##################### BETAS ########################
+
+########################
+# Razão capital trabalho
+########################
+p1a <- ggplot(autocorrelacao_beta_ct, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="Razão Cap./Trab.", lim = c(-0.1,0.6)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,155,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p1a <- p1a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="top", legend.text = element_text(size = 8), legend.title = element_text(size = 8), axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.05,0.1,0.1), "cm"))
+p1a <- p1a + labs(linetype = "Lags") # I couldn't fix the legend name properly, so why not use a gambiarra?
+p1a <- p1a + labs(colour='Lags')
+
+########################
+# selic
+########################
+p2a <- ggplot(autocorrelacao_beta_selic1, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="Selic", lim = c(-0.1,0.6)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,155,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p2a <- p2a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="top", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.05,0.1,0.1), "cm"))
+p2a <- p2a + labs(linetype = "Lags") 
+p2a <- p2a + labs(colour='Lags')
+
+########################
+# ibcbr
+########################
+p3a <- ggplot(autocorrelacao_beta_ibcbr, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="IBCBr", lim = c(-0.1,0.6)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,155,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p3a <- p3a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="right", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.05,0.1,0.1), "cm"))
+p3a <- p3a + labs(linetype = "Lags") 
+p3a <- p3a + labs(colour='Lags')
+
+########################
+# cambio
+########################
+p4a <- ggplot(autocorrelacao_beta_cambio, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="Câmbio", lim = c(-0.1,0.6)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,155,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p4a <- p4a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="top", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.05,0.1,0.1), "cm"))
+p4a <- p4a + labs(linetype = "Lags") 
+p4a <- p4a + labs(colour='Lags')
+
+########################
+# ipca
+########################
+p5a <- ggplot(autocorrelacao_beta_ipca, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="IPCA", lim = c(-0.1,0.6)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,155,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p5a <- p5a + theme(axis.text.x = element_text(angle=25, vjust = 2, size = 5, hjust = 1), axis.title.x = element_text(size = 6, vjust = 5), axis.title.y = element_text(size =6), legend.position="right", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.05,0.0001,0.1), "cm")) # cima,direita, baixo, esquerda)
+p5a <- p5a + labs(linetype = "Lags") # I couldn't fix the legend name properly, so why not?
+p5a <- p5a + labs(colour='Lags')
+
+#grid.draw(rbind(ggplotGrob(p1a), ggplotGrob(p2a), ggplotGrob(p3a), ggplotGrob(p4a), ggplotGrob(p5a), size = "first"))
+
+################## VOLATILIDADE ######################
+
+
+########################
+# Razão capital trabalho
+########################
+p1 <- ggplot(autocorrelacao_sd_ct, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=T, aes(linetype = variable))+
+        scale_y_continuous(name="Razão Cap./Trab.", lim = c(-0.1,0.5)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,155,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p1 <- p1 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="top", legend.text = element_text(size = 8), legend.title = element_text(size = 8), axis.text.y = element_text(size = 6), legend.key.size = unit(.5, "cm"), plot.margin = unit(c(0.009,0.08,0.1,0.1), "cm"))
+p1 <- p1 + labs(linetype = "Lags") # I couldn't fix the legend name properly, so why not use a gambiarra?
+p1 <- p1 + labs(colour='Lags')
+
+########################
+# selic
+########################
+
+p2 <- ggplot(autocorrelacao_sd_selic, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="Selic", lim = c(-0.1,0.5)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,155,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p2 <- p2 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="top", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.08,0.1,0.1), "cm"))
+p2 <- p2 + labs(linetype = "Lags") 
+p2 <- p2 + labs(colour='Lags')
+
+########################
+# ibcbr
+########################
+
+p3 <- ggplot(autocorrelacao_sd_ibcbr, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="IBCBr", lim = c(-0.1,0.5)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,155,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p3 <- p3 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="right", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.08,0.1,0.1), "cm"))
+p3 <- p3 + labs(linetype = "Lags") 
+p3 <- p3 + labs(colour='Lags')
+
+########################
+# cambio
+########################
+
+p4 <- ggplot(autocorrelacao_sd_cambio, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="Câmbio", lim = c(-0.1,0.5)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,155,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p4 <- p4 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="top", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.08,0.1,0.1), "cm")) # cima,direita, baixo, esquerda)
+p4 <- p4 + labs(linetype = "Lags") 
+p4 <- p4 + labs(colour='Lags')
+
+########################
+# ipca
+########################
+
+p5 <- ggplot(autocorrelacao_sd_ipca, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="IPCA", lim = c(-0.1,0.5)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,155,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p5 <- p5 + theme(axis.text.x = element_text(angle=25, vjust = 2, size = 5, hjust = 1), axis.title.x = element_text(size = 6, vjust = 5), axis.title.y = element_text(size =6), legend.position="right", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.08,0.0001,0.1), "cm")) # cima,direita, baixo, esquerda
+p5 <- p5 + labs(linetype = "Lags") # I couldn't fix the legend name properly, so why not?
+p5 <- p5 + labs(colour='Lags')
+
+
+
+ggarrange(p1a, p1, p2a, p2, p3a, p3, p4a, p4, p5a, p5, common.legend = TRUE, ncol = 2, nrow = 5)
+#################
+# grid.draw(rbind(ggplotGrob(p1), ggplotGrob(p2), ggplotGrob(p3), ggplotGrob(p4), ggplotGrob(p5), size = "first"))
+# grid.arrange(p1, p2, p3, p4, p5, ncol=1, nrow = 5) # This squish the graph with the legend
+
 # Estimar outroS 4 modelos guardando apenas as últimas 200 observações e fazer uma anova não paramétrica
+```
+
+### Diagnóstico multivariado
+
+A estatística de Gelman-Rubin mede se há diferença significativa entre a variância dentro e entre diversas cadeias utilizando um fator de redução de escala. Aqui eu optei por simular duas cadeias e fazer a comparação entre elas. Em função da memória do computador eu utilizei um número menor de iterações salvas: ao invés de salvar todos os valores, armazenei apenas os 10.000 últimos valores (20%).
+
+```{r, message = FALSE, warning = FALSE}
+# Primeira coisa é limpar a memória
+rm(list = ls())
+
+# Auxiliary variables, so I don't need to bother when something changes
+inicio <- "2003-02-01"
+fim    <- "2017-10-31"
+
+# Don't mess with this code
+inicio_cambio <- paste(seq(as.Date(inicio), length = 2, by = "-1 month")[2]) # 1 mês antes do início das outras séries
+inicio_ipca   <- paste(seq(as.Date(inicio), length = 12, by = "-1 month")[12]) # 12 meses antes do início das outras séries
+
+trabalho <- BETS.get("7620", from = inicio, to = fim)
+capital  <- BETS.get("7621", from = inicio, to = fim)
+capital_trabalho <- capital/trabalho
+
+# Usando ndiffs(ibcbr,test="adf",alpha = 0.1) se encontra que o ibcbr é não estacionário.
+# Como todas as outras séries são estacionárias, eu vou fazer também a diferença do log, igual no câmbio
+ibcbr_raw    <- BETS.get("24364", from = inicio_cambio, to = fim)
+ibcbr        <- diff(log(ibcbr_raw), 1)
+
+cambio_raw <- BETS.get("3696", from = inicio_cambio, to = fim)
+cambio     <- diff(log(cambio_raw), 1)
+
+selic_4390 <- BETS.get("4390", from = inicio, to = fim) 
+selic <- ((1+selic_4390/100)^(12)-1)*100
+
+ipca_raw <- BETS.get("433", from = inicio_ipca, to = fim) 
+ipca_acum <- ipca_raw/100 + 1
+ipca <- vector()
+
+final <- length(ipca_acum)
+for (i in 12:final){
+  ipca[(i-11)] <- (prod(ipca_acum[(i-11):i])-1)*100
+}
+
+ano <- as.numeric(substr(inicio, start = 1, stop = 4))
+mes <- as.numeric(substr(inicio, start = 6, stop = 7))
+dia <- as.numeric(substr(inicio, start = 9, stop = 10))
+
+ipca <- ts(ipca,  start = c(ano, mes, dia), frequency = 12) # Date format YYYY MM DD
+
+m <- seas(x = capital_trabalho)
+capital_trabalho2 <- final(m)
+
+m <- seas(x = selic, transform.function = "none")
+selic2 <- final(m)
+
+var1 <- cbind(capital_trabalho2, selic2, ibcbr, cambio, ipca) # The bvar function does not allows data.frames
+
+nburn. <- 5000
+nrep. <- 50000
+thinfac. <- 5
+
+set.seed(6969)
+pm <- proc.time()
+fit1 <- bvar.sv.tvp(var1, p=1, tau = 24, nburn = nburn., nrep = nrep., nf = 1, thinfac = thinfac.)
+proc.time() - pm
+
+set.seed(9696)
+fit2 <- bvar.sv.tvp(var1, p=1, tau = 24, nburn = nburn., nrep = nrep., nf = 1, thinfac = thinfac.)
+
+mcmc_1 <- mcmc(cbind(parameter.draws(fit1, type = "lag1", row = 1, col = 1), parameter.draws(fit1, type = "lag1", row = 2, col = 2), parameter.draws(fit1, type = "lag1", row = 3, col = 3), parameter.draws(fit1, type = "lag1", row = 4, col = 4), parameter.draws(fit1, type = "lag1", row = 5, col = 5)))
+
+mcmc_2 <- mcmc(cbind(parameter.draws(fit2, type = "lag1", row = 1, col = 1), parameter.draws(fit2, type = "lag1", row = 2, col = 2), parameter.draws(fit2, type = "lag1", row = 3, col = 3), parameter.draws(fit2, type = "lag1", row = 4, col = 4), parameter.draws(fit2, type = "lag1", row = 5, col = 5)))
+
+lista <- mcmc.list(mcmc_1, mcmc_2)
+gelman.diag(lista)
+gelman.plot(lista)
+
+# Tentar descobrir como colocar label no gelman plot
 ```
