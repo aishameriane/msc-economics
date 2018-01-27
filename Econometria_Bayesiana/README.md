@@ -2,7 +2,9 @@
 
 <img src="https://smbc-comics.com/comics/1464704879-20160531.png" width="500" align = "right">
 
-Repositório com códigos da disciplina de Econometria Bayesiana do PPGECO UFSC.
+Repositório com códigos da disciplina de Econometria Bayesiana do PPGECO UFSC em 2018-1.
+
+Professor: Guilherme Valle Moura.
 
 ## Descrição dos diretórios
 * **Notas de Aula** - Códigos utilizados para gerar figuras/exemplos das notas de aula.
