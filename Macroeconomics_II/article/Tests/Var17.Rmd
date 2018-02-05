@@ -1,0 +1,1518 @@
+---
+title: "Teoria Macroeconômica II - Artigo parte II - Décimo Sétimo Var"
+author: "Aishameriane Schmidt"
+date: "5 de janeiro de 2018"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+output: html_document
+---
+
+# Introdução
+
+Este documento contém a décima sétima especificação do VAR que eu testei. Ela é igual do var14. A única coisa de diferente que fiz foi mudar a priori para colocar algo mais não informativo nos coeficientes.
+
+Também tentei fazer o gráfico da estatística do Brooks Gelman e esse é meu VAR final, por isso os gráficos estão melhores. **Para a Aisha do futuro:** Tem que colocar os códigos dos gráficos das descritivas aqui.
+
+Para as transformações que foram feitas nos dados e a motivação da escolha das variáveis, sugiro ver meu arquivo de descritivas.
+
+Para fazer o BVar utilizei o pacote [`bvarsv`](https://cran.r-project.org/web/packages/bvarsv/index.html) do [Fabian Kruger](https://sites.google.com/site/fk83research/papers). Em particular, esses dois arquivos me ajudaram muito: [bvarsv: An R implementation of the Primiceri (2005) model for macroeconomic time series](https://github.com/FK83/bvarsv/blob/master/bvarsv_Nov2015_website.pdf) e [Replication of figures in Del Negro and Primiceri (2015)](https://github.com/FK83/bvarsv/blob/master/bvarsv_replication.pdf).
+
+Para fazer o diagnóstico da cadeia de Markov (algo que não estava presente nos outros VARs), usei o pacote `coda` junto com ...
+
+## Download de pacotes e dependências
+
+Se o mirror 10 (UFRJ) estiver fora do ar, tente mudar `ind = 10` para `ind = 1`. Mesma coisa se o BETS não instalar.
+
+```{r, warning = FALSE, message = FALSE}
+chooseCRANmirror(graphics = FALSE, ind = 10)
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(ggplot2, forecast, BETS, seasonal, seasonalview, bvarsv, lubridate, zoo, stargazer, gridExtra, reshape2, ggfortify, RColorBrewer, scales, quantmod, PerformanceAnalytics, strucchange, coda, foreach, doParallel, knitr, grid, ggpubr, gdata) 
+```
+
+Algumas funções auxiliares:
+
+```{r, warning = FALSE, message = FALSE}
+## Peguei essa função pronta
+matplot2 <- function(...){
+  matplot(..., type = 'l', lty = 1, lwd = 2, bty = "n", ylab = "")
+}
+
+# Essa função calcula os quantis e organiza 1 quantil, média, 3 quantil.
+stat.helper <- function(z) c(mean(z), quantile(z, c(0.16, 0.84)))[c(2,1,3)]
+
+# Paleta de cores
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+cols1 <- cbPalette[c(2,4,2)]
+cols2 <- cbPalette[c(2,4,6)]
+```
+
+# Modelo
+
+
+```{r, message = FALSE, warning = FALSE}
+# Auxiliary variables, so I don't need to bother when something changes
+inicio <- "1996-01-01"
+fim    <- "2017-11-30"
+inicio_deflator <- "1993-12-31"
+inicio_swap     <- "1999-09-01"
+
+# Don't mess with this code
+inicio_cambio <- paste(seq(as.Date(inicio), length = 2, by = "-1 month")[2]) # 1 mês antes do início das outras séries
+inicio_ipca2   <- paste(seq(as.Date(inicio), length = 12, by = "-1 month")[12]) # 12 meses antes do início das outras séries
+fim_ipca      <- paste(seq(as.Date(fim), length = 2, by = "1 month")[2]) # 1 mês depois do fim das outras séries
+inicio_swap2 <- paste(seq(as.Date(inicio_swap), length = 2, by = "-1 month")[2]) # 1 mês antes do início das outras séries
+
+trabalho <- BETS.get("7620", from = inicio, to = fim)
+capital  <- BETS.get("7621", from = inicio, to = fim)
+capital_trabalho <- capital/trabalho
+
+ipca_raw <- BETS.get("433", from = inicio_deflator, to = fim_ipca) 
+ipca2 <- ipca_raw
+ipca2[1] <- 100
+
+# Transformar em índice
+for (i in 2:length(ipca2)){
+  ipca2[i] <- round(ipca2[(i-1)]*(1+ipca2[(i)]/100),2)
+}
+
+# Média geométrica
+for (i in 1:(length(ipca2)-1)){
+  ipca2[i] <- sqrt(ipca2[i]*ipca2[(i+1)])
+}
+
+# Mudança para base de nov/2017
+for (i in 1:length(ipca2)) {
+  ipca2[i] <- tail(ipca2, n=2)[1]/ipca2[i]
+}
+
+# Tirando as observações que não quero
+ipca2 <- ts(ipca2,  start = c(1993, 12, 31), frequency = 12)
+ano_ipca <- as.numeric(substr(inicio_cambio, start = 1, stop = 4))
+mes_ipca <- as.numeric(substr(inicio_cambio, start = 6, stop = 7))
+ipca2 <- window(ipca2, c(ano_ipca, mes_ipca))
+
+ano_ipca <- as.numeric(substr(inicio_ipca2, start = 1, stop = 4))
+mes_ipca <- as.numeric(substr(inicio_ipca2, start = 6, stop = 7))
+ipca_raw <- window(ipca_raw, c(ano_ipca, mes_ipca))
+# Tira dezembro 2017
+ipca_raw <- ipca_raw[1:(length(ipca_raw)-1)]
+
+ipca_acum <- ipca_raw/100 + 1
+ipca <- vector()
+
+final <- length(ipca_acum)
+for (i in 12:final){
+  ipca[(i-11)] <- (prod(ipca_acum[(i-11):i])-1)*100
+}
+
+ano <- as.numeric(substr(inicio, start = 1, stop = 4))
+mes <- as.numeric(substr(inicio, start = 6, stop = 7))
+dia <- as.numeric(substr(inicio, start = 9, stop = 10))
+
+ipca <- ts(ipca,  start = c(ano, mes, dia), frequency = 12) # Date format YYYY MM DD
+
+# Usando ndiffs(PIBmensal,test="adf",alpha = 0.05) se encontra que o PIBmensal é não estacionário.
+# Como todas as outras séries são estacionárias, eu vou fazer também a diferença do log, igual no câmbio
+PIBmensal <- BETS.get("4380", from = inicio_cambio, to = fim)
+PIBmensal <- PIBmensal * ipca2 
+PIB <- diff(log(PIBmensal), 1)
+
+cambio_raw <- BETS.get("3696", from = inicio_cambio, to = fim)
+cambio     <- diff(log(cambio_raw), 1)
+
+
+selic_4390 <- BETS.get("4390", from = inicio, to = fim) 
+selic <- ((1+selic_4390/100)^(12)-1)*100
+
+swap90 <- BETS.get("7818", from = "1999-09-01", to = "2017-11-30")
+# Make dummy observations to complete the swap series - I need to plot the graph. Later I'll drop, treat seasonality and merge with selic
+dummy <- ts(rep(0, length(seq(from = as.Date(inicio), to = as.Date(inicio_swap2), by = "1 month"))),  start = c(1996, 01, 01), frequency = 12)
+
+# Binding the series
+comb <- ts.union(dummy, swap90)
+swap <- pmin(comb[,1], comb[,2], na.rm = TRUE)
+swap[1:44] <- NA
+
+# Plotting some nice graphs
+
+df1 <- data.frame(seq(as.Date(inicio), length = length(ipca), by = "1 month"), capital_trabalho, swap, selic, PIB, cambio, ipca)
+names(df1) <- c("Data", "Capital_trabalho", "swap", "selic", "PIB", "Cambio",  "IPCA")
+df2 <- melt(data = df1, id.vars = "Data")
+
+ggplot(df2, aes(Data, value, colour = variable)) +
+  geom_line(alpha = 1)+
+  labs(title="Variáveis do modelo", y = "", x= "Time", color = "Variável") +
+  scale_colour_brewer(palette = "Dark2") +
+  theme_bw()
+
+cores <- brewer.pal(6, "Dark2")
+
+# Gráficos individuais
+p1 <- ggplot(df2[which(df2$variable == "Capital_trabalho"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[1])+
+        scale_y_continuous(name="Capital trabalho") +
+        scale_x_date(date_breaks = "12 months")+ 
+        theme_bw()
+p1 <- p1 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p2 <- ggplot(df2[which(df2$variable == "swap"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[5])+
+        scale_y_continuous(name="Swap DI 90d (%a.a)") +
+        scale_x_date(date_breaks = "12 months")+
+        theme_bw()
+p2 <- p2 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p3 <- ggplot(df2[which(df2$variable == "PIB"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[3])+
+        scale_y_continuous(name="PIB mensal (tx.cresc)") +
+        scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%Y"))+
+        theme_bw()
+p3 <- p3 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p4 <- ggplot(df2[which(df2$variable == "Cambio"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[4])+
+        scale_y_continuous(name="Tx. Câmbio (var)") +
+        scale_x_date(date_breaks = "12 months")+
+        theme_bw()
+p4 <- p4 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p6 <- ggplot(df2[which(df2$variable == "IPCA"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[6])+
+        scale_y_continuous(name="IPCA") +
+        scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%Y"))+
+        theme_bw()
+p6 <- p6 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+grid.arrange(p1, p2, p4, p3, p6, ncol=1, nrow = 5)
+```
+
+## Tratando os dados
+
+1. Razão Capital-Trabalho
+```{r, warning = FALSE, message=FALSE}
+
+bp_ts <- breakpoints(capital_trabalho ~ 1)
+ci_ts <- confint(bp_ts)
+
+# Médias agrupadas por dia e mês
+ggmonthplot(capital_trabalho) + 
+  theme_bw() +
+  scale_y_continuous(name = "Razão Capital/Trabalho (% - média)") +
+  labs(title = "Média diária e mensal da razão capital-trabalho", x = "Mês", subtitle = "Nenhuma transformação")
+
+# Gráfico por ano e mês
+ggseasonplot(capital_trabalho, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "Razão Capital/Trabalho (% - média)") +
+  labs(title = "Média mensal da razão capital-trabalho", x = "Mês", subtitle = "Nenhuma transformação")
+
+Data <- seq(as.Date("1996-01-01"), length = length(capital_trabalho), by = "1 month")
+df1 <- melt(data.frame(Data,capital_trabalho), id.vars = "Data")
+names(df1) <- c("Data", "Variavel", "Valor")
+
+p1 <- ggplot(df1[which(df1$Variavel == "capital_trabalho"),], aes(Data, Valor, colour = Variavel)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[1])+
+        scale_y_continuous(name="Razão Capital/Trabalho") +
+        scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+ 
+        geom_vline(xintercept = Data[bp_ts$breakpoints], linetype="longdash")+
+        geom_segment(aes(x = Data[ci_ts$confint[1]], y = min(capital_trabalho), xend = Data[ci_ts$confint[3]], yend = min(capital_trabalho)))+
+        theme_bw()
+p1 <- p1 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), legend.position = "none")
+p1
+
+
+# Salvando duas séries para passar o seasonal
+capital_trabalho_a <- capital_trabalho[1:bp_ts$breakpoints]
+capital_trabalho_b <- capital_trabalho[(bp_ts$breakpoints+1):length(capital_trabalho)]
+capital_trabalho_a <- ts(capital_trabalho_a,  start = c(1996, 01, 01), frequency = 12)
+capital_trabalho_b <- ts(capital_trabalho_b,  start = c(2004, 02, 01), frequency = 12)
+
+m <- seas(x = capital_trabalho_a, transform.function = "none", regression.aictest = NULL)
+capital_trabalho_2a <- final(m)
+
+m <- seas(x = capital_trabalho_b, transform.function = "none", regression.aictest = NULL)
+capital_trabalho_2b <- final(m)
+
+###############
+# Juntando novamente as duas séries
+###############
+
+comb <- ts.union(capital_trabalho_2a, capital_trabalho_2b)
+capital_trabalho_final <- pmin(comb[,1], comb[,2], na.rm = TRUE)
+
+# Compara a série ajustada com a série original
+df <- data.frame(seq(as.Date("1996-01-01"), length = length(capital_trabalho_final), by = "1 month"), capital_trabalho, capital_trabalho_final)
+names(df) <- c("Data", "Original", "Série Filtrada")
+p1 <- ggplot(df, aes(Data)) +
+  geom_line(aes(y = capital_trabalho, colour = "Original")) +
+  geom_line(aes(y = capital_trabalho_final, colour = "Filtrada")) + 
+  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+
+  scale_y_continuous(name = "Razão Capital/Trabalho")+
+  labs(color="Variável") +
+  theme_bw() + theme(axis.text.x = element_text(angle=30, hjust = 1, size = 7))
+p1
+rm(capital_trabalho_a, capital_trabalho_b, capital_trabalho_2a, capital_trabalho_2b, p1, capital, trabalho)
+```
+
+2. Selic
+
+
+```{r, message = FALSE, warning = FALSE}
+ggmonthplot(selic) + 
+  theme_bw() +
+  scale_y_continuous(name = "Selic (%a.a - média)") +
+  labs(title = "Média diária e mensal da taxa Selic", x = "Mês", subtitle = "Nenhuma transformação")
+
+# Gráfico por ano e mês
+ggseasonplot(selic, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "Selic (%a.a. - média)") +
+  labs(title = "Média mensal da taxa Selic", x = "Mês", subtitle = "Nenhuma transformação")
+
+bp_ts <- breakpoints(selic ~ 1)
+ci_ts <- confint(bp_ts)
+
+Data <- seq(as.Date("1996-01-01"), length = length(selic), by = "1 month")
+df1 <- melt(data.frame(Data,selic), id.vars = "Data")
+names(df1) <- c("Data", "Variavel", "Valor")
+
+p1 <- ggplot(df1[which(df1$Variavel == "selic"),], aes(Data, Valor, colour = Variavel)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[1])+
+        scale_y_continuous(name="Selic (%a.a.)") +
+        scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+ 
+        geom_vline(xintercept = Data[bp_ts$breakpoints], linetype="longdash")+
+        geom_segment(aes(x = Data[ci_ts$confint[1]], y = min(selic), xend = Data[ci_ts$confint[5]], yend = min(selic)))+
+        geom_segment(aes(x = Data[ci_ts$confint[2]], y = min(selic), xend = Data[ci_ts$confint[6]], yend = min(selic)))+
+        theme_bw()
+p1 <- p1 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), legend.position = "none")
+p1
+
+###########
+# Dividindo a selic em três pedaços
+##########
+
+# Salvando três séries para passar o seasonal
+selic_a <- selic[1:(bp_ts$breakpoints[1]-1)]
+selic_b <- selic[(bp_ts$breakpoints[1]):(bp_ts$breakpoints[2]-1)]
+selic_c <- selic[(bp_ts$breakpoints[2]):(length(selic))]
+selic_a <- ts(selic_a,  start = c(1996, 01, 01), frequency = 12)
+selic_b <- ts(selic_b,  start = c(1999, 05, 01), frequency = 12)
+selic_c <- ts(selic_c,  start = c(2006, 08, 01), frequency = 12)
+
+selic_2a <- selic_a
+
+m <- seas(x = selic_b, transform.function = "none", regression.aictest = NULL)
+selic_2b <- final(m)
+
+m <- seas(x = selic_c, transform.function = "none", regression.aictest = NULL) 
+selic_2c <- final(m)
+
+###############
+# Juntando novamente as três séries
+###############
+
+comb <- ts.union(selic_2a, selic_2b, selic_2c)
+selic_final <- pmin(comb[,1], comb[,2], comb[,3], na.rm = TRUE)
+
+# Compara a série ajustada com a série original
+df <- data.frame(seq(as.Date("1996-01-01"), length = length(selic_final), by = "1 month"), selic, selic_final)
+names(df) <- c("Data", "Original", "Série Filtrada")
+p1 <- ggplot(df, aes(Data)) +
+  geom_line(aes(y = selic, colour = "Original")) +
+  geom_line(aes(y = selic_final, colour = "Filtrada")) + 
+  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+
+  scale_y_continuous(name = "Selic (%a.a.)")+
+  labs(color="Série") +
+  theme_bw() + theme(axis.text.x = element_text(angle=30, hjust = 1, size = 7))
+p1
+
+rm(p1, p2, selic_4390, selic_2a, selic_2b, selic_2c, selic_a, selic_b, selic_c)
+```
+
+3. Swap DI pré 3 meses
+```{r}
+ggmonthplot(swap90) + 
+  theme_bw() +
+  scale_y_continuous(name = "Swap DI 90d (%a.a - média)") +
+  labs(title = "Média diária e mensal da taxa Selic", x = "Mês", subtitle = "Nenhuma transformação")
+
+# Gráfico por ano e mês
+ggseasonplot(swap90, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "Swap DI 90d (%a.a. - média)") +
+  labs(title = "Média mensal da taxa swapDI 90d", x = "Mês", subtitle = "Nenhuma transformação")
+
+bp_ts <- breakpoints(swap90 ~ 1)
+ci_ts <- confint(bp_ts)
+
+Data <- seq(as.Date("1999-09-01"), length = length(swap90), by = "1 month")
+df1 <- melt(data.frame(Data,swap90), id.vars = "Data")
+names(df1) <- c("Data", "Variavel", "Valor")
+
+p1 <- ggplot(df1[which(df1$Variavel == "swap90"),], aes(Data, Valor, colour = Variavel)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[1])+
+        scale_y_continuous(name="Swap DI 90d (%a.a.)") +
+        scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+ 
+        geom_vline(xintercept = Data[bp_ts$breakpoints], linetype="longdash")+
+        geom_segment(aes(x = Data[ci_ts$confint[1]], y = min(swap90), xend = Data[ci_ts$confint[5]], yend = min(swap90)))+
+        geom_segment(aes(x = Data[ci_ts$confint[2]], y = min(swap90), xend = Data[ci_ts$confint[6]], yend = min(swap90)))+
+        theme_bw()
+p1 <- p1 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), legend.position = "none")
+p1
+
+#m <- seas(swap90)
+#summary(m) # Series should not be a candidate for seasonal adjustment because the spectrum of the prior adjusted series (Table B1) has no visually significant seasonal peaks.
+ndiffs(swap90, alpha = .1, test = "adf")
+```
+
+
+4. PIB mensal
+
+```{r}
+#######################
+# PIB Mensal          #
+#######################
+cores <- brewer.pal(6, "Dark2")
+ggmonthplot(PIB) + 
+  theme_bw() +
+  scale_y_continuous(name = "PIB (log-dif - média)") +
+  labs(title = "Média diária e mensal da variação do PIB", x = "Mês", subtitle = "Nenhuma transformação")
+
+# Gráfico por ano e mês
+ggseasonplot(PIB, year.labels = TRUE) + 
+  geom_point() + 
+  theme_bw() + 
+  scale_y_continuous(name = "PIB (log-dif - média)") +
+  labs(title = "Média mensal da da variação do PIB", x = "Mês", subtitle = "Nenhuma transformação")
+
+m <- seas(x = PIB, transform.function = "none", regression.aictest = NULL)
+
+# Salva a série final em uma nova variável
+PIB2 <- final(m)
+
+# Compara a série ajustada com a série original
+df <- data.frame(seq(as.Date("1996-01-01"), length = length(PIB), by = "1 month"), PIB, PIB2)
+names(df) <- c("Data", "Original", "Série Filtrada")
+p2 <- ggplot(df, aes(Data)) +
+  geom_line(aes(y = PIB, colour = "Original")) +
+  geom_line(aes(y = PIB2, colour = "Filtrada")) + 
+  scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%m-%Y"))+
+  scale_y_continuous(name = "PIB Mensal (variação mensal do índice, base = 11/17)")+
+  labs(color="Variável") +
+  theme_bw()
+p2 + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 8))
+
+rm(PIB, PIBmensal)
+```
+
+5. Câmbio
+
+Ficou como estava
+
+6. IPCA
+
+Ficou como estava
+
+## Variávels finais após ajuste sazonal
+
+```{r, warning = FALSE, message = FALSE}
+# Repete o mesmo gráfico de antes, mas com as variáveis dessazonalizadas
+cores <- brewer.pal(6, "Dark2")
+df1 <- data.frame(seq(as.Date(inicio), length = length(ipca), by = "1 month"), capital_trabalho_final, swap, PIB2, cambio, ipca)
+names(df1) <- c("Data", "Capital_trabalho", "Swap", "PIB", "Cambio", "IPCA")
+df2 <- melt(data = df1, id.vars = "Data")
+
+# Gráficos individuais
+p1a <- ggplot(df2[which(df2$variable == "Capital_trabalho"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[1])+
+        scale_y_continuous(name="Capital trabalho") +
+        scale_x_date(date_breaks = "12 months")+ 
+        theme_bw()
+p1a <- p1a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p2a <- ggplot(df2[which(df2$variable == "Swap"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[2])+
+        scale_y_continuous(name="Swap DI 90d (%a.a.)") +
+        scale_x_date(date_breaks = "12 months")+ 
+        theme_bw()
+p2a <- p2a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p3a <- ggplot(df2[which(df2$variable == "PIB"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[3])+
+        scale_y_continuous(name="PIB") +
+        scale_x_date(date_breaks = "12 months")+
+        theme_bw()
+p3a <- p3a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p4a <- ggplot(df2[which(df2$variable == "Cambio"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[4])+
+        scale_y_continuous(name="Tx. Câmbio (var)") +
+        scale_x_date(date_breaks = "12 months")+
+        theme_bw()
+p4a <- p4a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+p5a <- ggplot(df2[which(df2$variable == "IPCA"),], aes(Data, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, colour = cores[5])+
+        scale_y_continuous(name="IPCA (acum. 12m.)") +
+        scale_x_date(date_breaks = "12 months", name = "Data", labels = date_format("%Y"))+
+        theme_bw()
+p5a <- p5a + theme(axis.text.x = element_text(angle=25, hjust = 1, size = 6), axis.title.x = element_blank(), axis.title.y = element_text(size = 6))
+
+grid.arrange(p1a, p2a, p3a, p4a, p5a, ncol=1, nrow = 5)
+``` 
+
+## Descritivas
+
+```{r, results='axis', message=FALSE, warning=FALSE}
+### Descriptives
+
+descriptives     <- matrix(NA, nrow = 8, ncol = (ncol(df1)-1))
+rownames(descriptives) <- c("Observações", "Mínimo", "1o quartil",
+                      "Média", "Mediana",  "3o quartil", "Máximo",
+                      "Desv. Pad.")
+
+colnames(descriptives) <- names(df1)[-1]
+
+desc <- function(x) {
+  n       <- length(x)
+  minimum <- min(x, na.rm = TRUE)
+  first_q <- quantile(x, 0.25, na.rm = TRUE)
+  media   <- mean(x, na.rm = TRUE)
+  mediana <- median(x, na.rm = TRUE)
+  third_q <- quantile(x, 0.75, na.rm = TRUE)
+  maximum <- max(x, na.rm = TRUE)
+  std     <- sd(x, na.rm = TRUE)
+
+    return(list(n = n, minimum = minimum, first_quar = first_q, media = media, mediana = mediana, third_quar = third_q, maximum = maximum, std = std))
+}
+
+for (i in 1:8){
+  descriptives[i, 1] <- round(as.numeric(desc(df1[,2])[i]),4)
+  descriptives[i, 2] <- round(as.numeric(desc(df1[,3])[i]),4)
+  descriptives[i, 3] <- round(as.numeric(desc(df1[,4])[i]),4)
+  descriptives[i, 4] <- round(as.numeric(desc(df1[,5])[i]),4)
+  descriptives[i, 5] <- round(as.numeric(desc(df1[,6])[i]),4)
+}
+
+descriptives[1,] <- as.integer(descriptives[1,])
+descriptives <- data.frame(descriptives)
+
+stargazer(descriptives, summary=FALSE, header = TRUE, type = 'html')
+#stargazer(descriptives, summary=FALSE, header = TRUE, type = 'latex')
+
+ndiffs(x = capital_trabalho_final, test = "adf", alpha = .1)
+ndiffs(x = ipca, test = "adf", alpha = .1)
+ndiffs(x = cambio, test = "adf", alpha = .1)
+ndiffs(x = PIB2, test = "adf", alpha = .1)
+ndiffs(x = swap90, test = "adf", alpha = .1)
+
+rm(descriptives, df1, bp_ts, ci_ts, comb, df, df2, m, p1a, p2, p2a, p3, p3a, p4, p4a, p5a, p6, ano, ano_ipca, capital_trabalho, dia, final, ipca_acum, cambio_raw, fim, fim_ipca, inicio, inicio_cambio, inicio_deflator, inicio_ipca2, selic, mes, mes_ipca)
+``` 
+
+# Estimating the BVAR
+
+```{r}
+# Junta o swap com a selic
+selic_trim <- ts(selic_final[1:44], start = c(1996, 01, 01), frequency = 12)
+
+# Binding the series
+comb <- ts.union(selic_trim, swap90)
+swap <- pmin(comb[,1], comb[,2], na.rm = TRUE)
+
+#Inflação - Produto - Juros - Câmbio - Desigualdade.
+var1 <- cbind(capital_trabalho_final, ipca, PIB2, swap, cambio) # The bvar function does not allows data.frames
+#var2 <- cbind(capital_trabalho_final, swap, PIB2, cambio, ipca) # The bvar function does not allows data.frames
+names(var1) <- c("capital_trabalho", "ipca", "pib", "swap", "cambio")
+#names(var1) <- c("ipca", "pib", "swap", "cambio","capital_trabalho") # Ficou uma merda
+
+pos_ct     <- grep("capital_trabalho", names(var1))
+pos_swap  <- grep("swap", names(var1))
+pos_pib    <- grep("pib", names(var1))
+pos_cambio <- grep("cambio", names(var1))
+pos_ipca   <- grep("ipca", names(var1))
+
+set.seed(1)
+
+nburn.    <- 75000
+nrep.     <- 50000
+thinfac.  <- 2
+p.        <- 1
+tau.      <- 48
+nf.       <- 1
+k_B.      <- 6 # Fator de inflação na priori
+k_A.      <- 4 # Fator de inflação na priori
+
+tamanho <- floor(1/thinfac.*nrep.)
+# número de tempos
+tempo <- nrow(var1)
+
+# com tau = 24 dá ruim
+pm <- proc.time()
+#fit1 <- bvar.sv.tvp(var1, p=p., tau = tau., nburn = nburn., nrep = nrep., thinfac = thinfac., nf = nf., k_B = k_B., k_A = k_A.)
+fit1 <- readRDS("C:\\Users\\aisha\\Documents\\Var da Aisha\\Var7\\fit17.rds")
+#rm(fit1, ira)
+proc.time() - pm
+
+```
+
+## Alguns gráficos
+
+```{r}
+## Colocando as datas como strings
+tm1 <- as.yearmon(time(var1))
+
+# Eixo x
+xax <- time(var1)
+# Perde p. obervações pelo lag e outras .tau  pela amostra para estimar por MQO, então começa no tempo 1+p.+tau.
+ini_xax <- 1+p.+tau.
+xax <- xax[ini_xax:tempo]
+
+# Marcas verticais
+d <- ymd(Data[1])
+gp_ini <- d %m+% months(ini_xax)
+gp <- seq(year(gp_ini), year(tail(Data,1)), 1)
+```
+
+### Funções impulso resposta
+
+Peguei a explicação daqui [daqui](https://github.com/FK83/bvarsv/blob/master/bvarsv_Nov2015_website.pdf):
+A FIR estima o impacto de um choque unitário em algum elemento de $\varepsilon_t$. Os elementos de $c_t$, $B_{j,t}$, $A_t$ e $\Sigma_t$ em (1) são mantidos fixos em seus valores em $t$. Note que a ordem das variáveis importa e deve ser justificada por argumentos econômicos. As FIR contém os percentis 5, 25, 50, 75 e 95.
+
+```{r}
+# Função Impulso resposta do swap na razão capital-trabalho
+ira <- impulse.responses(fit1, impulse.variable = pos_swap, response.variable = pos_ct, scenario = 3, nhor = 20)
+```
+
+```{r}
+# Função Impulso resposta do swap no PIB
+ira <- impulse.responses(fit1, impulse.variable = pos_swap, response.variable = pos_pib, scenario = 3, nhor = 48)
+```
+
+```{r}
+# Função Impulso resposta do swap no câmbio
+ira <- impulse.responses(fit1, impulse.variable = pos_swap, response.variable = pos_cambio, scenario = 3, nhor = 48)
+```
+
+```{r}
+# Função Impulso resposta swap no IPCA
+ira <- impulse.responses(fit1, impulse.variable = pos_swap, response.variable = pos_ipca, scenario = 3, nhor = 48)
+```
+
+```{r}
+# Função Impulso resposta do PIB na razão capital trabalho
+ira <- impulse.responses(fit1, impulse.variable = pos_pib, response.variable = pos_ct, scenario = 3, nhor = 48)
+```
+
+```{r}
+# Função Impulso resposta do PIB no câmbio
+ira <- impulse.responses(fit1, impulse.variable = pos_pib, response.variable = pos_cambio, scenario = 3, nhor = 48)
+```
+
+```{r}
+# Função Impulso resposta do PIB na swap
+ira <- impulse.responses(fit1, impulse.variable = pos_pib, response.variable = pos_swap, scenario = 3, nhor = 48)
+```
+
+```{r}
+# Função Impulso resposta do PIB no IPCA
+ira <- impulse.responses(fit1, impulse.variable = pos_pib, response.variable = pos_ipca, scenario = 3, nhor = 48)
+```
+
+```{r}
+# Função Impulso resposta do Cambio na razão capital trabalho
+ira <- impulse.responses(fit1, impulse.variable = pos_cambio, response.variable = pos_ct, scenario = 3, nhor = 48)
+```
+
+```{r}
+# Função Impulso resposta do IPCA na razão capital trabalho
+ira <- impulse.responses(fit1, impulse.variable = pos_ipca, response.variable = pos_ct, scenario = 3, nhor = 48)
+```
+
+```{r}
+# Função Impulso resposta do IPCA na swap
+ira <- impulse.responses(fit1, impulse.variable = pos_ipca, response.variable = pos_swap, scenario = 3, nhor = 48)
+```
+
+
+
+## Avaliando os parâmetros
+
+```{r, message = FALSE, warning = FALSE}
+rm(var1, ira)
+
+# Saving parameters
+beta_ct     <- parameter.draws(fit1, type = "lag1", row = pos_ct, col = pos_ct)
+beta_swap   <- parameter.draws(fit1, type = "lag1", row = pos_swap, col = pos_swap)
+beta_pib    <- parameter.draws(fit1, type = "lag1", row = pos_pib, col = pos_pib)
+beta_cambio <- parameter.draws(fit1, type = "lag1", row = pos_cambio, col = pos_cambio)
+beta_ipca   <- parameter.draws(fit1, type = "lag1", row = pos_ipca, col = pos_ipca)
+
+sd_ct       <- parameter.draws(fit1, type = "vcv", row = pos_ct, col = pos_ct)
+sd_swap     <- parameter.draws(fit1, type = "vcv", row = pos_swap, col = pos_swap)
+sd_pib      <- parameter.draws(fit1, type = "vcv", row = pos_pib, col = pos_pib)
+sd_cambio   <- parameter.draws(fit1, type = "vcv", row = pos_cambio, col = pos_cambio)
+sd_ipca     <- parameter.draws(fit1, type = "vcv", row = pos_ipca, col = pos_ipca)
+
+# salva o fit em um csv e limpa da memória
+saveRDS(fit1, "C:\\Users\\aisha\\Documents\\Var da Aisha\\Var7\\fit17.rds")
+#fit1 <- readRDS("C:\\Users\\aisha\\Documents\\Var da Aisha\\Var7\\fit17.rds")
+rm(fit1)
+
+# Convert stuff into mcmc objects
+
+
+mcmc_beta_ct       <- mcmc(beta_ct, start = 1, end = dim(beta_ct)[1])
+mcmc_beta_swap     <- mcmc(beta_swap, start = 1, end = dim(beta_swap)[1])
+mcmc_beta_pib      <- mcmc(beta_pib, start = 1, end = dim(beta_pib)[1])
+mcmc_beta_cambio   <- mcmc(beta_cambio, start = 1, end = dim(beta_cambio)[1])
+mcmc_beta_ipca     <- mcmc(beta_ipca, start = 1, end = dim(beta_ipca)[1])
+
+mcmc_sd_ct         <- mcmc(sd_ct, start = 1, end = dim(sd_ct)[1])
+mcmc_sd_swap       <- mcmc(sd_swap, start = 1, end = dim(sd_swap)[1])
+mcmc_sd_pib        <- mcmc(sd_pib, start = 1, end = dim(sd_pib)[1])
+mcmc_sd_cambio     <- mcmc(sd_cambio, start = 1, end = dim(sd_cambio)[1])
+mcmc_sd_ipca       <- mcmc(sd_ipca, start = 1, end = dim(sd_ipca)[1])
+
+```
+
+Os gráficos abaixo contém os betas (esq) e volatilidade (dir) ao longo do tempo, com o 16o e o 68o percentis (como foi feito no artigo do Primiceri).  
+
+```{r}
+# Gráfico do desvio padrão do resíduo da razão capital trabalho
+x1     <- t(apply(sqrt(sd_ct), 2, stat.helper))
+x1betact <- t(apply(beta_ct, 2, stat.helper))
+
+#x1beta <- cbind(desc_betact$quantiles[,1], desc_betact$statistics[,1], desc_betact$quantiles[,5]) # ficou muito amplo mas meu coração não deixou eu apagar essa linha
+desc_betact <- summary(mcmc_beta_ct)
+desc_sdct   <- summary(mcmc_sd_ct)
+
+old.par <- par(mfrow=c(1,2))
+matplot2(x = xax, y = x1betact, ylim = c(min(desc_betact$quantiles[,1]), max(desc_betact$quantiles[,5])), col = cols1, main = "Betas da Razão Capital/Trabalho", xlab = "Tempo")
+matplot2(x = xax, y = x1, ylim = c(sqrt(min(desc_sdct$quantiles[,1])), sqrt(max(desc_sdct$quantiles[,5]))), col = cols1, main = "Volatilidade da Razão Capital/Trabalho", xlab = "Tempo")
+#matplot2(x = xax, y = x1, ylim = c(0.04, 0.065), col = cols1, main = "Volatilidade da Razão Capital/Trabalho", xlab = "Tempo")
+#matplot2(x = xax, y = x1, ylim = c(min(x1[,1])-2*sd(x1[,1]), max(x1[,3])+2*sd(x1[,3])), col = cols1, main = "Volatilidade da Razão Capital/Trabalho", xlab = "Tempo")
+par(old.par) # resets par()
+
+rm(desc_betact, desc_sdct)
+```
+
+```{r}
+# Gráfico do desvio padrão do resíduo do swap
+x2 <- t(apply(sqrt(sd_swap), 2, stat.helper))
+x2betaswap <- t(apply(beta_swap, 2, stat.helper))
+
+desc_betaswap <- summary(mcmc_beta_swap)
+desc_sdswap   <- summary(mcmc_sd_swap)
+
+old.par <- par(mfrow=c(1,2))
+matplot2(x = xax, y = x2betaswap, ylim = c(min(desc_betaswap$quantiles[,1]), max(desc_betaswap$quantiles[,5])), col = cols1, main = "Betas do Swap", xlab = "Tempo")
+matplot2(x = xax, y = x2, ylim = c(sqrt(min(desc_sdswap$quantiles[,1])), sqrt(max(desc_sdswap$quantiles[,5]))), col = cols1, main = "Volatilidade dao Swap", xlab = "Tempo")
+par(old.par) # resets par()
+
+rm(desc_betaswap, desc_sdswap)
+```
+
+```{r}
+# Gráfico do desvio padrão do resíduo do pib
+x3 <- t(apply(sqrt(sd_pib), 2, stat.helper))
+x3betapib <- t(apply(beta_pib, 2, stat.helper))
+
+desc_betapib <- summary(mcmc_beta_pib)
+desc_sdpib   <- summary(mcmc_sd_pib)
+
+old.par <- par(mfrow=c(1,2))
+matplot2(x = xax, y = x3betapib, ylim = c(min(desc_betapib$quantiles[,1]), max(desc_betapib$quantiles[,5])), col = cols1, main = "Betas do PIB", xlab = "Tempo")
+matplot2(x = xax, y = x3, ylim = c(sqrt(min(desc_sdpib$quantiles[,1])), sqrt(max(desc_sdpib$quantiles[,5]))), col = cols1, main = "Volatilidade do PIB", xlab = "Tempo")
+par(old.par) # resets par()
+
+rm(desc_betapib, desc_sdpib)
+```
+
+```{r}
+# Gráfico do desvio padrão do resíduo do cambio
+x4 <- t(apply(sqrt(sd_cambio), 2, stat.helper))
+x4betacambio <- t(apply(beta_cambio, 2, stat.helper))
+
+desc_betacambio <- summary(mcmc_beta_cambio)
+desc_sdcambio   <- summary(mcmc_sd_cambio)
+
+old.par <- par(mfrow=c(1,2))
+matplot2(x = xax, y = x4betacambio, ylim = c(min(desc_betacambio$quantiles[,1]), max(desc_betacambio$quantiles[,5])), col = cols1, main = "Betas da Variação da Tx. de Câmbio", xlab = "Tempo")
+matplot2(x = xax, y = x4, ylim = c(sqrt(min(desc_sdcambio$quantiles[,1])), sqrt(max(desc_sdcambio$quantiles[,5]))), col = cols1, main = "Volatilidade da Variação da Tx. de Câmbio", xlab = "Tempo")
+par(old.par) # resets par()
+
+rm(desc_betacambio, desc_sdcambio)
+```
+
+```{r}
+# Gráfico do desvio padrão do resíduo do ipca
+x5 <- t(apply(sqrt(sd_ipca), 2, stat.helper))
+x5betaipca <- t(apply(beta_ipca, 2, stat.helper))
+
+desc_betaipca <- summary(mcmc_beta_ipca)
+desc_sdipca   <- summary(mcmc_sd_ipca)
+
+old.par <- par(mfrow=c(1,2))
+matplot2(x = xax, y = x5betaipca, ylim = c(min(desc_betaipca$quantiles[,1]), max(desc_betaipca$quantiles[,5])), col = cols1, main = "Betas do IPCA acum. 12 meses", xlab = "Tempo")
+matplot2(x = xax, y = x5, ylim = c(sqrt(min(desc_sdipca$quantiles[,1])), sqrt(max(desc_sdipca$quantiles[,5]))), col = cols1, main = "Vol. do IPCA acum. 12 meses", xlab = "Tempo")
+par(old.par)
+
+rm(desc_betaipca, desc_sdipca)
+```
+
+## Diagnóstico
+
+Estou me baseando nos seguintes linkis:
+* www.patricklam.org/teaching/convergence_print.pdf para traceplot, density plot, running mean plot (é o plot da iteração contra a média das observações até a iteração (ele está indo de 10 em 10 para frente na média))
+* https://theoreticalecology.wordpress.com/2011/12/09/mcmc-chain-analysis-and-convergence-diagnostics-with-coda-in-r/
+
+### Diagnósticos para as médias
+
+Um dos diagnósticos é plotar a cadeia (usando `plot(mcmc_object)`). Ele retorna o gráfico dos valores (um gráfico de linha - quanto mais ruidoso melhor) e um traceplot que é o gráfico da distribuição. Se eu não estou enganada, os meus Betas tem distribuição à posteriori normal e falta ver a distribuição dos sigmas. Se a densidade das matrizes é inversa wishart eles tem distribuição gamma, **mas acho que não tem fórmula fechada para $\Sigma$ - preciso ver no artigo do Primeri depois.**
+
+Outro diagnóstico das médias envolve fazer o gráfico da média usando uma janela móvel para ver se a posteriori cai em alguma região e fica empacada.
+
+Como eu tenho muitos instantes de tempo (e portanto uma quantidade enorme de betas e de sigmas), eu selecionei arbitrariamente 15 betas (que é a divisão inteira de `t` por 10 - então estou plotando 10% dos parâmetros para cada $y$).
+
+```{r, warning = FALSE, message = FALSE}
+sequencia <- seq(10, dim(beta_ct)[2], 10)
+sequencia2 <- seq(1:dim(beta_ct)[1])
+
+#####################################
+# Para a razão capital trabalho
+#####################################
+
+#############
+# Betas
+#############
+
+# Traceplot e density plots
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_beta_ct[,i], auto.layout = T, main = paste("Beta em t=", as.character(i), "da Razão Cap./Trab."))
+}
+#par(old.par)  
+
+# Gráfico da média com janela móvel
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,mcmc_beta_ct[,i])
+  names(df1) <- c("Iteracao", "Beta")
+  p1 <- ggplot(df1, aes(Iteracao, Beta)) +
+    geom_line(aes(y = rollmean(Beta, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) de Beta para t=", as.character(i))) +
+    theme_bw()
+  p1
+} 
+#par(old.par)
+
+##############
+# Volatilidade
+##############
+
+# Traceplot e density plots
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_sd_ct[,i], auto.layout = T, main = paste("D.P. em t=", as.character(i), "da Razão Cap./Trab."))
+}
+#par(old.par)  
+
+# Gráfico da média com janela móvel
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,sqrt(mcmc_sd_ct[,i]))
+  names(df1) <- c("Iteracao", "DP")
+  ggplot(df1, aes(Iteracao, DP)) +
+    geom_line(aes(y = rollmean(DP, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) do desvio padrão para t=", as.character(i))) +
+    theme_bw()
+} 
+#par(old.par)
+
+#####################################
+# Para a swap
+#####################################
+
+#############
+# Betas
+#############
+
+# Traceplot e density plots
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_beta_swap[,i], auto.layout = T, main = paste("Beta em t=", as.character(i), "do Swap"))
+}
+#par(old.par)  
+
+# Gráfico da média com janela móvel
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,mcmc_beta_swap[,i])
+  names(df1) <- c("Iteracao", "Beta")
+  ggplot(df1, aes(Iteracao, Beta)) +
+    geom_line(aes(y = rollmean(Beta, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) de Beta para t=", as.character(i))) +
+    theme_bw()
+} 
+#par(old.par)
+
+##############
+# Volatilidade
+##############
+
+# Traceplot e density plots
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_sd_swap[,i], auto.layout = T, main = paste("D.P. em t=", as.character(i), "do Swap"))
+}
+#par(old.par)  
+
+# Gráfico da média com janela móvel
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,sqrt(mcmc_sd_swap[,i]))
+  names(df1) <- c("Iteracao", "DP")
+  ggplot(df1, aes(Iteracao, DP)) +
+    geom_line(aes(y = rollmean(DP, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) do desvio padrão para t=", as.character(i))) +
+    theme_bw()
+} 
+#par(old.par)
+
+
+#####################################
+# Para o PIB
+#####################################
+
+#############
+# Betas
+#############
+
+# Traceplot e density plots
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_beta_pib[,i], auto.layout = T, main = paste("Beta em t=", as.character(i), "do PIB"))
+}
+#par(old.par)  
+
+# Gráfico da média com janela móvel
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,mcmc_beta_pib[,i])
+  names(df1) <- c("Iteracao", "Beta")
+  ggplot(df1, aes(Iteracao, Beta)) +
+    geom_line(aes(y = rollmean(Beta, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) de Beta para t=", as.character(i))) +
+    theme_bw()
+} 
+#par(old.par)
+
+##############
+# Volatilidade
+##############
+
+# Traceplot e density plots
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_sd_pib[,i], auto.layout = T, main = paste("D.P. em t=", as.character(i), "do PIB"))
+}
+#par(old.par)  
+
+# Gráfico da média com janela móvel
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,sqrt(mcmc_sd_pib[,i]))
+  names(df1) <- c("Iteracao", "DP")
+  ggplot(df1, aes(Iteracao, DP)) +
+    geom_line(aes(y = rollmean(DP, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) do desvio padrão para t=", as.character(i))) +
+    theme_bw()
+} 
+#par(old.par)
+
+#####################################
+# Para o Câmbio
+#####################################
+
+#############
+# Betas
+#############
+
+# Traceplot e density plots
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_beta_cambio[,i], auto.layout = T, main = paste("Beta em t=", as.character(i), "do Câmbio"))
+}
+#par(old.par)  
+
+# Gráfico da média com janela móvel
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,mcmc_beta_cambio[,i])
+  names(df1) <- c("Iteracao", "Beta")
+  ggplot(df1, aes(Iteracao, Beta)) +
+    geom_line(aes(y = rollmean(Beta, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) de Beta para t=", as.character(i))) +
+    theme_bw()
+} 
+#par(old.par)
+
+##############
+# Volatilidade
+##############
+
+# Traceplot e density plots
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_sd_cambio[,i], auto.layout = T, main = paste("D.P. em t=", as.character(i), "do Câmbio"))
+}
+#par(old.par)  
+
+# Gráfico da média com janela móvel
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,sqrt(mcmc_sd_cambio[,i]))
+  names(df1) <- c("Iteracao", "DP")
+  ggplot(df1, aes(Iteracao, DP)) +
+    geom_line(aes(y = rollmean(DP, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) do desvio padrão para t=", as.character(i))) +
+    theme_bw()
+} 
+#par(old.par)
+
+
+#####################################
+# Para a IPCA
+#####################################
+
+#############
+# Betas
+#############
+
+# Traceplot e density plots
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_beta_ipca[,i], auto.layout = T, main = paste("Beta em t=", as.character(i), "do IPCA"))
+}
+#par(old.par)  
+
+# Gráfico da média com janela móvel
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,mcmc_beta_ipca[,i])
+  names(df1) <- c("Iteracao", "Beta")
+  ggplot(df1, aes(Iteracao, Beta)) +
+    geom_line(aes(y = rollmean(Beta, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) de Beta para t=", as.character(i))) +
+    theme_bw()
+} 
+#par(old.par)
+
+##############
+# Volatilidade
+##############
+
+# Traceplot e density plots
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  plot(mcmc_sd_ipca[,i], auto.layout = T, main = paste("D.P. em t=", as.character(i), "do IPCA"))
+}
+#par(old.par)  
+
+# Gráfico da média com janela móvel
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  df1 <- data.frame(sequencia2,sqrt(mcmc_sd_ipca[,i]))
+  names(df1) <- c("Iteracao", "DP")
+  ggplot(df1, aes(Iteracao, DP)) +
+    geom_line(aes(y = rollmean(DP, 10, na.pad = TRUE))) +
+    scale_y_continuous(name = paste("Média móvel (10 valores) do desvio padrão para t=", as.character(i))) +
+    theme_bw()
+} 
+#par(old.par)
+
+```
+
+Agora tem o `cumuplot()` que faz o gráfico dos quantis da cadeia (de forma acumulada). O default é 0.025, 0.5, 0.975. **Se eu tiver tempo depois, vou mexer no layout desses gráficos pois são feiosos demais.**
+
+```{r}
+#####################################
+# Para a razão capital trabalho
+#####################################
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_beta_ct[1:tamanho,i], auto.layout = F, main = paste("Quantis de Beta em t=", as.character(i), "da Razão Cap./Trab."))
+}
+#par(old.par) 
+
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_sd_ct[1:tamanho,i], auto.layout = F, main = paste("Quantis do D.P. em t=", as.character(i), "da Razão Cap./Trab."))
+}
+#par(old.par) 
+
+#####################################
+# Para a swap
+#####################################
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_beta_swap[1:tamanho,i], auto.layout = F, main = paste("Quantis de Beta em t=", as.character(i), "do Swap"))
+}
+#par(old.par) 
+
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_sd_swap[1:tamanho,i], auto.layout = F, main = paste("Quantis do D.P. em t=", as.character(i), "do Swap"))
+}
+#par(old.par) 
+
+#####################################
+# Para o pib
+#####################################
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_beta_pib[1:tamanho,i], auto.layout = F, main = paste("Quantis de Beta em t=", as.character(i), "do PIB"))
+}
+#par(old.par) 
+
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_sd_pib[1:tamanho,i], auto.layout = F, main = paste("Quantis do D.P. em t=", as.character(i), "do PIB"))
+}
+#par(old.par)
+
+#####################################
+# Para o Câmbio
+#####################################
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_beta_cambio[1:tamanho,i], auto.layout = F, main = paste("Quantis de Beta em t=", as.character(i), "do Câmbio"))
+}
+#par(old.par) 
+
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_sd_cambio[1:tamanho,i], auto.layout = F, main = paste("Quantis do D.P. em t=", as.character(i), "do Câmbio"))
+}
+#par(old.par)
+
+#####################################
+# Para o IPCA
+#####################################
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_beta_ipca[1:tamanho,i], auto.layout = F, main = paste("Quantis de Beta em t=", as.character(i), "do IPCA"))
+}
+#par(old.par) 
+
+
+#old.par <- par(mfrow=c(5,3))
+for (i in sequencia){
+  cumuplot(mcmc_sd_ipca[1:tamanho,i], auto.layout = F, main = paste("Quantis do D.P. em t=", as.character(i), "do IPCA"))
+}
+#par(old.par)
+
+```
+
+Por fim, tem o diagnóstico do Geweke, que calcula uma estatística com distribuição normal e que compara o início e o final da distribuição. De novo vou plotar só uma parte para não ficar muito grande
+
+```{r}
+frac1. <- .3
+frac2. <- .3
+
+geweke.plot(mcmc_beta_ct[,sequencia], frac1 = frac1., frac2 = frac2., pvalue = 0.05)
+geweke.plot(mcmc_beta_swap[,sequencia], frac1 = frac1., frac2 = frac2., pvalue = 0.05)
+geweke.plot(mcmc_beta_pib[,sequencia], frac1 = frac1., frac2 = frac2., pvalue = 0.05)
+geweke.plot(mcmc_beta_cambio[,sequencia], frac1 = frac1., frac2 = frac2., pvalue = 0.05)
+geweke.plot(mcmc_beta_ipca[,sequencia], frac1 = frac1., frac2 = frac2., pvalue = 0.05)
+
+geweke.plot(mcmc_sd_ct[,sequencia], frac1 = frac1., frac2 = frac2., pvalue = 0.05)
+geweke.plot(mcmc_sd_swap[,sequencia], frac1 = frac1., frac2 = frac2., pvalue = 0.05)
+geweke.plot(mcmc_sd_pib[,sequencia], frac1 = frac1., frac2 = frac2., pvalue = 0.05)
+geweke.plot(mcmc_sd_cambio[,sequencia], frac1 = frac1., frac2 = frac2., pvalue = 0.05)
+geweke.plot(mcmc_sd_ipca[,sequencia], frac1 = frac1., frac2 = frac2., pvalue = 0.05)
+```
+
+### Diagnóstico da autocorrelação
+
+O bloco abaixo eu montei para entender melhor o que a `autocorr()` do pacote `coda` faz. No fim, vou ficar com a função de autocorrelação (não a parcial) pois ela avalia o efeito até o instante `j`.
+
+```{r, eval = FALSE}
+# Tentando descobrir o que as coisas são
+# Esse é o do coda, ele é o mais parecido com a acf, mas não chega a ser igual.
+autocorr(mcmc_sd_ct[,i], lags = c(20,100,1000))
+
+c(acf(mcmc_sd_ct[,1], lag.max = 20, plot = F)[20]$acf,acf(mcmc_sd_ct[,1], lag.max = 100, plot = F)[100]$acf, acf(mcmc_sd_ct[,1], lag.max = 1000, plot = F)[1000]$acf)
+c(Acf(mcmc_sd_ct[,1], lag.max = 20, plot = F, type = "correlation")[20]$acf, Acf(mcmc_sd_ct[,1], lag.max = 100, plot = F, type = "correlation")[100]$acf, Acf(mcmc_sd_ct[,1], lag.max = 1000, plot = F, type = "correlation")[1000]$acf)
+
+# Esse não é parecido com ninguém
+c(Acf(mcmc_sd_ct[,1], lag.max = 20, plot = F, type = "covariance")[20]$acf, Acf(mcmc_sd_ct[,1], lag.max = 100, plot = F, type = "covariance")[100]$acf, Acf(mcmc_sd_ct[,1], lag.max = 1000, plot = F, type = "covariance")[1000]$acf)
+
+
+# Esses 3 são iguais
+# Function Pacf computes (and by default plots) an estimate of the partial autocorrelation function of a (possibly multivariate) time series
+# Aviso sobre as funções Acf e Pacf: The functions improve the acf, pacf and ccf functions. The main differences are that Acf does not plot a spike at lag 0 when type=="correlation" (which is redundant) and the horizontal axes show lags in time units rather than seasonal units..
+c(pacf(mcmc_sd_ct[,1], lag.max = 20, plot = F)[20]$acf,pacf(mcmc_sd_ct[,1], lag.max = 100, plot = F)[100]$acf, pacf(mcmc_sd_ct[,1], lag.max = 1000, plot = F)[1000]$acf)
+c(Acf(mcmc_sd_ct[,1], lag.max = 20, plot = F, type = "partial")[20]$acf, Acf(mcmc_sd_ct[,1], lag.max = 100, plot = F, type = "partial")[100]$acf, Acf(mcmc_sd_ct[,1], lag.max = 1000, plot = F, type = "partial")[1000]$acf)
+c(Pacf(mcmc_sd_ct[,1], lag.max = 20, plot = F)[20]$acf, Pacf(mcmc_sd_ct[,1], lag.max = 100, plot = F)[100]$acf, Pacf(mcmc_sd_ct[,1], lag.max = 1000, plot = F)[1000]$acf)
+```
+
+Agora estou calculando a função te autocorrelação para depois fazer uns fancy graphs.
+
+```{r}
+autocorrelacao_beta_ct <- vector()
+autocorrelacao_beta_swap <- vector()
+autocorrelacao_beta_pib <- vector()
+autocorrelacao_beta_cambio <- vector()
+autocorrelacao_beta_ipca <- vector()
+
+autocorrelacao_sd_ct <- vector()
+autocorrelacao_sd_swap <- vector()
+autocorrelacao_sd_pib <- vector()
+autocorrelacao_sd_cambio <- vector()
+autocorrelacao_sd_ipca <- vector()
+
+pm <- proc.time()
+for (i in 1:dim(mcmc_beta_ct)[2]) {
+    autocorrelacao_beta_ct <- cbind(autocorrelacao_beta_ct, autocorr(mcmc_beta_ct[,i], lags = c(20,100,1000)))
+    autocorrelacao_beta_swap <- cbind(autocorrelacao_beta_swap, autocorr(mcmc_beta_swap[,i], lags = c(20,100,1000)))
+    autocorrelacao_beta_pib <- cbind(autocorrelacao_beta_pib, autocorr(mcmc_beta_pib[,i], lags = c(20,100,1000)))
+    autocorrelacao_beta_cambio <- cbind(autocorrelacao_beta_cambio, autocorr(mcmc_beta_cambio[,i], lags = c(20,100,1000)))
+    autocorrelacao_beta_ipca <- cbind(autocorrelacao_beta_ipca, autocorr(mcmc_beta_ipca[,i], lags = c(20,100,1000)))
+    autocorrelacao_sd_ct <- cbind(autocorrelacao_sd_ct, autocorr(mcmc_sd_ct[,i], lags = c(20,100,1000)))
+    autocorrelacao_sd_swap <- cbind(autocorrelacao_sd_swap, autocorr(mcmc_sd_swap[,i], lags = c(20,100,1000)))
+    autocorrelacao_sd_pib <- cbind(autocorrelacao_sd_pib, autocorr(mcmc_sd_pib[,i], lags = c(20,100,1000)))
+    autocorrelacao_sd_cambio <- cbind(autocorrelacao_sd_cambio, autocorr(mcmc_sd_cambio[,i], lags = c(20,100,1000)))
+    autocorrelacao_sd_ipca <- cbind(autocorrelacao_sd_ipca, autocorr(mcmc_sd_ipca[,i], lags = c(20,100,1000)))
+}
+proc.time() - pm
+```
+
+Agora vamos para os gráficos.... a ideia é fazer algo como o Primiceri tem no anexo B (figura 9 - topo), porém dividindo por variável do VAR.
+
+```{r}
+# Montando os data frames
+
+#############################################
+#############################################
+# Betas
+#############################################
+#############################################
+autocorrelacao_beta_ct <- data.frame(1:(length(ini_xax:tempo)), t(autocorrelacao_beta_ct))
+names(autocorrelacao_beta_ct) <- c("tempo", "20", "100", "1000")
+autocorrelacao_beta_ct <- melt(autocorrelacao_beta_ct, id.vars = "tempo")
+autocorrelacao_beta_ct[,2] <- factor(autocorrelacao_beta_ct[,2])
+
+autocorrelacao_beta_swap <- data.frame(1:(length(ini_xax:tempo)), t(autocorrelacao_beta_swap))
+names(autocorrelacao_beta_swap) <- c("tempo", "20", "100", "1000")
+autocorrelacao_beta_swap <- melt(autocorrelacao_beta_swap, id.vars = "tempo")
+autocorrelacao_beta_swap[,2] <- factor(autocorrelacao_beta_swap[,2])
+
+autocorrelacao_beta_pib <- data.frame(1:(length(ini_xax:tempo)), t(autocorrelacao_beta_pib)) 
+names(autocorrelacao_beta_pib) <- c("tempo", "20", "100", "1000")
+autocorrelacao_beta_pib <- melt(autocorrelacao_beta_pib, id.vars = "tempo")
+autocorrelacao_beta_pib[,2] <- factor(autocorrelacao_beta_pib[,2])
+
+autocorrelacao_beta_cambio <- data.frame(1:(length(ini_xax:tempo)), t(autocorrelacao_beta_cambio))
+names(autocorrelacao_beta_cambio) <- c("tempo", "20", "100", "1000")
+autocorrelacao_beta_cambio <- melt(autocorrelacao_beta_cambio, id.vars = "tempo")
+autocorrelacao_beta_cambio[,2] <- factor(autocorrelacao_beta_cambio[,2])
+
+autocorrelacao_beta_ipca <- data.frame(1:(length(ini_xax:tempo)), t(autocorrelacao_beta_ipca))
+names(autocorrelacao_beta_ipca) <- c("tempo", "20", "100", "1000")
+autocorrelacao_beta_ipca <- melt(autocorrelacao_beta_ipca, id.vars = "tempo")
+autocorrelacao_beta_ipca[,2] <- factor(autocorrelacao_beta_ipca[,2])
+
+#############################################
+#############################################
+# Volatilidade
+#############################################
+#############################################
+autocorrelacao_sd_ct <- data.frame(1:(length(ini_xax:tempo)), t(autocorrelacao_sd_ct))
+names(autocorrelacao_sd_ct) <- c("tempo", "20", "100", "1000")
+autocorrelacao_sd_ct <- melt(autocorrelacao_sd_ct, id.vars = "tempo")
+autocorrelacao_sd_ct[,2] <- factor(autocorrelacao_sd_ct[,2])
+
+autocorrelacao_sd_swap <- data.frame(1:(length(ini_xax:tempo)), t(autocorrelacao_sd_swap))
+names(autocorrelacao_sd_swap) <- c("tempo", "20", "100", "1000")
+autocorrelacao_sd_swap <- melt(autocorrelacao_sd_swap, id.vars = "tempo")
+autocorrelacao_sd_swap[,2] <- factor(autocorrelacao_sd_swap[,2])
+
+autocorrelacao_sd_pib <- data.frame(1:(length(ini_xax:tempo)), t(autocorrelacao_sd_pib)) 
+names(autocorrelacao_sd_pib) <- c("tempo", "20", "100", "1000")
+autocorrelacao_sd_pib <- melt(autocorrelacao_sd_pib, id.vars = "tempo")
+autocorrelacao_sd_pib[,2] <- factor(autocorrelacao_sd_pib[,2])
+
+autocorrelacao_sd_cambio <- data.frame(1:(length(ini_xax:tempo)), t(autocorrelacao_sd_cambio))
+names(autocorrelacao_sd_cambio) <- c("tempo", "20", "100", "1000")
+autocorrelacao_sd_cambio <- melt(autocorrelacao_sd_cambio, id.vars = "tempo")
+autocorrelacao_sd_cambio[,2] <- factor(autocorrelacao_sd_cambio[,2])
+
+autocorrelacao_sd_ipca <- data.frame(1:(length(ini_xax:tempo)), t(autocorrelacao_sd_ipca))
+names(autocorrelacao_sd_ipca) <- c("tempo", "20", "100", "1000")
+autocorrelacao_sd_ipca <- melt(autocorrelacao_sd_ipca, id.vars = "tempo")
+autocorrelacao_sd_ipca[,2] <- factor(autocorrelacao_sd_ipca[,2])
+
+minimo_betas <- min(autocorrelacao_beta_ct[,3], autocorrelacao_beta_swap[,3], autocorrelacao_beta_pib[,3], autocorrelacao_beta_cambio[,3], autocorrelacao_beta_ipca[,3])
+maximo_betas <- max(autocorrelacao_beta_ct[,3], autocorrelacao_beta_swap[,3], autocorrelacao_beta_pib[,3], autocorrelacao_beta_cambio[,3], autocorrelacao_beta_ipca[,3])
+
+minimo_sd <- min(autocorrelacao_sd_ct[,3], autocorrelacao_sd_swap[,3], autocorrelacao_sd_pib[,3], autocorrelacao_sd_cambio[,3], autocorrelacao_sd_ipca[,3])
+maximo_sd <- max(autocorrelacao_sd_ct[,3], autocorrelacao_sd_swap[,3], autocorrelacao_sd_pib[,3], autocorrelacao_sd_cambio[,3], autocorrelacao_sd_ipca[,3])
+
+#############################################
+#############################################
+# Gráficos
+#############################################
+#############################################
+
+##################### BETAS ########################
+
+########################
+# Razão capital trabalho
+########################
+p1a <- ggplot(autocorrelacao_beta_ct, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="Razão Cap./Trab.", lim = c(minimo_betas,maximo_betas)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,tempo,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p1a <- p1a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="top", legend.text = element_text(size = 8), legend.title = element_text(size = 8), axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.05,0.1,0.1), "cm"))
+p1a <- p1a + labs(linetype = "Lags") # I couldn't fix the legend name properly, so why not use a gambiarra?
+p1a <- p1a + labs(colour='Lags')
+
+########################
+# swap
+########################
+p2a <- ggplot(autocorrelacao_beta_swap, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="Swap", lim = c(minimo_betas,maximo_betas)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,tempo,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p2a <- p2a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="top", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.05,0.1,0.1), "cm"))
+p2a <- p2a + labs(linetype = "Lags") 
+p2a <- p2a + labs(colour='Lags')
+
+########################
+# PIB
+########################
+p3a <- ggplot(autocorrelacao_beta_pib, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="PIB", lim = c(minimo_betas,maximo_betas)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,tempo,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p3a <- p3a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="right", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.05,0.1,0.1), "cm"))
+p3a <- p3a + labs(linetype = "Lags") 
+p3a <- p3a + labs(colour='Lags')
+
+########################
+# cambio
+########################
+p4a <- ggplot(autocorrelacao_beta_cambio, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="Câmbio", lim = c(minimo_betas,maximo_betas)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,tempo,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p4a <- p4a + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="top", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.05,0.1,0.1), "cm"))
+p4a <- p4a + labs(linetype = "Lags") 
+p4a <- p4a + labs(colour='Lags')
+
+########################
+# ipca
+########################
+p5a <- ggplot(autocorrelacao_beta_ipca, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="IPCA", lim = c(minimo_betas,maximo_betas)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,tempo,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p5a <- p5a + theme(axis.text.x = element_text(angle=25, vjust = 2, size = 5, hjust = 1), axis.title.x = element_text(size = 6, vjust = 5), axis.title.y = element_text(size =6), legend.position="right", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.05,0.0001,0.1), "cm")) # cima,direita, baixo, esquerda)
+p5a <- p5a + labs(linetype = "Lags") # I couldn't fix the legend name properly, so why not?
+p5a <- p5a + labs(colour='Lags')
+
+#grid.draw(rbind(ggplotGrob(p1a), ggplotGrob(p2a), ggplotGrob(p3a), ggplotGrob(p4a), ggplotGrob(p5a), size = "first"))
+
+################## VOLATILIDADE ######################
+
+
+########################
+# Razão capital trabalho
+########################
+p1 <- ggplot(autocorrelacao_sd_ct, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=T, aes(linetype = variable))+
+        scale_y_continuous(name="Razão Cap./Trab.", lim = c(minimo_sd,maximo_sd)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,tempo,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p1 <- p1 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="top", legend.text = element_text(size = 8), legend.title = element_text(size = 8), axis.text.y = element_text(size = 6), legend.key.size = unit(.5, "cm"), plot.margin = unit(c(0.009,0.08,0.1,0.1), "cm"))
+p1 <- p1 + labs(linetype = "Lags") # I couldn't fix the legend name properly, so why not use a gambiarra?
+p1 <- p1 + labs(colour='Lags')
+
+########################
+# swap
+########################
+
+p2 <- ggplot(autocorrelacao_sd_swap, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="Swap", lim = c(minimo_sd,maximo_sd)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,tempo,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p2 <- p2 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="top", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.08,0.1,0.1), "cm"))
+p2 <- p2 + labs(linetype = "Lags") 
+p2 <- p2 + labs(colour='Lags')
+
+########################
+# PIB
+########################
+
+p3 <- ggplot(autocorrelacao_sd_pib, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="PIB", lim = c(minimo_sd,maximo_sd)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,tempo,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p3 <- p3 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="right", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.08,0.1,0.1), "cm"))
+p3 <- p3 + labs(linetype = "Lags") 
+p3 <- p3 + labs(colour='Lags')
+
+########################
+# cambio
+########################
+
+p4 <- ggplot(autocorrelacao_sd_cambio, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="Câmbio", lim = c(minimo_sd,maximo_sd)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,tempo,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p4 <- p4 + theme(axis.text.x=element_blank(), axis.title.x = element_blank(), axis.title.y = element_text(size = 6), legend.position="top", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.08,0.1,0.1), "cm")) # cima,direita, baixo, esquerda)
+p4 <- p4 + labs(linetype = "Lags") 
+p4 <- p4 + labs(colour='Lags')
+
+########################
+# ipca
+########################
+
+p5 <- ggplot(autocorrelacao_sd_ipca, aes(tempo, value, colour = variable)) +
+        geom_line(alpha = 1, show.legend=F, aes(linetype = variable))+
+        scale_y_continuous(name="IPCA", lim = c(minimo_sd,maximo_sd)) +
+        scale_x_continuous(name = "Tempo", breaks = seq(0,tempo,10), expand = c(0,0)) +
+        theme_bw() +
+        scale_colour_brewer(palette="Set1")
+        
+p5 <- p5 + theme(axis.text.x = element_text(angle=25, vjust = 2, size = 5, hjust = 1), axis.title.x = element_text(size = 6, vjust = 5), axis.title.y = element_text(size =6), legend.position="right", axis.text.y = element_text(size = 6), plot.margin = unit(c(0.009,0.08,0.0001,0.1), "cm")) # cima,direita, baixo, esquerda
+p5 <- p5 + labs(linetype = "Lags") # I couldn't fix the legend name properly, so why not?
+p5 <- p5 + labs(colour='Lags')
+
+
+ggarrange(p1a, p1, p2a, p2, p3a, p3, p4a, p4, p5a, p5, common.legend = TRUE, ncol = 2, nrow = 5)
+#################
+# grid.draw(rbind(ggplotGrob(p1), ggplotGrob(p2), ggplotGrob(p3), ggplotGrob(p4), ggplotGrob(p5), size = "first"))
+# grid.arrange(p1, p2, p3, p4, p5, ncol=1, nrow = 5) # This squish the graph with the legend
+
+# Estimar outroS 4 modelos guardando apenas as últimas 200 observações e fazer uma anova não paramétrica
+```
+
+### Diagnóstico multivariado
+
+A estatística de Gelman-Rubin mede se há diferença significativa entre a variância dentro e entre diversas cadeias utilizando um fator de redução de escala. Aqui eu optei por simular duas cadeias e fazer a comparação entre elas. Em função da memória do computador eu utilizei um número menor de iterações salvas: ao invés de salvar todos os valores, armazenei apenas os 10.000 últimos valores (20%).
+
+```{r, message = FALSE, warning = FALSE}
+# Primeira coisa é limpar a memória
+keep(capital_trabalho_final, swap, PIB2, cambio, ipca, pos_ct, pos_ipca, pos_cambio, pos_swap, pos_pib, sure = TRUE)
+
+var1 <- cbind(capital_trabalho_final, ipca, PIB2, swap, cambio) # The bvar function does not allows data.frames
+names(var1) <- c("capital_trabalho", "ipca", "pib", "swap", "cambio")
+
+nburn. <- 75000
+nrep.  <- 50000
+thinfac. <- 2
+tamanho <- floor(1/thinfac.*nrep.)
+# número de tempos
+tempo <- nrow(var1)
+p. <- 1
+tau. <- 48
+nf. <- 1
+k_B.      <- 6 # Fator de inflação na priori
+k_A.      <- 4 # Fator de inflação na priori
+
+set.seed(6969)
+pm <- proc.time()
+#fit1 <- bvar.sv.tvp(var1, p=p., tau = tau., nburn = nburn., nrep = nrep., nf = nf., thinfac = thinfac.)
+fit1 <- readRDS("C:\\Users\\aisha\\Documents\\Var da Aisha\\Var7\\fit17a.rds")
+proc.time() - pm
+#saveRDS(fit1, "C:\\Users\\aisha\\Documents\\Var da Aisha\\Var7\\fit17a.rds")
+
+
+betas_ct     <- parameter.draws(fit1, type = "lag1", row = pos_ct, col = pos_ct)
+betas_swap   <- parameter.draws(fit1, type = "lag1", row = pos_swap, col = pos_swap)
+betas_pib    <- parameter.draws(fit1, type = "lag1", row = pos_pib, col = pos_pib)
+betas_cambio <- parameter.draws(fit1, type = "lag1", row = pos_cambio, col = pos_cambio)
+betas_ipca   <- parameter.draws(fit1, type = "lag1", row = pos_ipca, col = pos_ipca)
+
+sd_ct        <- parameter.draws(fit1, type = "vcv", row = pos_ct, col = pos_ct)
+sd_swap      <- parameter.draws(fit1, type = "vcv", row = pos_swap, col = pos_swap)
+sd_pib       <- parameter.draws(fit1, type = "vcv", row = pos_pib, col = pos_pib)
+sd_cambio    <- parameter.draws(fit1, type = "vcv", row = pos_cambio, col = pos_cambio)
+sd_ipca      <- parameter.draws(fit1, type = "vcv", row = pos_ipca, col = pos_ipca)
+
+mcmc_1 <- mcmc(cbind(betas_ct, betas_swap, betas_pib, betas_cambio, betas_ipca, sd_ct, sd_swap, sd_pib, sd_cambio, sd_ipca))
+
+rm(fit1, betas_ct, betas_swap, betas_pib, betas_cambio, betas_ipca, sd_ct, sd_swap, sd_pib, sd_cambio, sd_ipca)
+
+set.seed(9696)
+fit1 <- readRDS("C:\\Users\\aisha\\Documents\\Var da Aisha\\Var7\\fit17b.rds")
+#fit1 <- bvar.sv.tvp(var1, p=p., tau = tau., nburn = nburn., nrep = nrep., nf = nf., thinfac = thinfac.)
+#saveRDS(fit1, "C:\\Users\\aisha\\Documents\\Var da Aisha\\Var7\\fit17b.rds")
+
+betas_ct     <- parameter.draws(fit1, type = "lag1", row = pos_ct, col = pos_ct)
+betas_swap  <- parameter.draws(fit1, type = "lag1", row = pos_swap, col = pos_swap)
+betas_pib    <- parameter.draws(fit1, type = "lag1", row = pos_pib, col = pos_pib)
+betas_cambio <- parameter.draws(fit1, type = "lag1", row = pos_cambio, col = pos_cambio)
+betas_ipca   <- parameter.draws(fit1, type = "lag1", row = pos_ipca, col = pos_ipca)
+
+sd_ct        <- parameter.draws(fit1, type = "vcv", row = pos_ct, col = pos_ct)
+sd_swap     <- parameter.draws(fit1, type = "vcv", row = pos_swap, col = pos_swap)
+sd_pib       <- parameter.draws(fit1, type = "vcv", row = pos_pib, col = pos_pib)
+sd_cambio    <- parameter.draws(fit1, type = "vcv", row = pos_cambio, col = pos_cambio)
+sd_ipca      <- parameter.draws(fit1, type = "vcv", row = pos_ipca, col = pos_ipca)
+
+mcmc_2 <- mcmc(cbind(betas_ct, betas_swap, betas_pib, betas_cambio, betas_ipca, sd_ct, sd_swap, sd_pib, sd_cambio, sd_ipca))
+
+rm(fit1, betas_ct, betas_swap, betas_pib, betas_cambio, betas_ipca, sd_ct, sd_swap, sd_pib, sd_cambio, sd_ipca)
+
+lista <- mcmc.list(mcmc_1, mcmc_2)
+gelman.diag(lista)
+gelman.plot(lista)
+
+# Tentar descobrir como colocar label no gelman plot
+```
+
