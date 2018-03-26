@@ -1,0 +1,168 @@
+---
+title: "Amostrador de Gibbs"
+author: "Aishameriane Schmidt"
+date: "Última atualização: abril 2018"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+output: html_document
+bibliography: references.bib
+---
+\begin{align*}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\end{align*}
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { 
+      equationNumbers: {
+ 
+            autoNumber: "all",
+            formatNumber: function (n) {return '9.'+n}
+      } 
+  }
+});
+</script>
+
+- Capítulo 7 de [@murteira]
+- Seção 6.2.2 de [@bchoice]
+- Seção 3.3 de [@casella_MC]
+- Capítulo 6 de [@casella_MCR]
+- Explaining the Gibbs Sampler [@casella_george1992]
+- Capítulo 3 de [@BLR]
+- Capítulo 1 de [@meyn_tweedie2012]
+
+# Carregando os pacotes
+
+```{r, message = FALSE, warning = FALSE}
+chooseCRANmirror(graphics = FALSE, ind = 10)
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(ggplot2)
+``` 
+
+# Métodos de Monte Carlo
+
+## Ideias básicas da integração de Monte Carlo
+
+* Métodos de Monte Carlo são uma alternativa para resolução de integrais (especialmente em casos multivariados onde a dimensão do problema torna os algoritmos não estocásticos muito lentos);
+* Uma vez que a abordagem bayesiana requer o cálculo de distribuições a posteriori que muitas vezes envolve a resolução de integrais, os algorítmos de MC acabam sendo muito úteis neste contexto;
+* MC é baseado na ideia de reamostrar valores de uma distribuição de probabilidade (simulação estocástica). Utilizando um gerador de números pseudo-aleatórios podemos obter valores de qualquer distribuição (através da $F^{-1}(\cdot)$)
+
+## Método
+
+Considere a seguinte integral:
+
+\begin{equation}\tag{01}
+\int g(\theta)h(\theta|x)d\theta = \mathbb{E}[g(\theta)|x]
+\end{equation}
+
+Podemos ainda nos utilizar da probabilidade condicional $f(x|\theta) = \frac{f_{X,\theta}(x,\theta)}{\pi(\theta)} \Rightarrow f_{X,\theta}(x,\theta) = f(x|\theta)\pi(theta)$ para reescrever $h(\theta|x) = \frac{f(x|\theta)\pi(theta)}{f_{X}(x)}$. Como o denominador é uma constante, podemos simplesmente definir o problema da integral acima da seguinte maneira:
+
+\begin{equation}\tag{02}
+\int_{\Theta} g(\theta)f(x|\theta)\pi(\theta)d\theta 
+\end{equation}
+
+A primeira forma é como está definido o problema em [@murteira] (página 286) e a segunda é como está em [@bchoice] (página 294). 
+
+[@murteira] Se pudermos simular uma amostra $\theta_1, \ldots, \theta_n$ da densidade *a posteriori* $h(\theta|x)$, o método de MC irá aproximar \ref{integral-murteira} por uma média amostral:
+
+\begin{equation}\tag{03}
+\hat{\mathbb{E}}[g(\theta)|x] = \frac{1}{n}\sum_{i=1}^n g(\theta_i)
+\end{equation}
+
+Utilizando a lei dos grandes números, pode-se demonstrar que (03) converge quase certamente para a média $\mathbb{E}[g(\theta)|x]$ dada em (01). O método nos diz que se conseguirmos amostras da distribuição *a posteriori* $h(\theta|x)$, podemos resolver as integrais da forma descrita em (01).
+
+[@bchoice] Se for possível obter valores $\theta_1, \ldots, \theta_n$ da distribuição $\pi(\theta)$, então a média amostral
+
+\begin{equation}\tag{04}
+\frac{1}{n}\sum_{i=1}^m g(\theta_i)f(x|\theta_i)
+\end{equation}
+
+converge quase certamente para a média dada em (02) quando $m \to \infty$, pela lei dos grandes números. De maneira similar, se uma amostra aleatória de $\theta_i$'s da distribuição $\pi(\theta|x)$ pode ser obtida, então
+
+\begin{equation}\tag{05}
+\frac{1}{n}\sum_{i=1}^m g(\theta_i)
+\end{equation}
+
+converge para
+
+\begin{equation}\tag{06}
+\frac{\int_{\Theta g(\theta)f(x|\theta)\pi(\theta)d\theta}}{\int_{\Theta} f(x|\theta)\pi(\theta)d\theta}
+\end{equation}
+
+## MCMC
+
+Até o momento, estudamos o método de Monte Carlo com o foco de obter valores i.i.d. de uma densidade de interesse $f$, tanto de maneira direta, como de maneira indireta (via amostragem por importância). Agora iremos mudar o foco para métodos que geram uma amostra _correlacionada_ de valores a partir de uma Cadeia de Markov (do inglês _Markov Chain_). A teoria de processos estocásticos (mais especificamente, as propriedades de cadeias de Markov) pode ser explorada para obter densidades candidatas mesmo quando um amostrador por importância não é facilmente encontrado. Mais especificamente, métodos de MCMC colocam poucos ``requisitos'' nas densidades candidatas $f$, mesmo quando não conseguimos encontrar um amostrador por importância de maneira fácil. Além disso, pode-se dividir um problema de alta dimensão em vários pequenos problemas de menor dimensão, tornando o processo mais eficiente [@casella_MCR]
+
+Métodos de Cadeias de Markov via Monte Carlo (MCMC) foram introduzidos na econometria por volta de 1990, após serem desenvolvidos na estatística. Um dos motivos para o sucesso da técnica nos trabalhos de econometria bayesiana é sua facilidade de uso em comparação com a amostragem por importância. Apesar de ser um método de redução de variância de MC, IS torna-se pouco apelativo pois é uma técnica que se ajusta pontualmente aos problemas: é necessário encontrar uma boa aproximação para a densidade a posteriori e um amostrador por importância de uma aplicação (seja por causa de um modelo ou até mesmo um determinado conjunto de dados) pode não servir para outras aplicações. Os métodos de MCMC, por outro lado, se mostram mais fácil de implementar sem a necessidade de despender tanto tempo procurando pelas densidades candidatas [@BLR]. 
+
+Por não imporem muitas restrições nas densidades candidatas, os métodos de MCMC tem ampla aplicabilidade. No entando, sua performance é bastante variável e depende da complexidade do problema que se quer resolver. Como dito anteriormente, intuitivamente o  método consiste em produzir aproximações para integrais e outras quantidades de interesse a partir de uma Cadeiade Markov $\{\theta^{(t)}\}$ cuja distribuição limite é exatamente a densidade que temos interesse. Esta ideia de utilizar o comportamento assintótico de uma cadeia de Markov surgiu mais ou menos na mesma época do primeiro algorítmo de Monte Carlo, porém não havia recursos computacionais suficientes na época que permitissem sua disseminação [@bchoice].
+
+Os métodos de MCMC mais conhecidos são o _amostrador de Gibbs_ (do inglês _Gibbs Sampler_) e o algoritmo de _Metropolis-Hastings_ (MH), sendo que este último se relaciona com amostragem por importância. Ambos métodos podem ser combinados, dando origem ao _Metropolis within Gibbs_, para o caso onde não é possível implementar um amostrador de Gibbs sozinho. Uma vez que são métodos de MCMC, eles são baseados na geração de amostras da posteriori que não são independentes entre si [@BLR].
+
+### Uma breve introdução às Cadeias de Markov
+
+Uma Cadeia de Markov $\{\theta^{(t)}\}$ é uma sequência de variáveis aleatórias não-independentes $\theta^{(0)}, \theta^{(1)}, \theta^{(2)}, \ldots, \theta^{(t)}, \ldots$ tais que a densidade de probabilidade de $X^{(t+1)}$ condicional aos valores passados depende apenas de $\theta^{(t)}$, isto é, uma Cadeia de Markov tem como característica sua ``perda de memória'' _exceto_ com relação ao passado imediatamente anterior [@meyn_tweedie2012]. A probabilidade condicional de $\theta^{(t+1)}$ dado os valores anteriores é chamada de _núcleo de transição_ (do inglês _transition kernel_) ou _núcleo de Markov_ (_Markov Kernel_) e é denotado por $K$:
+$$\theta^{(t+1)}\ |\ \theta^{(0)}, \theta^{(1)}, \theta^{(2)}, \ldots, \theta^{(t+1)} \sim K\left(\theta^{(t)}, \theta^{(t+1)}\right).$$
+Se pensarmos na cadeia de Markov como uma sequência de v.a. que evoluem ao longo do tempo, o núcleo de transição é a probabilidade de mudança de um estado para outro, condicional ao estado atual. Formalmente, temos:
+
+**Definição 4.01** (Adaptado de [casella_MC]) **Núcleo de transição**
+
+Um núcleo de transição é uma função $K$ definida em $\Theta \times \mathcal{B}(\Theta)$ tal que:
+1. $\forall \ \theta in \Theta$, $K(\theta, \cdot)$ é uma medida de probabilidade;
+2. $\forall \ A \in \mathcal{B}(\Theta)$, $K(\cdot, A)$ é mensurável.
+
+Quando $\Theta$ é discreto, então o núcleo de transição é simplesmente a matriz de transição $K$ com elementos dados por
+
+$$\mathbb{P}_{mn} = \mathbb{P}\left(\theta^{(t+1)} = n|\theta^{(t)} = m\right), \qquad m,n \in \Theta   $$
+
+A cadeia $\left(\theta^{(t)} \right)$ é usualmente definida para $t \in \mathbb{N}$ do que para $t \in \mathbb{Z}$, de maneira que a distribuição de $\theta^{(0)}$, o estado inicial da cadeia, desempenha um papel importante na nossa análise. No caso discreto, em que $K$ é uma matriz de transição, dada uma distribuição inicial $\mu = (\omega_1, \omega_2, \ldots)$, a densidade marginal de $\theta^{(1)}$ é obtida através do produto matricial
+$$\mu_1 = \mu \cdot K $$
+e, por múltiplos produtos, temos $\theta^{(t)} \sim \mu_t = \mu \cdot K^t$.
+
+Por exemplo, a forma mais simples de uma cadeia de Markov é o _passeio aleatório_ (_random walk_), que satisfaz:
+$$\theta^{(t+1)} = \theta^{(t)} + \epsilon_t, \qquad \epsilon_t \sim \mathcal{N}(0,1).$$
+Neste caso, o núcleo de transição $K\left(\theta^{(t)}, \theta^{(t+1)}\right)$ corresponde à densidade normal de média $\theta^{(t)}$ e variância unitária.
+
+Na maioria das aplicações MCMC, as cadeias de Markov construídas possuem um comportamento estável. De fato, essas cadeias têm, por construção, uma _distribuição de probabilidade estacionária_ (ou simplesmente _distribuição estacionária_, do inglês _stationary probability distribution_). Isso significa que existe uma distribuição de probabilidade $f$ tal que se $\theta^{(t)} \sim f$, então $\theta^{(t+1)} \sim f$. Formalmente, a relação entre o núcleo de transição e a distribuição estacionária de uma cadeia de Markov é que eles satisfazem
+$$\int_\Theta K\left(\theta^{(t)},\theta^{(t)}\right)f\left(\theta^{(t)}\right)d\theta^{(t)} = f\left(\theta^{(t+1)}\right) $$
+
+De acordo com [@casella_MCR], a existência da distribuição estacionária (ou a propriedade de estacionariedade da cadeia) impõe uma restrição prévia em $K$ chamada de _irredutibilidade_ (_irreducibility_) na teoria das cadeias de Markov, que significa que o núcleo $K$ permite ``movimentos livres'' em todo o espaço de parãmetros. Ou seja, não importa o valor inicial de $\theta^{(0)}$, a sequência $\{\theta^{(t)} \}$ tem uma probabilidade não nula de eventualmente chegar em qualquer valor do espaço de parâmetros (uma condição suficiente é que $K(\theta^{(t)}, \cdot) > 0, \ \forall \ t)$. A existência de uma distribuição estacionária implica que as cadeias de Markov são ''recorrentes'', i.e., a cadeia assume valores em todos subconjuntos do espaço paramétrico um número infinito de vezes. 
+
+** Exercício 6.1 **
+Considere a cadeia de Markov definida por $X^{(t+1)} = \rho X^{(t)} + \epsilon_t$, com $\epsilon_t \sim \mathcal{N}(0,1)$. Simule $X^{(0)} \sim \mathcal{N}(0,1)$ e plote o histograma de uma amostra de $X^{(t)}$ para $t \leq 10^4$ e $\rho = 0.9$. Verifique a aderência da distribuição estacionária $\mathcal{N}\left(0,\frac{1}{(1-\rho^2)}\right)$.
+
+```{r}
+# Define a semente
+set.seed(6969)
+
+# Define o t máximo
+tamanho <- 10^4
+
+# Define o valor de rho
+rho <- 0.9
+
+# Amostra o valor inicial
+X_0 <- rnorm(0,1,n = 1)
+
+# Cria uma cadeia vazia
+cadeia <- vector()
+cadeia[1] <- X_0
+
+# Popula a cadeia
+for (i in 2:tamanho){
+  cadeia[i] <- rho*cadeia[i-1]+rnorm(0,1,n=1)
+}
+
+
+ts.plot(cadeia)
+hist(cadeia,freq=F,col="wheat2",main="")
+#curve(dnorm(cadeia,sd=1/sqrt(1-r^2)),add=T,col="tomato")
+```
+
+# Referências
+
+
