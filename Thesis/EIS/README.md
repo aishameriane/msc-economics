@@ -1,5 +1,7 @@
 # EIS
 
+Obs: I've changed project and I'm no longer using EIS, so this is not being updated.
+
 This folder contains the files I produced while studying about EIS. It is not directly my thesis problem, but some stuff I needed to understand. 
 Some of the codes were produced with C. Piazza.
 
