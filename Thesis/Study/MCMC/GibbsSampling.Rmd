@@ -7,6 +7,9 @@ header-includes:
    - \usepackage[brazil]{babel}
    - \usepackage{graphicx}
    - \usepackage{amsmath}
+   - \usepackage{amsfonts}
+   -  \usepackage{calrsfs}
+   - \usepackage{mathrsfs}
 output: html_document
 bibliography: references.bib
 ---
@@ -34,13 +37,17 @@ MathJax.Hub.Config({
 - Explaining the Gibbs Sampler [@casella_george1992]
 - Capítulo 3 de [@BLR]
 - Capítulo 1 de [@meyn_tweedie2012]
+- Capítulos 5, 6 e 7 de [@greenberg2008]
+- Capítulos 4 e 13 de [@durbin_koopman2012]
+- [@koop_korobilis2010]
+- Capítulo 1 e 2 de [@]
 
 # Carregando os pacotes
 
 ```{r, message = FALSE, warning = FALSE}
 chooseCRANmirror(graphics = FALSE, ind = 10)
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(ggplot2)
+pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify)
 ``` 
 
 # Métodos de Monte Carlo
@@ -99,40 +106,208 @@ Até o momento, estudamos o método de Monte Carlo com o foco de obter valores i.i
 
 Métodos de Cadeias de Markov via Monte Carlo (MCMC) foram introduzidos na econometria por volta de 1990, após serem desenvolvidos na estatística. Um dos motivos para o sucesso da técnica nos trabalhos de econometria bayesiana é sua facilidade de uso em comparação com a amostragem por importância. Apesar de ser um método de redução de variância de MC, IS torna-se pouco apelativo pois é uma técnica que se ajusta pontualmente aos problemas: é necessário encontrar uma boa aproximação para a densidade a posteriori e um amostrador por importância de uma aplicação (seja por causa de um modelo ou até mesmo um determinado conjunto de dados) pode não servir para outras aplicações. Os métodos de MCMC, por outro lado, se mostram mais fácil de implementar sem a necessidade de despender tanto tempo procurando pelas densidades candidatas [@BLR]. 
 
-Por não imporem muitas restrições nas densidades candidatas, os métodos de MCMC tem ampla aplicabilidade. No entando, sua performance é bastante variável e depende da complexidade do problema que se quer resolver. Como dito anteriormente, intuitivamente o  método consiste em produzir aproximações para integrais e outras quantidades de interesse a partir de uma Cadeiade Markov $\{\theta^{(t)}\}$ cuja distribuição limite é exatamente a densidade que temos interesse. Esta ideia de utilizar o comportamento assintótico de uma cadeia de Markov surgiu mais ou menos na mesma época do primeiro algorítmo de Monte Carlo, porém não havia recursos computacionais suficientes na época que permitissem sua disseminação [@bchoice].
+Por não imporem muitas restrições nas densidades candidatas, os métodos de MCMC tem ampla aplicabilidade. No entando, sua performance é bastante variável e depende da complexidade do problema que se quer resolver. Intuitivamente o  método consiste em produzir aproximações para integrais e outras quantidades de interesse a partir de uma Cadeiade Markov $\{\theta^{(t)}\}$ cuja distribuição limite é exatamente a densidade que temos interesse. Esta ideia de utilizar o comportamento assintótico de uma cadeia de Markov surgiu mais ou menos na mesma época do primeiro algorítmo de Monte Carlo, porém não havia recursos computacionais suficientes na época que permitissem sua disseminação [@bchoice].
 
 Os métodos de MCMC mais conhecidos são o _amostrador de Gibbs_ (do inglês _Gibbs Sampler_) e o algoritmo de _Metropolis-Hastings_ (MH), sendo que este último se relaciona com amostragem por importância. Ambos métodos podem ser combinados, dando origem ao _Metropolis within Gibbs_, para o caso onde não é possível implementar um amostrador de Gibbs sozinho. Uma vez que são métodos de MCMC, eles são baseados na geração de amostras da posteriori que não são independentes entre si [@BLR].
 
-### Uma breve introdução às Cadeias de Markov
+### Uma breve introdução aos processos estocásticos às Cadeias de Markov
 
-Uma Cadeia de Markov $\{\theta^{(t)}\}$ é uma sequência de variáveis aleatórias não-independentes $\theta^{(0)}, \theta^{(1)}, \theta^{(2)}, \ldots, \theta^{(t)}, \ldots$ tais que a densidade de probabilidade de $X^{(t+1)}$ condicional aos valores passados depende apenas de $\theta^{(t)}$, isto é, uma Cadeia de Markov tem como característica sua ``perda de memória'' _exceto_ com relação ao passado imediatamente anterior [@meyn_tweedie2012]. A probabilidade condicional de $\theta^{(t+1)}$ dado os valores anteriores é chamada de _núcleo de transição_ (do inglês _transition kernel_) ou _núcleo de Markov_ (_Markov Kernel_) e é denotado por $K$:
+A teoria de processos estocásticos se ocupa de investigar a estrutura de famílias de variáveis aleatórias $\{X_\theta \}$ indexadas por um parâmetro $\theta$, em que $\theta \in \Theta$ ($\Theta$ é chamado de conjunto indexador). Em praticamente todas as aplicações, $\Theta$ representa o tempo. A _realização_ de um processo estocástico $\{X_\theta, \theta \in \Theta \}$ é quando associamos, a cada $\theta \in \Theta$, um dos possíveis valores de $X_\theta$. Por exemplo, no caso de $\theta$ assumir valores discretos (quando $\Theta=\{0, 1,2, 3, \ldots \}$) e $X_\theta$ representar o resultado de uma moeda ($1$ para cara e $0$ para coroa), então a sequência $01001101110001111110$ é uma realização possível deste processo estocástico considerando $20$ lançamentos da moeda. Os valores de $X_\theta$ podem ser unidimensionais, bidimensionais, $n$-dimensionais ou terem uma estrutura mais geral ainda. No caso onde $X_n$ é o resultado do lançamento de um dado, seus valores possíveis pertencem ao conjunto $\{1,2,3,4,5,6 \}$ e uma realização do processo poderia ser $5,1,3,2,2,4,1,6,3,6,\ldots$. Nestes dois exemplos, as variáveis aleatórias são independentes, porém essa não é a regra quando lidamos com processos estocásticos [@karlin1975].
+
+Os principais elementos que distinguem os processos estocásticos são o _estado de espaços_, o _parâmetro indexador_ e a natureza da relação entre as variáveis aleatórias $X_t$. Essas classificações foram retiradas de [@karlin1975], sendo que aqui iremos nos preocupar apenas com as duas primeiras classificações.
+
+\begin{itemize}
+\item[a.] **Estado de espaços (S)**: Este é o espaço onde todos os valores possíveis de cada $X_t$ estão. No caso onde $S=(0,1,2,\ldots)$ nós dizemos que $S$ é um estado de espaços discreto. Já  quando $S = \R$, então dizemos que $X_\theta$ é um processo estocástico que assume valores reais. E no caso de $S$ ser um espaço euclidiano de $k$ dimensões, então $X_\theta$ é um processo vetorial de dimensão $k$ (\emph{$k$-vector process}). A escolha de $S$ não é única de acordo com o fenômeno físico a ser estudado, porém usualmente uma escolha acabará se sobressaindo como a mais apropriada.
+\item[b.] **Conjunto indexador ($\Theta$):** Se $\Theta = (0,1,\ldots)$ então dizemos que $X_\theta$ é um processo estocástico a tempo discreto, sendo que uma notação usual, neste caso, é $X_n$. Se $\Theta = [0, +\infty)$, então $X_\theta$ é um processo em tempo contínuo. Note que não necessariamente $\Theta$ será unidimensional: no caso de ondas no oceano, podemos usar a latitude e a longitude como $\theta = (\theta_1, \theta_2)$ e neste caso $X_\theta$ pode representar a altura da onda na coordenada $\theta$. Nesta disciplina como usaremos as cadeias de Markov para simulação, iremos considerar apenas processos em tempo discreto.
+\end{itemize}
+
+Uma Cadeia de Markov $\{\theta^{(t)}\}$ é uma sequência de variáveis aleatórias não-independentes $\theta^{(0)}, \theta^{(1)}, \theta^{(2)}, \ldots, \theta^{(t)}, \ldots$ tais que a densidade de probabilidade de $X^{(t+1)}$ condicional aos valores passados depende apenas de $\theta^{(t)}$, isto é, uma Cadeia de Markov tem como característica sua ``perda de memória'' _exceto_ com relação ao passado imediatamente anterior [@meyn_tweedie2012]. Posto de outra maneira, um _processo Markoviano_ é um processo com a propriedade de que, dado o valor $X_t$, o valor de $X_s$, $s > t$, não depende dos valores de $X_u$, $u < t$, ou seja, a probabilidade do comportamento futuro do processo, quando o estado atual é totalmente conhecido, não depende de informações adicionais a respeito das informações passadas. Formalmente, um processo é dito ser Markoviano se
+\begin{align*}
+\P(a < X_t \leq b| X_{t_1}) &= x_1, X_{t_2} = x_2, \ldots, X_{t_n} = x_n)\\
+&= \P(a < X_t \leq b|X_{t_n} = x_n)
+\end{align*}
+sempre que $t_1 < t_2 < \ldots < t_n < t$.
+
+A probabilidade condicional de $\theta^{(t+1)}$ dado os valores anteriores é chamada de _núcleo de transição_ (do inglês _transition kernel_) ou _núcleo de Markov_ ( _Markov Kernel_ ) e é denotado por $K$:
 $$\theta^{(t+1)}\ |\ \theta^{(0)}, \theta^{(1)}, \theta^{(2)}, \ldots, \theta^{(t+1)} \sim K\left(\theta^{(t)}, \theta^{(t+1)}\right).$$
-Se pensarmos na cadeia de Markov como uma sequência de v.a. que evoluem ao longo do tempo, o núcleo de transição é a probabilidade de mudança de um estado para outro, condicional ao estado atual. Formalmente, temos:
+Se pensarmos na cadeia de Markov como uma sequência de v.a. que evoluem ao longo do tempo, o núcleo de transição é a probabilidade de mudança de um estado para outro (ainda nesta seção será dada uma definição alternativa, fornecida pelo texto do [@greenberg2008]), condicional ao estado atual. Formalmente, temos:
 
-**Definição 4.01** (Adaptado de [casella_MC]) **Núcleo de transição**
-
+**Definição 4.1** Núcleo de Transição (adaptado de [@casella_MC])\\
 Um núcleo de transição é uma função $K$ definida em $\Theta \times \mathcal{B}(\Theta)$ tal que:
-1. $\forall \ \theta in \Theta$, $K(\theta, \cdot)$ é uma medida de probabilidade;
-2. $\forall \ A \in \mathcal{B}(\Theta)$, $K(\cdot, A)$ é mensurável.
-
+\begin{enumerate}
+\item $\forall \ \theta \in \Theta$, $K(\theta, \cdot)$ é uma medida de probabilidade;
+\item $\forall \ A \in \mathcal{B}(\Theta)$, $K(\cdot, A)$ é mensurável.
+\end{enumerate}
 Quando $\Theta$ é discreto, então o núcleo de transição é simplesmente a matriz de transição $K$ com elementos dados por
 
-$$\mathbb{P}_{mn} = \mathbb{P}\left(\theta^{(t+1)} = n|\theta^{(t)} = m\right), \qquad m,n \in \Theta   $$
-
-A cadeia $\left(\theta^{(t)} \right)$ é usualmente definida para $t \in \mathbb{N}$ do que para $t \in \mathbb{Z}$, de maneira que a distribuição de $\theta^{(0)}$, o estado inicial da cadeia, desempenha um papel importante na nossa análise. No caso discreto, em que $K$ é uma matriz de transição, dada uma distribuição inicial $\mu = (\omega_1, \omega_2, \ldots)$, a densidade marginal de $\theta^{(1)}$ é obtida através do produto matricial
-$$\mu_1 = \mu \cdot K $$
+$$\mathbb{P}_{mn} = \mathbb{P}\left(\theta^{(t+1)} = n|\theta^{(t)} = m\right), \qquad m,n \in \Theta$$
 e, por múltiplos produtos, temos $\theta^{(t)} \sim \mu_t = \mu \cdot K^t$.
 
-Por exemplo, a forma mais simples de uma cadeia de Markov é o _passeio aleatório_ (_random walk_), que satisfaz:
+Podemos então reescrever nossa definição de cadeia de Markov usando o núcleo de transição como segue.
+
+**Definição 4.02** Cadeia de Markov (adaptado de [@casella_MC])
+Dado um núcleo de transição $K$, uma sequência $X_0, X_1, \ldots, X_n, \ldots$ de variáveis aleatórias é uma cadeia de Markov, denotada por $\{X_n \}$, se, para qualquer $t$, a distribuição condicional de $X_t$ dado $x_{t-1}, x_{t-2}, \ldots, x_0$ é a mesma que a distribuição de $X_t$ dado $x_{t-1}$, isto é:
+\begin{align*}
+\P(X_{k+1} \in A | x_0, x_1, x_2, \ldots, x_k) &= \P(X_{k+1} \in A | x_k)
+&= \int_A K(x_k, dx)
+\end{align*}
+
+Por exemplo, a forma mais simples de uma cadeia de Markov é o \emph{passeio aleatório} (do inglês \emph{random walk}), que satisfaz:
 $$\theta^{(t+1)} = \theta^{(t)} + \epsilon_t, \qquad \epsilon_t \sim \mathcal{N}(0,1).$$
 Neste caso, o núcleo de transição $K\left(\theta^{(t)}, \theta^{(t+1)}\right)$ corresponde à densidade normal de média $\theta^{(t)}$ e variância unitária.
 
-Na maioria das aplicações MCMC, as cadeias de Markov construídas possuem um comportamento estável. De fato, essas cadeias têm, por construção, uma _distribuição de probabilidade estacionária_ (ou simplesmente _distribuição estacionária_, do inglês _stationary probability distribution_). Isso significa que existe uma distribuição de probabilidade $f$ tal que se $\theta^{(t)} \sim f$, então $\theta^{(t+1)} \sim f$. Formalmente, a relação entre o núcleo de transição e a distribuição estacionária de uma cadeia de Markov é que eles satisfazem
-$$\int_\Theta K\left(\theta^{(t)},\theta^{(t)}\right)f\left(\theta^{(t)}\right)d\theta^{(t)} = f\left(\theta^{(t+1)}\right) $$
+Uma notação alternativa é dada por  [@greenberg2008].
+Considere um processo estocástico indexado por $t$ e denotado por $X_t$, que toma valores em um conjunto finito $S = \{1,2, \ldots, s \}$. O índice $t$ pode ser interpretado como o instante de tempo ou a iteração. Para qualquer para de inteiros, $i, j \ \in S$, definimos $p_{ij}$ como a probabilidade que $X_{t+1} = j$ dado que $X_t = i$, isto é
+$$p_{ij} = \mathbb{P}(X_{t+1} = j | X_t = i), \ \forall i,j \ \in S $$.
+E dizemos que $p_{ij}$ são as probabilidades de transição. A hipótese de que a distribuição de probabilidade no tempo $t+1$ depende apenas do estado do sistema no período $t$ é chamada de _propriedade Markoviana_ e resulta em um processo estocástico chamado de _processo de Markov_.
 
-De acordo com [@casella_MCR], a existência da distribuição estacionária (ou a propriedade de estacionariedade da cadeia) impõe uma restrição prévia em $K$ chamada de _irredutibilidade_ (_irreducibility_) na teoria das cadeias de Markov, que significa que o núcleo $K$ permite ``movimentos livres'' em todo o espaço de parãmetros. Ou seja, não importa o valor inicial de $\theta^{(0)}$, a sequência $\{\theta^{(t)} \}$ tem uma probabilidade não nula de eventualmente chegar em qualquer valor do espaço de parâmetros (uma condição suficiente é que $K(\theta^{(t)}, \cdot) > 0, \ \forall \ t)$. A existência de uma distribuição estacionária implica que as cadeias de Markov são ''recorrentes'', i.e., a cadeia assume valores em todos subconjuntos do espaço paramétrico um número infinito de vezes. 
+Uma vez que $p_ij}$ são probabilidades, temos $p_{ij} \geq 0$. Mais ainda, como o processo fica restrito a $S$, temos
+$$\sum\limits_{j=1}^s p_{ij} = 1$$
+(isso implica que a soma das probabilidades do sistema sair da posição $i$ e ir para qualquer outra posição é sempre $1$). Será conveniente também definir a _matriz de transição_ de dimensão $s \times s$ e denotada por $P = \{p_{ij} \}$. A $i$-ésima linha de $P$, $(p_{i1}, p_{i2}, \ldots, p_{is})$ especifica a distribuição do processo $t+1$, dado que está no estado $i$ no tempo $t$. 
 
-** Exercício 6.1 **
+Por exemplo, a matriz de transição abaixo
+\[\tag{01}
+P =
+\begin{pmatrix}
+0.750 & 0.250 \\
+0.125 & 0.875
+\end{pmatrix}
+\]
+especifica que o processo permanece no estado $1$ com probabilidade $.750$ e se move para o estado $2$ com probabilidade $.250$ (caso comece no estado $1$). Analogamente, se o sistema começa no estado $2$, existe uma probabilidade de $87.5\%$ de continuar nesse estado e $12.5\%$ de mudar para o estado $1$.
+
+Na maioria das aplicações MCMC, as cadeias de Markov construídas possuem um comportamento estável. De fato, essas cadeias têm, por construção uma distribuição de probabilidade estacionária (**Obs:**É preciso tomar cuidado para não confundir a existência de uma distribuição estacionária com o conceito de estacionariedade (estrita). No livro de [@karlin1975] diz o seguinte: _A Markov process is said to have stationary transition probabilities if $P(x, s; t, A)$ (a probabilidade de transição) is a function only of $t-s$. Remember that $P(x, s; t, A)$ is a conditional probability, given the present state. Therefore,_ **_there is no reason to expect that a Markov Process with stationary transition probabilities is a stationary process, and this is indeed the case._**) Um exemplo de processo de Markov que não é estacionário é o movimento Browniano.} (ou simplesmente \emph{distribuição estacionária}, do inglês _stationary probability distribution_). Isso significa que existe uma distribuição de probabilidade $f$ tal que se $\theta^{(t)} \sim f$, então $\theta^{(t+1)} \sim f$. Formalmente, a relação entre o núcleo de transição e a distribuição estacionária de uma cadeia de Markov é que eles satisfazem
+$$\int_\Theta K\left(\theta^{(t)},\theta^{(t)}\right)f\left(\theta^{(t)}\right)d\theta^{(t)} = f\left(\theta^{(t+1)}\right). $$
+
+De acordo com [@casella_MCR], a existência da distribuição estacionária (ou a propriedade de estacionariedade da cadeia) impõe uma restrição prévia em $K$ chamada de _irredutibilidade_ (_irreducibility_) na teoria das cadeias de Markov, que significa que o núcleo $K$ permite ''movimentos livres'' em todo o espaço de parãmetros. Ou seja, não importa o valor inicial de $\theta^{(0)}$, a sequência $\{\theta^{(t)} \}$ tem uma probabilidade não nula de eventualmente chegar em qualquer valor do espaço de parâmetros (uma condição suficiente é que $K(\theta^{(t)}, \cdot) > 0, \ \forall \ t)$. A existência de uma distribuição estacionária implica que as cadeias de Markov são ''recorrentes'', i.e., a cadeia assume valores em todos subconjuntos do espaço paramétrico um número infinito de vezes.
+
+Na notação do [@greenberg2008], antes de definir a distribuição estacionária, vamos voltar para a matriz $P$ dada em (1). Inicialmente, considere a distribuição do estado em $t+2$, dado que o sistema encontra-se em $i$ no tempo $t$. Essa distribuição é denotada por $p_{ij}^{(2)}$ e pode ser calculada da seguinte forma: para ir do estado $i$ para o estado $j$ em dois passos, o processo vai de $i$ no tempo $t$ para qualquer outro estado $k$ em $t+1$ e então vai de $k$ até $j$ em $t+2$. Essa transição ocorre com a seguinte probabilidade:
+
+$$p_{ij}^{(2)} = \sum_k p_{ik}\cdot p_{kj}\tag{02} $$
+Isso acontece porque precisamos considerar todos os possíveis $k$ para chegar até $j$. Por exemplo, na matriz (01), supondo que estamos no estado 1, podem acontecer duas coisas no primeiro instante de tempo: 1) permanecer no estado $1$ com probabilidade $0.750$ ou 2) passar para o estado $2$ com probabilidade $0.250$. Se ocorrer 1), então necessariamente no próximo instante de tempo precisaremos passar para o estado $2$. Essa primeira possibilidade ocorre com probabilidade $0.750 \times 0.250$= `r round(0.750*0.250,5)`. Já na outra possibilidade, precisaremos que ele permaneça no estado $2$, então isso ocorre com probabilidade $0.250 \times 0.875=$ `r round(0.250*0.875,5)`. A probabilidade de sair do estado $1$ no tempo $2$ para o estado $2$ no tempo $2$ será a soma dessas duas probabilidades:`r round(0.750*0.250,5)+round(0.250*0.875,5)`.  Isto é, se olharmos na equação (02), nosso $k$ assume valores $1$ e $2$, $i=1$ e $j=2$. O que acontece se multiplicarmos a matriz $P$ por ela mesma?
+
+\begin{align}
+P \times P &=
+\begin{pmatrix}
+0.750 & 0.250 \\
+0.125 & 0.875
+\end{pmatrix} \times 
+\begin{pmatrix}
+0.750 & 0.250 \\
+0.125 & 0.875
+\end{pmatrix}\nonumber\\
+&= \begin{pmatrix}
+0.750^2 + 0.250 \times 0.125 & 0.750\times 0.250 + 0.250 \times 0.875 \\
+0.125\times 0.750 + 0.875\times 0.125 & 0.125\times 0.250 + 0.875^2
+\end{pmatrix}\\
+&= \begin{pmatrix}
+0.5938 & 0.4062 \\
+0.2031 & 0.7969
+\end{pmatrix}
+\end{align}\tag{03}
+Note que o valor que está na primeira linha e segunda coluna, $0.4062$ é justamente a probabilidade de iniciar o sistema na posição $1$ e terminar na posição $2$ em $t=2$. Este resultado é esperado, uma vez que a matriz de $p_{ij}^{(2)}$ é dada por $P\cdot P \equiv P^2$. Isso decorre da própria definição de produto matricial. Suponha que $C = A \times B$, com $A$ e $B$ $2\times2$. Então:
+
+\begin{align*}
+C = A \times B &=
+\begin{pmatrix}
+a_{11} & a_{12} \\
+a_{21} & a_{22}
+\end{pmatrix} \times 
+\begin{pmatrix}
+b_{11} & b_{12} \\
+b_{21} & b_{22}
+\end{pmatrix}\\
+&= \begin{pmatrix}
+a_{11}\cdot b_{11}+a_{12}\cdot b_{21} & a_{11}\cdot b_{12}+ a_{12}\cdot b_{22} \\
+a_{21}\cdot b_{11}+a_{22}\cdot b_{21} & a_{21}\cdot b_{12}+ a_{22}\cdot b_{22}
+\end{pmatrix}\\
+&= \begin{pmatrix}
+\sum_{k=1}^2 a_{1k}b_{k1} & \sum_{k=1}^2 a_{1k}b_{k2} \\
+\sum_{k=1}^2 a_{2k}b_{k1} & \sum_{k=1}^2 a_{2k}b_{k2}
+\end{pmatrix}.
+\end{align*}
+É possível, usando indução, demostrar que os valores de $p_{ij}^{(n)}$ são as entradas $ij$ da matriz $P^n$ (com $n \in \mathbb{N}$). Será conveniente definir $p_{ij}^{(0)}$ como $1$ se $i=j$ e $0$ caso contrário. Vamos agora ver algumas definições básicas e exemplos.
+
+Um exemplo simples é o de independência: assuma que todas as linhas de $P$ são idênticas, isto é, $p_{ij} = p_j \ \forall \ i$. Neste caso, a probabilidade de se mover do estado $i$ para o estado $j$ depende apenas de $j$. Um lançamento independente de uma moeda é um exemplo clássico. Defina cara como o estado $1$ e coroa como o estado $2$ e defina $p_1 \equiv \mathbb{P}(cara) = 2/3$. É claro então que $p_2 \equiv \mathbb{P}(coroa) = 1 - \mathbb{P}(cara) = 1-1/3 = 2/3$. A matriz de transição então será dada por:
+\begin{align*}
+P &=
+\begin{pmatrix}
+1/3 & 2/3 \\
+1/3 & 2/3
+\end{pmatrix}.
+\end{align*}
+Perceba que não importa se saiu cara ou coroa no lançamento anterior, continuamos com a mesma probabilidade de $1/3$ e $2/3$.
+
+_Acessibilidade, comunicatividade_: Se $p_{ij}^{(n)}>0$ para algum $n\geq 1$, dizemos que $j$ é acessível a partir de $i$ e escrevemos $i \rightarrow j$. Caso $i \rightarrow j$ e $j \rightarrow i$, dizemos de $i$ e $j$ se comunicam e escrevemos $i \leftrightarrow j$. Pode-se mostrar que a relação de comunicação entre estados define uma relação de equivalência, isto é, $i \leftrightarrow i$ (reflexibilidade), $i \leftrightarrow j \Longleftrightarrow j \leftrightarrow i$ (simetria) e se $i \leftrightarrow j$ e $j \leftrightarrow k$, então $i \leftrightarrow k$ (transitividade). Uma prova pode ser vista em [@karlin1975}.
+
+A relação de equivalência define como as classes dentro dos estados se comunicam. Uma ideia importante da teoria agora pode ser definida: um processo de Markov é dito *irredutível* se há apenas uma classe de equivalência, isto é, se todo mundo se comunica com todo mundo (caso houvesse $2$ classes de equivalência, haveriam dois grupos onde todo mundo de cada grupo se comunica, porém os grupos não tem ligação entre si). Isso é equivalente a dizer que partindo de um estado $i$ o processo pode parar em qualquer outro estado com probabilidade não nula disso acontecer.
+
+Um exemplo de matriz $P$ de um processo não irredutível é dada por:
+\begin{align*}
+P &=
+\begin{pmatrix}
+P_1 & 0 \\
+0 & P_2
+\end{pmatrix}.
+\end{align*}
+em que $P_1$ e $P_2$ são de dimensão $m\times m$. Se o processo começar em qualquer um dos $m$ primeiros estados (ou seja, em $P_1$), ele nunca sairá de $P_1$. Da mesma forma, se o processo começa em $P_2$, ele nunca sairá de $P_2$.
+
+Outra propriedade importante de uma cadeia é a _peridiocidade_. Considere uma matriz de transição que assume a seguinte forma:
+\begin{align*}
+P &=
+\begin{pmatrix}
+0 & P_1 \\
+P_2 & 0
+\end{pmatrix}.
+\end{align*}
+em que $P_1$ e $P_2$ são de dimensão $m\times m$. Se em $t=1$ o processo está em um dos primeiro $m$ estados, então ele necessariamente irá para $m+1, m+2$ ou $2m$. Analogamente, em $t=3$, o processo terá que voltar para os primeiros $m$ estados e assim por diante. Isto significa que a série retorna a um estado apenas nos valores de $n$ pares e neste caso dizemos que o período da cadeia é $2$. Se o período é igual a $1$ para todos os estados, a cadeia é dita ser _aperiódica_. Mais formalmente, se $i \rightarrow i$, então o \emph{período de} $i$ é o maior divisor comum dos inteiros no conjunto $A = \{n \geq 1: p_{ii}^{(n)} > 0\}$. Em palavras, se $d_i$ é o período de $i$, então $p_{ii}^{(n)}=0$ sempre que $n$ não for um múltiplo de $d_{i}$, e $d_i$ é o maior inteiro com esta propriedade. Note que uma cadeia é aperiódica se $p_{ii}^{(n)}>0$ para todo $i$ para um valor de $n$ suficientemente largo.
+
+A distribuição de probabilidade $\pi = (\pi_1, \ldots, \pi_s)'$ é dita ser a _distribuição invariante_ de $P$ se $\pi' = \pi'P$ ou,
+\[
+\pi_j = \sum\limits_i \pi_i p_{ij}, \qquad j = 1, \ldots, s.
+\]
+O lado direito da equação é a probabilidade do processo estar no estado $j$ em qualquer $t$ marginalizado sobre os estados $t-1$, ele pode ser interpretado como a probabilidade de iniciar o processo no estado $i$ com probabilidade $\pi_i$ e então se mover para o estado $j$ com probabilidade $p_{ij}$. O fato de que o valor resultante é $pi_j$ é o que faz de $\pi$ uma distribuição invariante: se os estados são escolhidos de acordo com $\pi$, a probabilidade é $\pi_j$ de que o sistema esteja em um estado $j$ a qualquer período de tempo. Note ainda que $\pi'$ é o vetor característico da matriz $P$ com raiz característica igual a $1$.
+
+Vamos descobrir quem é a distribuição invariante da matriz $P$ dada em (1), utilizando a relação $\pi'P=\pi'$:
+
+\begin{align*}
+(\pi_1, \pi_2)\begin{pmatrix}
+0.750 & 0.250 \\
+0.125 & 0.875
+\end{pmatrix} &= (\pi_1, \pi_2) \\
+0.750 \cdot \pi_1 + 0.125 \cdot \pi_2 = \pi_1.
+\end{align*}
+Agora, usamos o resultado que $\pi_2 = 1 - \pi_1$ para obter
+$$\pi_1 = 0.750\cdot \pi_1 + 0.125(1-\pi_1) \rightarrow 0.375 \cdot \pi_1 = 0.125 \rightarrow \pi_1 = \frac{1}{3},$$
+o que implica que $\pi = (1/3, 2/3)$. 
+
+A existência e unicidade das distribuições invariantes são um aspecto importante da teoria. Em particular, irredutibilidade é uma condição necessária para que $P$ tenha uma distribuição invariante única. Um caso especial de uma cadeia de markov irredutível e aperiódica é dado por aquela onde $p_{ij}>0$. Neste caso, o seguinte teorema é válido:
+
+**Teorema 1** (adaptado de [@greenberg2008], página 79)
+
+Suponha que o espaço de estados $S$ é finito e $p_{ij}>0 \ \forall \ i,j$. Então, existe uma única distribuição de probabilidade $\pi_j$, $j\in S$, tal que $\sum_i \pi_i p_{ij} = \pi_j \ \forall\ j \in S$. Mais ainda,
+$$|p_{ij}^{(n)} - \pi_j| \leq r^n,$$
+em que $0 < r < 1$, para todo $i, j$ e $n \geq 1$.
+
+De acordo com [@greenberg2008]. este teorema nos diz que, em um estado de espaços finito onde todas probabilidades são positivas, não apenas existe uma única distribuição invariante, $\pi_j$, como também as probabilidades de transição $p_{ij}^{(n)}$ convergem a uma taxa geométrica ($r^n$) para $\pi_j$. Note que este último resultado, para valores suficientemente grandes de $n$, independe do estado inicial $i$. Outra maneira de dizer isso é que $P^n$ converge para uma matriz onde as linhas são dadas por $\pi'$.
+
+Vamos voltar na nossa matriz dada em (1) e calcular $P^{10}$ e $P^{20}$:
+
+\begin{align*}
+P^{10} = \begin{pmatrix}
+0.339 & 0.661 \\
+0.330 & 0.670
+\end{pmatrix} & \qquad
+P^{20} = \begin{pmatrix}
+0.333 & 0.667 \\
+0.333 & 0.667
+\end{pmatrix}.
+\end{align*}
+Observe que $P^n$ alcança sua distribuição invariante (até pelo menos a terceira casa decimal) quando $n=20$ (nem foi necessário chegar em $n=30$, o infinito!).
+
+O teorema (1) forma a base dos métodos de MCMC. Ele nos diz que se uma cadeia de Markov satisfaz certas condições, a distribuição de probabilidade de sua $n$-ésima iteração é, para $n$ grande, muito próxima da distribuição invariante. Posto de outra forma, as retiradas $n+1$, $n+2$, etc, para $n$ grande serão amostradas da distribuição invariante. Em termos de simulação, isso implica que se conseguirmos encontrar um processo de Markov para o qual a distribuição invariante é a nossa distribuição alvo, podemos simular retiradas do processo estocástico para gerar valores da distribuição que temos interesse.
+
+**Exercício 6.1** (retirado de [@casella_MC])
+
 Considere a cadeia de Markov definida por $X^{(t+1)} = \rho X^{(t)} + \epsilon_t$, com $\epsilon_t \sim \mathcal{N}(0,1)$. Simule $X^{(0)} \sim \mathcal{N}(0,1)$ e plote o histograma de uma amostra de $X^{(t)}$ para $t \leq 10^4$ e $\rho = 0.9$. Verifique a aderência da distribuição estacionária $\mathcal{N}\left(0,\frac{1}{(1-\rho^2)}\right)$.
 
 ```{r}
@@ -157,11 +332,74 @@ for (i in 2:tamanho){
   cadeia[i] <- rho*cadeia[i-1]+rnorm(0,1,n=1)
 }
 
+cores <- brewer.pal(6, "Dark2")
+cores2 <- brewer.pal(10, "Paired")
+cadeiadf <- data.frame(1:tamanho, cadeia)
 
-ts.plot(cadeia)
-hist(cadeia,freq=F,col="wheat2",main="")
-#curve(dnorm(cadeia,sd=1/sqrt(1-r^2)),add=T,col="tomato")
+# Plot os the time series
+p1 <- autoplot(as.ts(cadeia), main = "Evolução dos dados ao longo do tempo", xlab = "Tempo", ylab = TeX('X^{(t+1)}'), colour = cores2[10]) +  
+  theme(plot.title=element_text(size = 12),
+              text=element_text(size = 12),
+              axis.text.x=element_text(colour="black", size = 10),
+              axis.text.y=element_text(colour="black", size = 10),
+              panel.background = element_blank(),
+              panel.grid.major = element_line(colour = "gray"),
+              panel.grid.minor = element_line(),
+              panel.border = element_rect(colour = "black", fill = NA))
+
+# Histogram overlaid with kernel density curve
+p2 <- ggplot(cadeiadf, aes(x=cadeiadf$cadeia)) + 
+    geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
+                   binwidth=.5, fill = cores[3], colour = cores[3], alpha=0.5)+
+   stat_function(
+     fun = function(x, mean, sd, n, bw){
+       dnorm(x =x, mean = mean, sd = sd)
+   },
+   args = c(mean = 0, sd = 1/sqrt(1-rho^2), n = length(cadeia), bw = .5), colour = cores2[10], size = 1)+
+  labs(title= TeX('Simulando $X^{(t+1)}=\\rho X^{(t)} + \\epsilon_t$, $\\epsilon_t \\sim N(0,1)$, $\\rho = .9$'), y = "", x= TeX('$X^{(t+1)}$'), color = "Variável") +
+    theme(plot.title=element_text(size = 12),
+              text=element_text(size = 12),
+              axis.text.x=element_text(colour="black", size = 10),
+              axis.text.y=element_text(colour="black", size = 10),
+              panel.background = element_blank(),
+              panel.grid.major = element_line(colour = "gray"),
+              panel.grid.minor = element_line(),
+              panel.border = element_rect(colour = "black", fill = NA))
+p2 <- p2 + geom_vline(aes(xintercept=mean(cadeia)),
+            color="purple", linetype="dashed", size=1) + annotate("text", x = 3.5, y = 0.17, label = paste0("Média dos\n valores simulados\n", round(mean(cadeia),4)), size = 2.5)
+
+#pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2018-01\\Notas de Aula 2018\\Imagens notas de aula\\Cap 4\\Fig-4.007.pdf", width = 10, height = 4)
+grid.arrange(p1, p2, ncol = 2, nrow = 1)
+#dev.off()
 ```
+
+No histograma foi plotada a distribuição $\mathcal{N}\left(0, \frac{1}{1-\rho^2}\right)$, por ser a distribuição estacionária da cadeia. Para verificar, vamos calcular a média e a variância, assumindo $X^{(t+1)} = X^{(t)}$:
+
+\begin{align*}
+\mathbb{E}[X^{(t+1)}] &= \mathbb{E}[\rho X^{(t)} + \epsilon_t]\\
+\mathbb{E}[X] &= \mathbb{E}[\rho X + \epsilon_t]\\
+\mathbb{E}[X] &= \rho\mathbb{E}[X] + \mathbb{E}[\epsilon_t]\\
+(1-\rho)\mathbb{E}[X] &=  0\\
+\mathbb{E}[X] &= 0
+\end{align*}
+
+Se a média é $0$, temos $Var[X] = \mathbb{E}[X^2] - (\mathbb{E}[X])^2 = \mathbb{E}[X^2] - (0)^2 = \mathbb{E}[X^2]$. Então:
+
+\begin{align*}
+\mathbb{E}[X^2] &= \mathbb{E}[(\rho X + \epsilon_t)^2]\\
+\mathbb{E}[X^2] &= \mathbb{E}[(\rho X)^2 + 2\cdot\rho X\epsilon_t +\epsilon_t^2]\\
+\mathbb{E}[X^2] &= \mathbb{E}(\rho X)^2 + 2\mathbb{E}(\rho X)\mathbb{E}(\epsilon_t) +\mathbb{E}(\epsilon_t^2)\\
+\mathbb{E}[X^2] &= \rho^2 \cdot \mathbb{E}[X^2] + 0 + 1\\
+(1-\rho^2)\mathbb{E}[X^2] &= 1\\
+\mathbb{E}[X^2] &= \frac{1}{(1-\rho^2)}
+\end{align*}
+
+-----
+[@casella_MCR] diz que no caso de cadeias recorrentes, a distribuição estacionária é dita também _distribuição limítrofe_ (do inglês _limiting distribution_ <span style="color:red">conferir essa tradução</span>), pois a distribuição limite de $X^{(t)}$ é $f$ para quase todo valor inicial $X^0$. Essa propriedade também é conhecida como _ergodicidade_ e é o que vai garantir os resultados obtidos com MCMC. Note que se um determinado núcleo (_kernel_) $K$ produz uma cadeia de Markov ergódica com distribuição estacionária dada por $f$, gerar uma cadeia a partir de $K$ irá eventualmente amostrar valores de $f$.
+
+**<span style="color:red">Para refletir:</span>** _Como mostrar que o passeio aleatório_ $X^{(t+1)} = X^{(t)} + \varepsilon_{t+1}$  _não tem distribuição estacionária?_ Bom, dá para perceber que a [variância incondicional depende do tempo](http://economia.unipv.it/pagp/pagine_personali/erossi/rossi_intro_stochastic_process_PhD.pdf), mas será que é o único jeito?
+
+
 
 # Referências
 
