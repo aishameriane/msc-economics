@@ -1,7 +1,7 @@
 ---
 title: "Amostrador de Gibbs"
 author: "Aishameriane Schmidt"
-date: "Última atualização: abril 2018"
+date: "Última atualização: 02 abril 2018"
 header-includes:
    - \usepackage{bigints}
    - \usepackage[brazil]{babel}
@@ -10,6 +10,7 @@ header-includes:
    - \usepackage{amsfonts}
    -  \usepackage{calrsfs}
    - \usepackage{mathrsfs}
+   - \usepackage{upgreek}
 output: html_document
 bibliography: references.bib
 ---
@@ -40,7 +41,7 @@ MathJax.Hub.Config({
 - Capítulos 5, 6 e 7 de [@greenberg2008]
 - Capítulos 4 e 13 de [@durbin_koopman2012]
 - [@koop_korobilis2010]
-- Capítulo 1 e 2 de [@]
+- Capítulo 1 e 2 de [@karlin1975]
 
 # Carregando os pacotes
 
@@ -100,7 +101,7 @@ converge para
 \frac{\int_{\Theta g(\theta)f(x|\theta)\pi(\theta)d\theta}}{\int_{\Theta} f(x|\theta)\pi(\theta)d\theta}
 \end{equation}
 
-## MCMC
+# MCMC
 
 Até o momento, estudamos o método de Monte Carlo com o foco de obter valores i.i.d. de uma densidade de interesse $f$, tanto de maneira direta, como de maneira indireta (via amostragem por importância). Agora iremos mudar o foco para métodos que geram uma amostra _correlacionada_ de valores a partir de uma Cadeia de Markov (do inglês _Markov Chain_). A teoria de processos estocásticos (mais especificamente, as propriedades de cadeias de Markov) pode ser explorada para obter densidades candidatas mesmo quando um amostrador por importância não é facilmente encontrado. Mais especificamente, métodos de MCMC colocam poucos ``requisitos'' nas densidades candidatas $f$, mesmo quando não conseguimos encontrar um amostrador por importância de maneira fácil. Além disso, pode-se dividir um problema de alta dimensão em vários pequenos problemas de menor dimensão, tornando o processo mais eficiente [@casella_MCR]
 
@@ -110,7 +111,7 @@ Por não imporem muitas restrições nas densidades candidatas, os métodos de MCMC 
 
 Os métodos de MCMC mais conhecidos são o _amostrador de Gibbs_ (do inglês _Gibbs Sampler_) e o algoritmo de _Metropolis-Hastings_ (MH), sendo que este último se relaciona com amostragem por importância. Ambos métodos podem ser combinados, dando origem ao _Metropolis within Gibbs_, para o caso onde não é possível implementar um amostrador de Gibbs sozinho. Uma vez que são métodos de MCMC, eles são baseados na geração de amostras da posteriori que não são independentes entre si [@BLR].
 
-### Uma breve introdução aos processos estocásticos às Cadeias de Markov
+## Uma breve introdução aos processos estocásticos às Cadeias de Markov
 
 A teoria de processos estocásticos se ocupa de investigar a estrutura de famílias de variáveis aleatórias $\{X_\theta \}$ indexadas por um parâmetro $\theta$, em que $\theta \in \Theta$ ($\Theta$ é chamado de conjunto indexador). Em praticamente todas as aplicações, $\Theta$ representa o tempo. A _realização_ de um processo estocástico $\{X_\theta, \theta \in \Theta \}$ é quando associamos, a cada $\theta \in \Theta$, um dos possíveis valores de $X_\theta$. Por exemplo, no caso de $\theta$ assumir valores discretos (quando $\Theta=\{0, 1,2, 3, \ldots \}$) e $X_\theta$ representar o resultado de uma moeda ($1$ para cara e $0$ para coroa), então a sequência $01001101110001111110$ é uma realização possível deste processo estocástico considerando $20$ lançamentos da moeda. Os valores de $X_\theta$ podem ser unidimensionais, bidimensionais, $n$-dimensionais ou terem uma estrutura mais geral ainda. No caso onde $X_n$ é o resultado do lançamento de um dado, seus valores possíveis pertencem ao conjunto $\{1,2,3,4,5,6 \}$ e uma realização do processo poderia ser $5,1,3,2,2,4,1,6,3,6,\ldots$. Nestes dois exemplos, as variáveis aleatórias são independentes, porém essa não é a regra quando lidamos com processos estocásticos [@karlin1975].
 
@@ -242,23 +243,23 @@ _Acessibilidade, comunicatividade_: Se $p_{ij}^{(n)}>0$ para algum $n\geq 1$, di
 A relação de equivalência define como as classes dentro dos estados se comunicam. Uma ideia importante da teoria agora pode ser definida: um processo de Markov é dito *irredutível* se há apenas uma classe de equivalência, isto é, se todo mundo se comunica com todo mundo (caso houvesse $2$ classes de equivalência, haveriam dois grupos onde todo mundo de cada grupo se comunica, porém os grupos não tem ligação entre si). Isso é equivalente a dizer que partindo de um estado $i$ o processo pode parar em qualquer outro estado com probabilidade não nula disso acontecer.
 
 Um exemplo de matriz $P$ de um processo não irredutível é dada por:
-\begin{align*}
-P &=
+\begin{align}\tag{02}
+P_R &=
 \begin{pmatrix}
 P_1 & 0 \\
 0 & P_2
 \end{pmatrix}.
-\end{align*}
+\end{align}
 em que $P_1$ e $P_2$ são de dimensão $m\times m$. Se o processo começar em qualquer um dos $m$ primeiros estados (ou seja, em $P_1$), ele nunca sairá de $P_1$. Da mesma forma, se o processo começa em $P_2$, ele nunca sairá de $P_2$.
 
 Outra propriedade importante de uma cadeia é a _peridiocidade_. Considere uma matriz de transição que assume a seguinte forma:
-\begin{align*}
-P &=
+\begin{align}\tag{02}
+P_P &=
 \begin{pmatrix}
 0 & P_1 \\
 P_2 & 0
 \end{pmatrix}.
-\end{align*}
+\end{align}
 em que $P_1$ e $P_2$ são de dimensão $m\times m$. Se em $t=1$ o processo está em um dos primeiro $m$ estados, então ele necessariamente irá para $m+1, m+2$ ou $2m$. Analogamente, em $t=3$, o processo terá que voltar para os primeiros $m$ estados e assim por diante. Isto significa que a série retorna a um estado apenas nos valores de $n$ pares e neste caso dizemos que o período da cadeia é $2$. Se o período é igual a $1$ para todos os estados, a cadeia é dita ser _aperiódica_. Mais formalmente, se $i \rightarrow i$, então o \emph{período de} $i$ é o maior divisor comum dos inteiros no conjunto $A = \{n \geq 1: p_{ii}^{(n)} > 0\}$. Em palavras, se $d_i$ é o período de $i$, então $p_{ii}^{(n)}=0$ sempre que $n$ não for um múltiplo de $d_{i}$, e $d_i$ é o maior inteiro com esta propriedade. Note que uma cadeia é aperiódica se $p_{ii}^{(n)}>0$ para todo $i$ para um valor de $n$ suficientemente largo.
 
 A distribuição de probabilidade $\pi = (\pi_1, \ldots, \pi_s)'$ é dita ser a _distribuição invariante_ de $P$ se $\pi' = \pi'P$ ou,
@@ -306,7 +307,9 @@ Observe que $P^n$ alcança sua distribuição invariante (até pelo menos a terceira
 
 O teorema (1) forma a base dos métodos de MCMC. Ele nos diz que se uma cadeia de Markov satisfaz certas condições, a distribuição de probabilidade de sua $n$-ésima iteração é, para $n$ grande, muito próxima da distribuição invariante. Posto de outra forma, as retiradas $n+1$, $n+2$, etc, para $n$ grande serão amostradas da distribuição invariante. Em termos de simulação, isso implica que se conseguirmos encontrar um processo de Markov para o qual a distribuição invariante é a nossa distribuição alvo, podemos simular retiradas do processo estocástico para gerar valores da distribuição que temos interesse.
 
-**Exercício 6.1** (retirado de [@casella_MC])
+Um exemplo de processo e distribuição invariante é o exercício 6.1 de [@casella_MCR], detalhado a seguir.
+
+**Exercício 6.1** (retirado de [@casella_MCR])
 
 Considere a cadeia de Markov definida por $X^{(t+1)} = \rho X^{(t)} + \epsilon_t$, com $\epsilon_t \sim \mathcal{N}(0,1)$. Simule $X^{(0)} \sim \mathcal{N}(0,1)$ e plote o histograma de uma amostra de $X^{(t)}$ para $t \leq 10^4$ e $\rho = 0.9$. Verifique a aderência da distribuição estacionária $\mathcal{N}\left(0,\frac{1}{(1-\rho^2)}\right)$.
 
@@ -399,7 +402,125 @@ Se a média é $0$, temos $Var[X] = \mathbb{E}[X^2] - (\mathbb{E}[X])^2 = \mathbb{
 
 **<span style="color:red">Para refletir:</span>** _Como mostrar que o passeio aleatório_ $X^{(t+1)} = X^{(t)} + \varepsilon_{t+1}$  _não tem distribuição estacionária?_ Bom, dá para perceber que a [variância incondicional depende do tempo](http://economia.unipv.it/pagp/pagine_personali/erossi/rossi_intro_stochastic_process_PhD.pdf), mas será que é o único jeito?
 
+A restrição de que $p_{ij} > 0 \ \forall \ i,j$ do teorema (1) pode ser relaxada e o teorema generalizado da seguinte forma:
 
+**Teorema 2** (adaptado de [@greenberg2008], página 80)
+Seja $P$ irredutível e aperiódica em um espaço de estados finito. Então existe uma única distribuição de probabilidade $\pi$ tal que $\sum\limits_i \pi_i p_{ij} = \pi_j \ \forall \ j \ \in S$ e
+$$|p_{ij}^{(n)}-\pi_j| \leq r^{\frac{n}{\nu}} $$
+para todo $i$, $j$ $\in S$, em que $0 < r < 1$ e $\nu \in \mathbb{N}$.
+
+[@greenberg2008] não prova o teorema (ele indica o livro do [Bhattacharya e Waymire](https://www.amazon.com/Stochastic-Processes-Applications-Classics-Mathematics/dp/0898716896) página 128), mas propõe um exercício de verificar o que acontece quando as suposições do teorema não são atendidas. Considere a matriz de transição reduzível $P_R$, dada por (02). Ela não possui uma distribuição invariante única. Para notar isso, considere $\pi_1$ que satisfaz $\pi_1'P_1 = \pi_1'$ e $pi_2$ que satisfaz $\pi_2'P_2 = \pi_2'$ (isso pode ser feito por causa do teorema de Perron-Frobenius, que mostra que para uma matriz positiva quadrada sempre tem um vetor $\pi$ associado). Tome agora o vetor $(\pi_1 0)$. Então,
+\begin{align*}
+(\pi_1 \quad 0)\cdot 
+\begin{pmatrix}
+P_1 & 0 \\
+0 & P_2
+\end{pmatrix}=
+(\pi_1 \cdot P_R \quad  0)=
+(\pi_1  \quad  0)
+\end{align*}
+
+(a mesma conta pode ser feita para $P_2$)
+
+Então, $\pi' = (\pi_1 \quad  0)$ e $\pi'' = (0  \quad  \pi_2)$ são distribuições invariantes de $P_R$. Mais ainda, podemos mostrar que todas as combinações convexas de $\pi'$ e $\pi''$ também serão distribuições invariantes, isto é, $\pi = (\omega\cdot pi_1,\ (1-\omega)\cdot\pi_2)$ é uma distribuição invariante de $P_R$. Note que $P_R$ não converge para nada útil para o procedimento de MCMC:
+
+\begin{align*}
+P_R^n = \begin{pmatrix}
+P_1^n & 0 \\
+0 & P_2^n
+\end{pmatrix}
+\end{align*}
+Claramente $P_R^n$ não possui a mesma distribuição de probabilidade em todas as linhas.
+
+Outra condição necessária é que a matriz seja aperiódica. Considere a matriz periódica e irredutível $P_P$ definida em (2) e vamos calcular $P_P^2$ e $P_P^3$:
+
+\begin{align*}
+P_P^2 = \begin{pmatrix}
+P_1\cdot P_2 & 0 \\
+0 & P_2 \cdot P_1
+\end{pmatrix}\qquad
+P_P^3 = \begin{pmatrix}
+ 0 & P_1\cdot P_2 \cdot P_1\\
+P_2 \cdot P_1 \cdot P_2 & 0 
+\end{pmatrix}
+\end{align*}
+
+Note que esse padrão irá se repetir indefinidamente, de forma que $P_P^n$ nunca terá a mesma distribuição em todas as linhas, não importa o valor de $n$. Isso não demonstra formalmente o teorema (2), mas pelo menos dá boas razões para que irredutibilidade e aperidiocidade sejam condições necessárias para que ele valha. O teorema (2) dá o resultado para que essas duas condições sejam suficientes para justificar os métodos MCMC em estado de espaços finitos, porém a maioria das aplicações em econometria envolve aplicações contínuas. O primeiro passo vai ser analisar cadeias de Markov com um número contável de estados antes de ir para as aplicações "pesadas".
+
+(aqui começa a seção 6.2 de [@greenberg2008])
+
+Um exemplo de espaço de estado contável é o passeio aleatório simples. Neste processo temos $S = \{0, \pm1, \pm2, \ldots \}$, e as probabilidades de transição são:
+
+\begin{align*}
+p_{ij} = \begin{cases}
+p,&\ \text{se}\ j = i+1 \\
+q,&\ \text{se}\ j = i-1 \\
+0,&\ \textbf{caso contrário.}
+\end{cases}
+\end{align*}
+em que $0 < p < 1$ e $q = 1-p$. Os possíveis estados são todos os inteiros positivos e negativos, i.e., $S$ é contável.
+
+Irredutibilidade e aperidiocidade não mais vão implicar a existência de uma única distribuição quando $S$ é contável mas não finito. Iremos então usar o conceito de _recorrência_. Por exemplo, considere a cadeia de Markov definida pelas seguintes probabilidades de transição:
+
+\begin{align*}
+p_{ij} = \begin{cases}
+p,&\ \text{se}\ j = i+1 \\
+r,&\ \text{se}\ j = i \\
+q,&\ \textbf{se}\ j = i-1
+\end{cases}
+\end{align*}
+Este processo é um passeio aleatório. Partindo do estado $i$, ele se move para $i+1$ com probabilidade $p$, e se move com probabilidade $q$ para $i-1$. Além disso, ele pode ficar em $i$ com probabilidade $r$, sendo que $p+q+r =1$, com $p,\ q,\ r \geq 0$. Se todas as probabilidades são positivas, então o processo é irredutível e aperiódico (isto é, todos os estados se comunicam e todos os estados podem ser visitados). Uma forma de simular este processo é a seguinte (que utiliza $p=q=r$):
+
+```{r}
+set.seed(6969)
+
+n <- 1000
+x <- cumsum(sample(c(-1, 0, 1), n, TRUE))
+
+p1 <- autoplot(as.ts(x), main = TeX('1.000 observações de um passeio aleatório com p = q = r = \\frac{1}{3}'), xlab = "Tempo", ylab = TeX('X^{(t)}'), colour = cores2[10]) +  
+  theme(plot.title=element_text(size = 12),
+              text=element_text(size = 12),
+              axis.text.x=element_text(colour="black", size = 10),
+              axis.text.y=element_text(colour="black", size = 10),
+              panel.background = element_blank(),
+              panel.grid.major = element_line(colour = "gray"),
+              panel.grid.minor = element_line(),
+              panel.border = element_rect(colour = "black", fill = NA))
+
+p1
+```
+
+Note que não há nenhum valor observável na figura. Agora, suponha agora que temos $p$ e $q$ positivos e $p>q$, como na figura abaixo:
+
+```{r}
+set.seed(6969)
+
+n <- 1000
+x <- cumsum(sample(c(-1, 1), n, replace = TRUE, prob = c(0.55, 0.45)))
+
+p1 <- autoplot(as.ts(x), main = TeX('1.000 observações de um passeio aleatório com p = 0.55 e q = 0.45'), xlab = "Tempo", ylab = TeX('X^{(t)}'), colour = cores2[10]) +  
+  theme(plot.title=element_text(size = 12),
+              text=element_text(size = 12),
+              axis.text.x=element_text(colour="black", size = 10),
+              axis.text.y=element_text(colour="black", size = 10),
+              panel.background = element_blank(),
+              panel.grid.major = element_line(colour = "gray"),
+              panel.grid.minor = element_line(),
+              panel.border = element_rect(colour = "black", fill = NA))
+
+p1
+```
+
+Neste caso podemos ver que o processo está claramente indo "para baixo". Pode-se mostrar que o processo vai divergir para $-\infty$ pois $p_{ij}^{(n)} \to 0$ para todo $i,j$. Isso significa que, partindo de $i$, a probabilidade de que qualquer estado $j$ (finito) seja alcançado vai para zero, implicando que o processo não possui uma distribuição invariante.
+
+Então, para conseguir usar os teoremas (1) e (2) com um estado de espaços contável, iremos precisar do conceito de recurrência. Seja $P_j(A)$ a probabilidade de que o evento $A$ ocorre dado que o processo se iniciou em $j$. Então, diremos que o estado $j$ é _recorrente_ se $\mathbb{P}_j(X_n = j\ \ i.o.)=1$ ($i.o.$ significa _infinitely often_ ou, em português, infinitas vezes). Em palavras, isso significa que o processo volta com probabilidade $1$ ao estado $j$ por um número infinito de vezes. Dizemos ainda que se um estado não é recorrente, que ele é _transiente_. No passeio aleatório onde $p>q$, nenhum dos estados é recorrente e quando $p=q$, todos estados são recorrentes.
+
+No entanto, a recorrência sozinha não é forte o suficiente para implicar uma única distribuição invariante. Vamos definir uma condição mais forte. Para isso, seja $\uptau_j^{(1)}$ o tempo que leva para o processo voltar ao seu primeiro estado (denotado por $j$):
+
+$$\uptau_j^{(1)} = \min\{n>0: X_n = j\} $$
+Um estado $j$ é chamado recorrente positivo se $\mathbb{E}[\uptau_j^{(1)}]< \infty$. Caso contrário, é recorrente nulo.
+
+Agora podemos enunciar o teorema (3).
 
 # Referências
 
