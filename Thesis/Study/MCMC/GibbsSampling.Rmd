@@ -1,5 +1,5 @@
 ---
-title: "Amostrador de Gibbs"
+title: "Cadeias de Markov e Introdução a MCMC"
 author: "Aishameriane Schmidt"
 date: "Última atualização: 02 abril 2018"
 header-includes:
@@ -50,6 +50,10 @@ chooseCRANmirror(graphics = FALSE, ind = 10)
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify)
 ``` 
+
+# Dúvidas
+
+1. **Na seção 6.3 do Greenberg, a equação que está entre 6.8 e 6.9 é uma versão do Chapman-Kolmogorov que dá a probabilidade de ir de $y$ em $n-1$ para $x$ em $n$?**
 
 # Métodos de Monte Carlo
 
@@ -111,7 +115,7 @@ Por não imporem muitas restrições nas densidades candidatas, os métodos de MCMC 
 
 Os métodos de MCMC mais conhecidos são o _amostrador de Gibbs_ (do inglês _Gibbs Sampler_) e o algoritmo de _Metropolis-Hastings_ (MH), sendo que este último se relaciona com amostragem por importância. Ambos métodos podem ser combinados, dando origem ao _Metropolis within Gibbs_, para o caso onde não é possível implementar um amostrador de Gibbs sozinho. Uma vez que são métodos de MCMC, eles são baseados na geração de amostras da posteriori que não são independentes entre si [@BLR].
 
-## Uma breve introdução aos processos estocásticos às Cadeias de Markov
+## Uma (não tão) breve introdução aos processos estocásticos às Cadeias de Markov
 
 A teoria de processos estocásticos se ocupa de investigar a estrutura de famílias de variáveis aleatórias $\{X_\theta \}$ indexadas por um parâmetro $\theta$, em que $\theta \in \Theta$ ($\Theta$ é chamado de conjunto indexador). Em praticamente todas as aplicações, $\Theta$ representa o tempo. A _realização_ de um processo estocástico $\{X_\theta, \theta \in \Theta \}$ é quando associamos, a cada $\theta \in \Theta$, um dos possíveis valores de $X_\theta$. Por exemplo, no caso de $\theta$ assumir valores discretos (quando $\Theta=\{0, 1,2, 3, \ldots \}$) e $X_\theta$ representar o resultado de uma moeda ($1$ para cara e $0$ para coroa), então a sequência $01001101110001111110$ é uma realização possível deste processo estocástico considerando $20$ lançamentos da moeda. Os valores de $X_\theta$ podem ser unidimensionais, bidimensionais, $n$-dimensionais ou terem uma estrutura mais geral ainda. No caso onde $X_n$ é o resultado do lançamento de um dado, seus valores possíveis pertencem ao conjunto $\{1,2,3,4,5,6 \}$ e uma realização do processo poderia ser $5,1,3,2,2,4,1,6,3,6,\ldots$. Nestes dois exemplos, as variáveis aleatórias são independentes, porém essa não é a regra quando lidamos com processos estocásticos [@karlin1975].
 
@@ -263,9 +267,9 @@ P_2 & 0
 em que $P_1$ e $P_2$ são de dimensão $m\times m$. Se em $t=1$ o processo está em um dos primeiro $m$ estados, então ele necessariamente irá para $m+1, m+2$ ou $2m$. Analogamente, em $t=3$, o processo terá que voltar para os primeiros $m$ estados e assim por diante. Isto significa que a série retorna a um estado apenas nos valores de $n$ pares e neste caso dizemos que o período da cadeia é $2$. Se o período é igual a $1$ para todos os estados, a cadeia é dita ser _aperiódica_. Mais formalmente, se $i \rightarrow i$, então o \emph{período de} $i$ é o maior divisor comum dos inteiros no conjunto $A = \{n \geq 1: p_{ii}^{(n)} > 0\}$. Em palavras, se $d_i$ é o período de $i$, então $p_{ii}^{(n)}=0$ sempre que $n$ não for um múltiplo de $d_{i}$, e $d_i$ é o maior inteiro com esta propriedade. Note que uma cadeia é aperiódica se $p_{ii}^{(n)}>0$ para todo $i$ para um valor de $n$ suficientemente largo.
 
 A distribuição de probabilidade $\pi = (\pi_1, \ldots, \pi_s)'$ é dita ser a _distribuição invariante_ de $P$ se $\pi' = \pi'P$ ou,
-\[
+\begin{equation}\tag{6.3}
 \pi_j = \sum\limits_i \pi_i p_{ij}, \qquad j = 1, \ldots, s.
-\]
+\end{equation}
 O lado direito da equação é a probabilidade do processo estar no estado $j$ em qualquer $t$ marginalizado sobre os estados $t-1$, ele pode ser interpretado como a probabilidade de iniciar o processo no estado $i$ com probabilidade $\pi_i$ e então se mover para o estado $j$ com probabilidade $p_{ij}$. O fato de que o valor resultante é $pi_j$ é o que faz de $\pi$ uma distribuição invariante: se os estados são escolhidos de acordo com $\pi$, a probabilidade é $\pi_j$ de que o sistema esteja em um estado $j$ a qualquer período de tempo. Note ainda que $\pi'$ é o vetor característico da matriz $P$ com raiz característica igual a $1$.
 
 Vamos descobrir quem é a distribuição invariante da matriz $P$ dada em (1), utilizando a relação $\pi'P=\pi'$:
@@ -515,12 +519,77 @@ Neste caso podemos ver que o processo está claramente indo "para baixo". Pode-se
 
 Então, para conseguir usar os teoremas (1) e (2) com um estado de espaços contável, iremos precisar do conceito de recurrência. Seja $P_j(A)$ a probabilidade de que o evento $A$ ocorre dado que o processo se iniciou em $j$. Então, diremos que o estado $j$ é _recorrente_ se $\mathbb{P}_j(X_n = j\ \ i.o.)=1$ ($i.o.$ significa _infinitely often_ ou, em português, infinitas vezes). Em palavras, isso significa que o processo volta com probabilidade $1$ ao estado $j$ por um número infinito de vezes. Dizemos ainda que se um estado não é recorrente, que ele é _transiente_. No passeio aleatório onde $p>q$, nenhum dos estados é recorrente e quando $p=q$, todos estados são recorrentes.
 
-No entanto, a recorrência sozinha não é forte o suficiente para implicar uma única distribuição invariante. Vamos definir uma condição mais forte. Para isso, seja $\uptau_j^{(1)}$ o tempo que leva para o processo voltar ao seu primeiro estado (denotado por $j$):
+No entanto, a recorrência sozinha não é forte o suficiente para implicar uma única distribuição invariante. Vamos definir uma condição mais forte. Para isso, seja $\tau_j^{(1)}$ o tempo que leva para o processo voltar ao seu primeiro estado (denotado por $j$):
 
-$$\uptau_j^{(1)} = \min\{n>0: X_n = j\} $$
-Um estado $j$ é chamado recorrente positivo se $\mathbb{E}[\uptau_j^{(1)}]< \infty$. Caso contrário, é recorrente nulo.
+$$\tau_j^{(1)} = \min\{n>0: X_n = j\} $$
+Um estado $j$ é chamado recorrente positivo se $\mathbb{E}[\tau_j^{(1)}]< \infty$. Caso contrário, é recorrente nulo.
 
 Agora podemos enunciar o teorema (3).
+
+**Teorema 3** (adaptado de [@greenberg2008], página 84)
+
+Assuma que um processo é irredutível. Então:
+
+1. Se todos os estados são recorrentes, então eles são todos positivamente recorrentes ou todos recorrentes nulos.
+2. Existe uma distribuição invariante se e somente se todos os estados são positivos recorrentes. Neste caso, a distribuição invariante $\pi$ é única e dada por:
+
+$$\pi_j = (\mathbb{E}_j[\tau_j^{(1)}])^{-1}$$
+
+3. No caso dos estados serem positivos recorrentes, para qualquer distribuição inicial, caso $\mathbb{E}_\pi[|f(X_1)|]<\infty$,
+
+$$lim_{n \to \infty} \frac{1}{n} \sum_{m=1}^n f(X_m) = \mathbb{E}_\pi f(X_1) $$
+
+-----
+O teorema (3) tem implicações importantes para os métodos MCMC e pode ser generalizado para os estados de espaços contínuos. Sob as condições do teorema, sabemos que existe uma única distribuição invariante e que a média de funções avaliadas nos valores amostrais converge para seus valores esperados (com relação à distribuição invariante). Note que se $f$ for a função indicadora, então seu valor esperado é $\pi_i$ e o mesmo pode ser estimado a partir dos dados. Uma versão do teorema do limite central também pode ser demonstrada para este caso.
+
+A convergência de $P^n$ para uma matriz cujas linhas são distribuições invariantes vai precisar de aperiocidade.
+
+**Teorema 4** (adaptado de [@greenberg2008], página 84)
+
+Se $P$ é uma cadeia aperiódica, $lim_{n\to \infty} P^n$ existe. Se $P$ é uma cadeia aperiódica positiva-recorrente, então $lim_{n\to \infty} P^n = A$, em que $A$ é uma matriz cujas linhas são a distribuição invariante.
+
+Note que temos um problema: até agora, nós começamos com uma matriz de transição $P$ e determinamos as condições para as quais as linhas de $P^n$ convergem para uma distribuição invariante. No entanto, ao fazermos MCMC queremos o contrário: dada uma distribuição invariante (distribuição alvo), queremos encontrar uma matriz $P$ cujas linhas convirjam para ela. O livro até dá um teorema (5), porém o teorema não ajuda nessa parte (eu acho).
+
+**Parte 3 - Estados de Espaços Contínuos**
+
+Agora suponha que os estados de um pocesso de Markov tomem valores na reta real. Neste caso, ao invés de ter as probabilidades de transição $p_{ij}$, vamos lidar com o Kernel de transição ou a densidade de transição (agora tudo faz sentido!), denotada por $p(x,y)$. A notação $p(x,y)$ é usada porque o núcleo é o correspondente contínuo de $p_{ij}$, mas é mais instrutivo interpretá-lo como a probabilidade condicional $p(y|x)$. A propriedade Markoviana é capturada assumindo que a densidade conjunta, condicional ao valor inivial $X_0 = x_0$ é dada por:
+
+$$f_{(X_1, \ldots, X_n|X_0 = x_0)}(x_1, \ldots, x_n) = p(x_0, x_1)p(x_1, x_2) \ldots p(x_{n-1}, x_n)$$
+
+Dado que o processo está no instante atual no estado $x$, a probabilidade de que ele se mova para uma região $A \subseteq \mathbb{R}$ dada por:
+
+\begin{align*}
+\mathbb{P}(x, A) = \int_A p(x,y)dy
+\end{align*}
+
+A transição do $n$-ésimo passo é calculada de forma similar ao que foi feito na equação (6.3)
+
+\begin{equation}
+\mathbb{P}^{(n)}(x,A) = \int_\mathbb{R}\mathbb{P}(x,dy)\mathbb{P}^{(n-1)}(y,A)
+\end{equation}
+
+<span style="color:red">**Dúvida:** _Essa é uma versão mais simples das equações de Chapman-Kolmogorov?_ </span> Do [@casella_MC] página 144, temos o lema 4.2.6. que diz: _For every $(m,n) \ \in \mathbb{N}^2, x \ \in \ \chi, A \ \in \mathcal{B}(\chi)$,
+$$K^{m+n}(x,A) = \int_\chi K^n(y,A)K^m(x,dy).$$
+
+**Definição (Densidade invariante)** 
+Uma densidade invariante $\pi(y)$ para o núcleo de transição $p(x,y)$ é uma densidade que satisfaz
+
+$$\pi(y) \int_\mathbb{R} \pi(x)p(x,y)dx $$
+Como exemplo de uma densidade invariante, considere o processo AR($1$) dado por $y_t = \theta y_{t-1} + u_t$ em que $|\theta| < 1$ e $u_t \sim \mathcal{N}(0, \sigma^2)$. Vamos veriicar que de fato a distribuição invariante é Gaussiana:
+
+\begin{align*}
+\pi(y_t) &= \int \pi(y_{t-1})f(y_{t-1}, y_t)dy_{t-1}\\
+&\propto \int \exp \left[-\frac{1-\theta^2}{2\sigma^2} y^2_{t-1} \right] \exp \left[-\frac{1}{2\sigma^2} (y_t - \theta \cdot y_{t-1})^2\right]dy_{t-1}\\
+&\propto \int \exp -\frac{1}{2\sigma^2}\left[ (1-\theta^2)y^2_{t-1} + y_t^2 - 2\theta \cdot y_{t-1}y_t + \theta^2 y_{t-1}^2 \right]dy_{t-1}\\
+&\propto \int \exp -\frac{1}{2\sigma^2}\left[ y^2_{t-1} -\theta^2y^2_{t-1} + y_t^2 - 2\theta \cdot y_{t-1}y_t + \theta^2 y_{t-1}^2 \right]dy_{t-1}\\
+&\propto \int \exp -\frac{1}{2\sigma^2}\left[ y^2_{t-1}  + y_t^2 - 2\theta \cdot y_{t-1}y_t \right]dy_{t-1}\\
+&\propto \int \exp -\frac{1}{2\sigma^2}\left[ y^2_{t-1}  + y_t^2 - 2\theta \cdot y_{t-1} y_t + \theta^2 y_t^2 - \theta^2 y_t^2 \right]dy_{t-1}\\
+&\propto \int \exp -\frac{1}{2\sigma^2}\left[ y^2_{t-1}  - 2\theta \cdot y_{t-1} y_t + \theta^2 y_t^2 + y_t^2 - \theta^2 y_t^2 \right]dy_{t-1}\\
+& \propto \int \exp -\frac{1}{2\sigma^2} \left[(y_{t-1} - \theta y_t)^2 + (1-\theta^2)y_t^2 \right] dy_{t-1}\\
+&\propto -\frac{1}{2\sigma^2} \exp \left\{(1-\theta^2)y_t^2 \right\} \int \exp -\frac{1}{2\sigma^2} \left[(y_{t-1} - \theta y_t)^2 +  \right]dy_{t-1}\\
+&\propto -\frac{1}{2\sigma^2} \exp \left\{(1-\theta^2) y_t^2 \right\} \cdot 1 = -\frac{1}{2\sigma^2} \exp \left\{(1-\theta^2) y_t^2 \right\}.
+\end{align*}
+
 
 # Referências
 
