@@ -52,11 +52,19 @@ pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify)
 
 # Dúvidas
 
-1. **Na seção 6.3 do Greenberg, a equação que está entre 6.8 e 6.9 é uma versão do Chapman-Kolmogorov que dá a probabilidade de ir de $y$ em $n-1$ para $x$ em $n$?**
-2. **Na página 86 do [@greenberg2008] tem o seguinte: $P_X(X_n \ \in \ B i.o.) = 1, \ \text{for} \ \pi\text{-almost all}\ x$. Eu não entendi o que isso quer dizer... A definição do _i.o._ está na página 83, onde ele diz que significa _infinetely often_**. 
+1. <span style="color:red">**Dúvida 1:**</span>  Na seção 6.3 do Greenberg, a equação que está entre 6.8 e 6.9 é uma versão do Chapman-Kolmogorov que dá a probabilidade de ir de $y$ em $n-1$ para $x$ em $n$?
 
-Resposta: para entender isso, precisamos da definição abaixo:
+<span style="color:green">**Resposta:**</span>
+
+2. <span style="color:red">**Dúvida 2:**</span> Na página 86 do [@greenberg2008] tem o seguinte: $P_X(X_n \ \in \ B i.o.) = 1, \ \text{for} \ \pi\text{-almost all}\ x$. Eu não entendi o que isso quer dizer... Obs: A definição do _i.o._ está na página 83, onde ele diz que significa _infinetely often_. 
+
+<span style="color:green">**Resposta:**</span>  para entender isso, precisamos da definição abaixo:
 **Definição ($\pi$ quase sempre)**: Seja um espaço de probabilidade $(\Omega, \mathcal{B}, \mathbb{P})$. Dizemos que uma propriedade $A(X),\ x \in \Omega$ vale $\mu$ quase sempre se $\mu(\{X \in \Omega |A(X)\text{ é verdadeira} \})=1$, em que $\mu$ é uma medida de probabilidade.
+
+3. <span style="color:red">**Dúvida 3:**</span> Entre o teorema 6.4 e o teorema 6.5 (página 84) o Greenberg faz um papo de que embora a teoria de cadeias de Markov tratem de, a partir de uma probabilidade de transição $P$, encontrar quem é a densidade estacionária $\pi$, quando trabalhamos com MCMC a gente quer o contrário, isto é, sabemos quem é $\pi$ e queremos chegar em uma $P$. Mas daí depois de falar isso ele apresenta o teorema 6.5 mas ele começa tendo uma $P$ fixa e eu esperava que ele iajustamente mostrar como sair de $\pi$ e chegar na $P$. Tô doida ou de fato o parágrafo não tá muito relacionado com o teorema?
+Aí entra um segundo pedaço dessa dúvida. Quando fazemos MCMC seria como, usando o exemplo da aula, dizer: _preciso amostrar de $\mathcal{N}\left(\frac{a}{1-b}, \frac{d^2}{1-b^2} \right)$, ache uma cadeia de Markov que converge pra isso!_ E daí a gente magicamente tira do bolso $X_t = a + b\cdot X_{t-1} + d\cdot u_{t}$?
+
+<span style="color:green">**Resposta:**</span>
 
 # Métodos de Monte Carlo
 
@@ -108,7 +116,7 @@ converge para
 \frac{\int_{\Theta g(\theta)f(x|\theta)\pi(\theta)d\theta}}{\int_{\Theta} f(x|\theta)\pi(\theta)d\theta}
 \end{equation}
 
-# Uma (não tão) breve introdução aos processos estocásticos às Cadeias de Markov
+# Uma (não tão) breve introdução aos processos estocásticos e Cadeias de Markov
 
 A teoria de processos estocásticos se ocupa de investigar a estrutura de famílias de variáveis aleatórias $\{X_\theta \}$ indexadas por um parâmetro $\theta$, em que $\theta \in \Theta$ ($\Theta$ é chamado de conjunto indexador). Em praticamente todas as aplicações, $\Theta$ representa o tempo. A _realização_ de um processo estocástico $\{X_\theta, \theta \in \Theta \}$ é quando associamos, a cada $\theta \in \Theta$, um dos possíveis valores de $X_\theta$. Por exemplo, no caso de $\theta$ assumir valores discretos (quando $\Theta=\{0, 1,2, 3, \ldots \}$) e $X_\theta$ representar o resultado de uma moeda ($1$ para cara e $0$ para coroa), então a sequência $01001101110001111110$ é uma realização possível deste processo estocástico considerando $20$ lançamentos da moeda. Os valores de $X_\theta$ podem ser unidimensionais, bidimensionais, $n$-dimensionais ou terem uma estrutura mais geral ainda. No caso onde $X_n$ é o resultado do lançamento de um dado, seus valores possíveis pertencem ao conjunto $\{1,2,3,4,5,6 \}$ e uma realização do processo poderia ser $5,1,3,2,2,4,1,6,3,6,\ldots$. Nestes dois exemplos, as variáveis aleatórias são independentes, porém essa não é a regra quando lidamos com processos estocásticos [@karlin1975].
 
