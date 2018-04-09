@@ -120,7 +120,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Cadeias de Markov e Introdução a MCMC</h1>
 <h4 class="author"><em>Aishameriane Schmidt</em></h4>
-<h4 class="date"><em>Última atualização: 02 abril 2018</em></h4>
+<h4 class="date"><em>Última atualização: 08 abril 2018</em></h4>
 
 </div>
 
@@ -584,7 +584,7 @@ Para processos em estados contínuos, as definições de irredutibilidade e aper
 <p>Os métodos de MCMC mais conhecidos são o <em>amostrador de Gibbs</em> (do inglês <em>Gibbs Sampler</em>) e o algoritmo de <em>Metropolis-Hastings</em> (MH), sendo que este último se relaciona com amostragem por importância. Ambos métodos podem ser combinados, dando origem ao <em>Metropolis within Gibbs</em>, para o caso onde não é possível implementar um amostrador de Gibbs sozinho. Uma vez que são métodos de MCMC, eles são baseados na geração de amostras da posteriori que não são independentes entre si <span class="citation">(Bauwens, Lubrano, and Richard 2000)</span>.</p>
 </div>
 <div id="ideias-basicas" class="section level2">
-<h2>Ideias basicas</h2>
+<h2>Ideias básicas</h2>
 <p>Na seção de integração de Monte Carlo apresentamos o problema de aproximar a integral <span class="math display">\[\int h(x)f(x)dx.\]</span> A nossa estratégia até então era enxergar a integral como uma esperança populacional para aproximá-la por uma média amostral. Nos casos onde o suporte comum de <span class="math inline">\(h(x)\)</span> e <span class="math inline">\(f(x)\)</span> é pequeno, podemos escolher um amostrador por importância que vai atuar fazendo o papel de ``pesos’’ para que as amostras geradas estejam dentro do intervalode interesse com uma probabilidade um pouco maior (método da amostragem por importância). Mesmo assim, nem sempre iremos conseguir estimativas boas, seja pela falta de um suporte comum seja pela dificuldade em escolher um bom amostrador por importância.</p>
 <p>O que iremos discutir agora é como aproximar a integral fazendo a escolha de um núcleo de transição cuja distribuição estacionária é a distribuição alvo que temos interesse. Vimos nas seções anteriores as condições para as quais é possível que uma cadeia de Markov convirja para sua densidade estacionária, isto é, para um valor inicial <span class="math inline">\(x_0\)</span>, uma cadeia <span class="math inline">\(\{X_t \}\)</span> é gerada utilizando um núcleo de transição <span class="math inline">\(K\)</span> (ou <span class="math inline">\(P\)</span>) com distribuição estacionária <span class="math inline">\(f\)</span> (ou <span class="math inline">\(\pi\)</span>), e sob determinadas condições, a convergência de <span class="math inline">\(\{X_t \}\)</span> para uma v.a. que foi amostrada diretamente de <span class="math inline">\(f\)</span> está garantida pelos resultados anteriores.</p>
 <p><strong>Definição (Método de Cadeias de Markov via Monte Carlo)</strong> Um método de MCMC para a simulação da distribuição <span class="math inline">\(f\)</span> é qualquer método que produza uma cadeia de Markov ergódica cuja distribuição estacionária é <span class="math inline">\(f\)</span>.</p>

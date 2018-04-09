@@ -1,7 +1,7 @@
 ---
 title: "Cadeias de Markov e Introdução a MCMC"
 author: "Aishameriane Schmidt"
-date: "Última atualização: 02 abril 2018"
+date: "Última atualização: 08 abril 2018"
 header-includes:
    - \usepackage{bigints}
    - \usepackage[brazil]{babel}
@@ -622,7 +622,7 @@ Por não imporem muitas restrições nas densidades candidatas, os métodos de MCMC 
 
 Os métodos de MCMC mais conhecidos são o _amostrador de Gibbs_ (do inglês _Gibbs Sampler_) e o algoritmo de _Metropolis-Hastings_ (MH), sendo que este último se relaciona com amostragem por importância. Ambos métodos podem ser combinados, dando origem ao _Metropolis within Gibbs_, para o caso onde não é possível implementar um amostrador de Gibbs sozinho. Uma vez que são métodos de MCMC, eles são baseados na geração de amostras da posteriori que não são independentes entre si [@BLR].
 
-## Ideias basicas
+## Ideias básicas
 
 Na seção de integração de Monte Carlo apresentamos o problema de aproximar a integral
 $$\int h(x)f(x)dx.$$
