@@ -60,7 +60,7 @@ MathJax.Hub.Config({
 ```{r, message = FALSE, warning = FALSE}
 chooseCRANmirror(graphics = FALSE, ind = 10)
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify, car, rgl, rglwidget,psych)
+pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify, car, rgl, rglwidget, psych, rmutil)
 ``` 
 
 # Dúvidas
@@ -262,7 +262,95 @@ rglwidget()
 scatter.hist(x=bvn[,1], y=bvn[,2], density=TRUE, ellipse=TRUE)
 ```
 
+Ambos gráficos peguei [nesta thread](https://stackoverflow.com/questions/19949435/3d-plot-of-bivariate-distribution-using-r-or-matlab). Já para fazer o gráfico 3D funcionar no html, vi [aqui](http://www.stats.uwo.ca/faculty/murdoch/talks/2015-12-02/rgl_on_the_web.html).
 
+### Exemplo 2: Modelo hierárquico simples (adaptado de [@casella_MCR] e [@casella_george1992])
+
+Considere a distribuição Beta-Binomial dada por
+$$f(x, \theta) = {n\choose x} \frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)}\theta^{x+a+1}(1-\theta)^{n-x+b-1}, \qquad \text{com} \quad 0 \leq \theta \leq 1 \quad \text{e} \quad x = 1, 2, \ldots, n.$$
+Vamos calcular a densidade marginal de $\theta$:
+
+\begin{align*}
+f(\theta) &= \sum_{i=1}^n f(x_i, \theta) = \sum_{i=1}^n {n\choose x_i} \frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)}\theta^{x_i+a+1}(1-\theta)^{n-x_i+b-1}\\
+&= \frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)} \theta^{a-1}(1-\theta)^{b-1} \sum_{i=1}^n {n\choose x_i}\theta^{x_i}(1-\theta)^{n-x_i}\\
+&= \frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)} \theta^{a-1}(1-\theta)^{b-1} \Rightarrow \theta \sim \mathcal{B}(\alpha,\beta)
+\end{align*}
+Note que para sumir com o somatório consideramos que era a f.m.p. de uma v.a. Binomial.
+
+Agora, para calcular a condicional de $x|\theta$, usamos o teorema de Bayes:
+
+\begin{align*}
+f(x|\theta) &=\frac{f(x,\theta)}{f(\theta)} = \frac{{n\choose x} \frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)}\theta^{x+a+1}(1-\theta)^{n-x+b-1}}{\frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)} \theta^{a-1}(1-\theta)^{b-1}}\\
+&= {n\choose x} \theta^{x}(1-\theta)^{n-x}
+\end{align*}
+
+Que é a densidade de uma v.a. Binomial com parâmetros $n$ e $\theta$. Assim, $X|theta \sim \text{Binomial}(n,\theta)$ e $\theta \sim \mathcal{B}(a,b) \Rightarrow \theta|x \sim \mathcal{B}(x + a, n-x+b)$ e podemos implementar um amostrador de Gibbs da seguinte forma (peguei o código do [@casella_MCR]).
+
+```{r}
+Nsim  <- 5000
+n     <- 15
+a     <- 3
+b     <- 7
+x     <-vector()
+theta <- vector()
+
+# Valores iniciais
+theta[1] <- rbeta(1,a,b)
+x[1]     <- rbinom(1,n,theta[1])
+
+for (i in 2:Nsim){
+  x[i] <- rbinom(1, n, theta[i-1])
+  theta[i] <- rbeta(1, a+x[i], n-x[i]+b)
+}
+
+cores <- brewer.pal(6, "Dark2")
+cores2 <- brewer.pal(10, "Paired")
+cadeiadf <- data.frame(1:Nsim, x, theta)
+
+p1 <- ggplot(cadeiadf, aes(x=cadeiadf$x)) + 
+    geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
+      binwidth=.5, fill = cores[3], colour = cores[3], alpha=0.5)+
+   # stat_function(
+   #   fun = function(x, size, m, s, n, bw){
+   #     dbetabinom(y =x, size = Nsim, m = tail(cadeiadf$theta, n=1), s = b)
+   # },
+   # args = c(size = Nsim, m = tail(cadeiadf$theta, n=1), s = b, n = length(cadeiadf), bw = .5), colour = cores2[10], size = 1)+
+  geom_density(colour = cores2[10])+
+  labs(title= TeX('$X \\sim$ Beta-Binomial ($n$,$a$, $b$)'), y = "", x= TeX('$X$'), color = "Variável") +
+    theme(plot.title=element_text(size = 12),
+              text=element_text(size = 12),
+              axis.text.x=element_text(colour="black", size = 10),
+              axis.text.y=element_text(colour="black", size = 10),
+              panel.background = element_blank(),
+              panel.grid.major = element_line(colour = "gray"),
+              panel.grid.minor = element_line(),
+              panel.border = element_rect(colour = "black", fill = NA))
+p1 <- p1 + geom_vline(aes(xintercept=mean(cadeiadf$x)),
+            color="purple", linetype="dashed", size=1) + annotate("text", x = 8, y = 0.22, label = paste0("Média dos\n valores simulados\n", round(mean(cadeiadf$x),4)), size = 2.5)
+
+p2<- ggplot(cadeiadf, aes(x=cadeiadf$theta)) + 
+    geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
+      binwidth=.05, fill = cores[1], colour = cores[1], alpha=0.5)+
+   # stat_function(
+   #   fun = function(x, size, m, s, n, bw){
+   #     dbetabinom(y =x, size = Nsim, m = tail(cadeiadf$theta, n=1), s = b)
+   # },
+   # args = c(size = Nsim, m = tail(cadeiadf$theta, n=1), s = b, n = length(cadeiadf), bw = .5), colour = cores2[10], size = 1)+
+  geom_density(colour = cores2[4])+
+  labs(title= TeX('$\\theta \\sim B(a,b)$'), y = "", x= TeX('$\\theta$'), color = "Variável") +
+    theme(plot.title=element_text(size = 12),
+              text=element_text(size = 12),
+              axis.text.x=element_text(colour="black", size = 10),
+              axis.text.y=element_text(colour="black", size = 10),
+              panel.background = element_blank(),
+              panel.grid.major = element_line(colour = "gray"),
+              panel.grid.minor = element_line(),
+              panel.border = element_rect(colour = "black", fill = NA))
+p2 <- p2 + geom_vline(aes(xintercept=mean(cadeiadf$theta)),
+            color="darkgreen", linetype="dashed", size=1) + annotate("text", x = 0.6, y = 1.5, label = paste0("Média dos\n valores simulados\n", round(mean(cadeiadf$theta),4)), size = 2.5)
+
+grid.arrange(p1, p2, ncol = 2, nrow = 1)
+```
 
 # Referências
 
