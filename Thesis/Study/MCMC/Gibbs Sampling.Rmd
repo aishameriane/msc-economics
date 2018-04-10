@@ -60,7 +60,7 @@ MathJax.Hub.Config({
 ```{r, message = FALSE, warning = FALSE}
 chooseCRANmirror(graphics = FALSE, ind = 10)
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify, car, rgl, rglwidget)
+pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify, car, rgl, rglwidget,psych)
 ``` 
 
 # Dúvidas
@@ -172,7 +172,7 @@ Assim, nosso amostrador de Gibbs será dado por:
     1. $\theta_2^{(t+1)}|\theta_1^{(t)} \sim \mathcal{N}(\rho\cdot\theta_1^{(t)}, 1 - \rho^2)$
     2. $\theta_1^{(t+1)}|\theta_2^{(t+1)} \sim \mathcal{N}(\rho\cdot\theta_2^{(t+1)}, 1 - \rho^2)$
 
-```{r, webGL = TRUE}    
+```{r}    
 set.seed(6969)
 theta1_init <- runif(1, min = -4, max = 4)
 
@@ -193,8 +193,11 @@ for (i in 1:tesao){
 }
 
 bvn <- cbind(theta1, theta2)
+```
 
+```{r, webGL = TRUE, eval=FALSE}
 # Agora vamos fazer um gráfico bonitão
+# Ele não carrega no github :|
 
 hx <- hist(bvn[,2], plot=FALSE)
 hxs <- hx$density / sum(hx$density)
@@ -253,6 +256,13 @@ mtext3d('P(X)', edge='x+', pos=c(0, ymax, outset * zmax))
 mtext3d('P(Y)', edge='y+', pos=c(xmax, 0, outset * zmax))
 rglwidget()
 ```
+
+```{r}
+# É tipo um gráfico reserva, já que o outro está dando ruim pra visualizar na Web
+scatter.hist(x=bvn[,1], y=bvn[,2], density=TRUE, ellipse=TRUE)
+```
+
+
 
 # Referências
 
