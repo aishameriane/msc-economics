@@ -1,0 +1,259 @@
+---
+title: "Amostrador de Gibbs"
+author: "Aishameriane Schmidt"
+date: "Última atualização: 09 abril 2018"
+header-includes:
+   - \usepackage{bigints}
+   - \usepackage[brazil]{babel}
+   - \usepackage{graphicx}
+   - \usepackage{amsmath}
+   - \usepackage{amsfonts}
+   -  \usepackage{calrsfs}
+   - \usepackage{mathrsfs}
+   - \usepackage{upgreek}
+output: html_document
+bibliography: references.bib
+---
+
+\begin{align*}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}\\
+\def\I{{\mathbb I}}\\
+\def\P{{\mathbb P}}\\
+\def\E{{\mathbb E}}\\
+\def\V{{\mathbb V}}\\
+\def\R{{\mathbb R}}\\
+\def\N{{\mathbb N}}\\
+\def\Q{{\mathbb Q}}\\
+\newcommand{\Or}{{\mathrm O}}\\
+\newcommand{\A}{{\mathcal A}}\\
+\newcommand{\C}{{\mathbb C}}\\
+\newcommand{\K}{{\mathbb K}}\\
+\newcommand{\Z}{{\mathbb Z}}
+\end{align*}
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { 
+      equationNumbers: {
+ 
+            autoNumber: "all",
+            formatNumber: function (n) {return '9.'+n}
+      } 
+  }
+});
+</script>
+
+- Seção 6.2.2 de [@bchoice]
+- Seção 3.3 de [@casella_MC]
+- Capítulo 6 de [@casella_MCR]
+- Capítulo 3 de [@BLR]
+- Capítulo 7 de [@greenberg2008]
+- [@chib2001]
+- [@chib2013]
+- [@geweke1996]
+- [@suess_trumbo2010]
+- [@casella_george1992]
+
+# Carregando os pacotes
+
+```{r, message = FALSE, warning = FALSE}
+chooseCRANmirror(graphics = FALSE, ind = 10)
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify, car, rgl, rglwidget)
+``` 
+
+# Dúvidas
+
+1.  <span style="color:red">**Dúvida 1:**</span> Qual a melhor tradução para _full conditional_? Eu coloquei como ''densidade condicional a todos os outros parâmetros''.
+
+<span style="color:green">**Resposta**</span>:
+
+2.  <span style="color:red">**Dúvida 2:**</span> O [@casella_MCR] fala que _"The appeal of those specific algorithms (Gibbs sampler) is that first they gather most of their **calibration** from the target density"_. Eu não entendi essa parte. Quer dizer que outros algoritmos, como o MH, não fazem "calibração" a partir da densidade alvo? Isso é porque usamos uma candidata que não necessariamente tem a ver com a densidade alvo e no Gibbs por usarmos as condicionais a gente necessariamente cai na densidade alvo? 
+
+<span style="color:green">**Resposta**</span>: 
+
+# Introdução
+
+A origem do amostrador de Gibbs é o trabalho de Geman e Geman (1984), cuja aplicação era em [campos aleatórios de Gibbs](http://www.nlpr.ia.ac.cn/users/szli/MRF_Book/Chapter_1/node12.html) (_Gibbs random fields_). Pode-se mostrar que o amostrador de Gibbs é um caso particular do algoritmo de Metropolis-Hastings, onde os parâmetros são agrupados em blocos que, por sua vez, são amostrados de forma condicional uns aos outros. Por exemplo, supondo que temos interesse no parâmetro $\theta$ e que ele pode ser escrito como uma partição $\theta = (\theta_1, \theta_2, \ldots, \theta_p)$ (onde $\theta_i, \ i \in \{1, \ldots, p\}$ pode ser escalar ou vetorial), então usaremos as distribuições condicionais de $\theta_i| \theta_1, \ldots, \theta_{i-1}, \theta_{i+1}, \ldots, \theta_p$, $\forall\ i$ de maneira a obter amostras de todos os $\theta_i$ [@chib2001]. Esse procedimento equivale a escolher como densidade candidata as densidades condicionais a todos os outros parâmetros (também chamada de _full conditional_ - <span style="color:red">**Dúvida**: Qual a melhor tradução de _full conditional_? </span>). Como resultado, a probabilidade de aceitação, a cada passo, é sempre igual a $1$ [@chib2013]. No entanto, como não estou falando de Metropolis-Hastings antes, vou fazer a abordagem partindo diretamente do Gibbs.
+
+Assim como os demais métodos de MCMC, o amostrador de Gibbs é uma técnica de gerar variáveis aleatórias de uma distribuição $f$ de maneira indireta, sem necessariamente amostrar de $f$. [@casella_MCR] cita duas principais vantagens do amostrador de Gibbs: a primeira é que o método usa praticamente apenas a densidade alvo (<span style="color:red">**ver a dúvida no início do documento sobre isso**</span>) e a segunda é que nos permite quebrar um problema complexo em diversos problemas de dimensão menor. No exemplo do parágrafo anterior, se temos $m$ parâmetros, poderíamos "dividir" o problema em amostrar condicionalmente cada um dos $m$ parâmetros, formando uma cadeia de Markov cuja densidade estacionária fosse a posteriori de $\theta$. [@casella_george1992] chamam atenção para o fato de que, embora seja amplamente aplicado em problemas bayesianos, é possível utilizar o amostrador de Gibbs em problemas frequentistas também.
+
+# Noções básicas
+
+**Definição 1** Amostrador de Gibbs (adaptado de [@casella_MC])
+
+Suponha que para algum $p>1$ a variável aleatória $\theta \in \Theta$ pode ser escrita como $\theta = (\theta_1, \theta_2, \ldots, \theta_p)$ (onde $\theta_i, \ i \in \{1, \ldots, p\}$ pode ser escalar ou vetorial). Suponha ainda que pode-se simular das densidades univariadas condicionais $f_1, \ldots, f_p$, isto é, é possível amostrar
+$$\theta_i|\underline{\theta}_1, \ldots, \underline{\theta}_{i-1}, \underline{\theta}_{i+1}, \ldots, \underline{\theta}_p  \sim f_i(\underline{\theta}_{i}|\underline{\theta}_1, \ldots, \underline{\theta}_{i-1}, \underline{\theta}_{i+1}, \ldots, \underline{\theta}_p)$$
+com $i=1, \ldots, p$. O _algoritmo de amostragem de Gibbs_ (ou _amostrador de Gibbs_) correspondente é dado pela transição de $\theta^{(t)}$ para $\theta^{(t+1)}$:
+
+**Algoritmo 1 - Amostrador de Gibbs **
+
+* Dado $\theta^{(t)} = (\theta_1^{(t)}, \ldots, \theta_p^{(t)})$, gere
+    1. $\theta_1^{(t+1)} \sim f_1(\theta_1|\theta_2^{(t)}, \ldots, \theta_p^{(t)})$
+    2. $\theta_2^{(t+1)} \sim f_2(\theta_2|\theta_1^{(t+1)}, \theta_3^{(t)}, \ldots, \theta_p^{(t)})$
+    
+    $\hspace{1cm} \vdots$
+    
+    p. $\theta_p^{(t+1)} \sim f_p(\theta_p|\theta_1^{(t+1)}, \theta_2^{(t+1)}, \ldots, \theta_{p-1}^{(t+1)})$
+
+Chamamos as densidades $f_1, \ldots, f_p$ de _full conditionals_. Note que o algoritmo 1 implica que apenas essas densidades são usadas para simulação e, como dito anteriormente, podemos reduzir um problema de dimensão $p$ em $p$ problemas univariados [@casella_MC].
+
+# Exemplos
+
+## Caso bivariado
+
+(Retirado de [@casella_MCR])
+Considere $\theta=(\theta_1, \theta_2)$ com distribuição conjunta $f(\theta_1, \theta_2)$ e condicionais denotadas por $f_{\theta_1|\theta_2}$ e $f_{\theta_2|\theta_1}$. Neste caso, o amostrador de Gibbs correspondente é também chamado de _amostrador de Gibss em dois estágios_ (_two stage Gibbs sampler_) e consiste em gerar uma cadeia de Markov $\{\theta_1, \theta_2\}$ da seguinte forma:
+
+**Algoritmo 2 - Amostrador de Gibbs em dois estágios** 
+
+* Dado $\theta_1^{(0)} = \underline{\theta}_1^{(0)}$, gere
+    1. $\theta_2^{(t)} \sim f_{\theta_2|\theta_1}(\cdot | \theta_1^{(t-1)})$
+    2. $\theta_1^{(t)} \sim f_{\theta_1|\theta_2}(\cdot | \theta_2^{(t)})$
+    
+### Exemplo 1: A normal bivariada (adaptado de [@casella_MCR])
+
+Considere o modelo dado por:
+
+\begin{align*}
+(X,Y) \sim \mathcal{N}_2\left(0, \begin{pmatrix}1 & \rho \\ \rho & 1 \end{pmatrix} \right)
+\end{align*}
+
+Primeiro vamos calcular as marginais. Uma forma de fazer é na "força bruta", como está [aqui](http://fourier.eng.hmc.edu/e161/lectures/gaussianprocess/node7.html). A outra forma é acreditar no teorema que diz que as condicionais na distribuição normal multivariada são também normais e aí calcular a média e a variância condicional (peguei [daqui](http://athenasc.com/Bivariate-Normal.pdf) e [daqui](https://stats.stackexchange.com/questions/30588/deriving-the-conditional-distributions-of-a-multivariate-normal-distribution)).
+
+Primeiro, vamos definir uma v.a. auxiliares (vou fazer para o caso genérico onde $\theta_1 \sim \mathcal{N}(\mu_1, \sigma^2_1)$ e $\theta_2 \sim \mathcal{N}(\mu_2, \sigma^2_2)$:
+
+\begin{equation}\tag{01}
+Z = \theta_1 + A\theta_2
+\end{equation}
+em que $A = -\frac{\rho}{\sigma_2^2}$, com $\rho$ sendo a correlação entre $\theta_1$ e $\theta_2$. Note que $Z$ é uma combinação linear de v.a. com distribuição normal e portanto tem também distribuição normal. Vamos calcular a covariância entre $Z$ e $\theta_2$:
+
+\begin{align*}
+Cov[Z, \theta_2] &= Cov[\theta_1 + A\theta_2, \theta _2]\\
+&= Cov[\theta_1, \theta_2] + Cov[A\theta_2,\theta_2]\\
+&= \rho + A Var[\theta_2] \\
+&= \rho + A \sigma_2^2 \\
+&= \rho + -\frac{\rho}{\sigma_2}\sigma_2^2 = 0
+\end{align*}
+E com isso descobrimos que $Z$ e $\theta_2$ são independentes (pois na distribuição normal multivariada [ausência de correlação necessariamente implica independência](https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Correlations_and_independence)).
+
+A esperança de $Z$ é dada por $\E[Z]= \E[\theta_1 + A\theta_2] = \mu_1 + A\mu_2$. Logo, a esperança condicional de $\theta_1$ dado $\theta_2$ será:
+
+\begin{align*}
+\E[\theta_1|\theta_2] &= \E[Z - A\theta_2|\theta_2]\\
+&= \E[Z|\theta_2] - \E[A\theta_2|\theta_2]\\
+&= \E[Z] - A\theta_2\\
+&= \mu_1 + A\mu_2- A\theta_2\\
+&= \mu_1 + A(\mu_2 - \theta_2)\\
+&= \mu_1 -\frac{\rho}{\sigma_2^2}(\mu_2 - \theta_2)
+\end{align*}
+
+Se $\mu_1 = \mu_2 = 0$ e $\sigma_2 = 1$, então $\E[\theta_1|\theta_2] = \rho\theta_2$. Para a variância, teremos:
+
+\begin{align*}
+Var[\theta_1|\theta_2] &= Var[Z - A\theta_2|\theta_2]\\
+&= Var[Z|\theta_2] + Var[-\frac{\rho}{\sigma_2^2}\theta_2|\theta_2] -2ACov[Z, -\theta_2]\\
+&= Var[Z|\theta_2]\\
+&= Var[Z]\\
+&= Var[\theta_1 + A\theta_2]\\
+&= Var[\theta_1] + Var[A\theta_2] + 2ACov(\theta_1, \theta_2)\\
+&= \sigma_1^2 +\frac{\rho^2}{(\sigma_2^2)^2}\sigma_2^2 -2\frac{\rho}{\sigma_2^2}\rho\\
+&= \sigma_1^2 +\frac{\rho^2}{\sigma_2^2} + 2\frac{\rho^2}{\sigma_2^2}\\
+&= \sigma_1^2 -\frac{\rho^2}{\sigma_2^2}
+\end{align*}
+Obs: note que [$Var[X|X]= 0$](https://math.stackexchange.com/questions/1738414/what-is-the-variance-of-a-variable-given-itself). Da mesma forma, se $\sigma_1 = \sigma_2 = 1$, então $Var[\theta_1|\theta_2] = 1 - \rho^2$.
+
+Assim, nosso amostrador de Gibbs será dado por:
+
+**Algoritmo 3 - Amostrador de Gibbs em dois estágios para a normal bivariada** 
+
+* Dado $\theta_1^{(0)} = \underline{\theta}_1^{(0)}$, gere
+    1. $\theta_2^{(t+1)}|\theta_1^{(t)} \sim \mathcal{N}(\rho\cdot\theta_1^{(t)}, 1 - \rho^2)$
+    2. $\theta_1^{(t+1)}|\theta_2^{(t+1)} \sim \mathcal{N}(\rho\cdot\theta_2^{(t+1)}, 1 - \rho^2)$
+
+```{r, webGL = TRUE}    
+set.seed(6969)
+theta1_init <- runif(1, min = -4, max = 4)
+
+theta1 <- vector()
+theta2 <- vector()
+
+
+rho    <- 0.5
+tesao  <- 100000
+
+for (i in 1:tesao){
+  if(i == 1){
+    theta2[i] <- rnorm(n = 1, mean = rho*theta1_init, sd = 1-rho^2)
+  } else {
+    theta2[i] <- rnorm(n = 1, mean = rho*theta1[i-1], sd = 1-rho^2)
+  }
+  theta1[i] <- rnorm(n = 1, mean = rho*theta2[i], sd = 1-rho^2)
+}
+
+bvn <- cbind(theta1, theta2)
+
+# Agora vamos fazer um gráfico bonitão
+
+hx <- hist(bvn[,2], plot=FALSE)
+hxs <- hx$density / sum(hx$density)
+hy <- hist(bvn[,1], plot=FALSE)
+hys <- hy$density / sum(hy$density)
+
+## [xy]max: so that there's no overlap in the adjoining corner
+xmax <- tail(hx$breaks, n=1) + diff(tail(hx$breaks, n=2))
+ymax <- tail(hy$breaks, n=1) + diff(tail(hy$breaks, n=2))
+zmax <- max(hxs, hys)
+
+## the base scatterplot
+plot3d(bvn[,2], bvn[,1], 0, zlim=c(0, zmax), pch='.', xlab='X', ylab='Y', zlab='', axes=FALSE)
+par3d(scale=c(1,1,3))
+
+## manually create each histogram
+for (ii in seq_along(hx$counts)) {
+    quads3d(hx$breaks[ii]*c(.9,.9,.1,.1) + hx$breaks[ii+1]*c(.1,.1,.9,.9),
+            rep(ymax, 4),
+            hxs[ii]*c(0,1,1,0), color='gray80')
+}
+for (ii in seq_along(hy$counts)) {
+    quads3d(rep(xmax, 4),
+            hy$breaks[ii]*c(.9,.9,.1,.1) + hy$breaks[ii+1]*c(.1,.1,.9,.9),
+            hys[ii]*c(0,1,1,0), color='gray80')
+}
+
+# I use these to ensure the lines are plotted "in front of" the
+## respective dot/hist
+bb <- par3d('bbox')
+inset <- 0.02 # percent off of the floor/wall for lines
+x1 <- bb[1] + (1-inset)*diff(bb[1:2])
+y1 <- bb[3] + (1-inset)*diff(bb[3:4])
+z1 <- bb[5] + inset*diff(bb[5:6])
+
+## even with draw=FALSE, dataEllipse still pops up a dev, so I create
+## a dummy dev and destroy it ... better way to do this?
+#dev.new()
+de <- dataEllipse(bvn[,1], bvn[,2], draw=FALSE, levels=0.95)
+#dev.off()
+
+## the ellipse
+lines3d(de[,2], de[,1], z1, color='green', lwd=3)
+
+## the two density curves, probability-style
+denx <- density(bvn[,2])
+lines3d(denx$x, rep(y1, length(denx$x)), denx$y / sum(hx$density), col='red', lwd=3)
+deny <- density(bvn[,1])
+lines3d(rep(x1, length(deny$x)), deny$x, deny$y / sum(hy$density), col='blue', lwd=3)
+
+grid3d(c('x+', 'y+', 'z-'), n=10)
+#box3d()
+axes3d(edges=c('x-', 'y-', 'z+'))
+outset <- 1.2 # place text outside of bbox *this* percentage
+mtext3d('P(X)', edge='x+', pos=c(0, ymax, outset * zmax))
+mtext3d('P(Y)', edge='y+', pos=c(xmax, 0, outset * zmax))
+rglwidget()
+```
+
+# Referências
+
+
