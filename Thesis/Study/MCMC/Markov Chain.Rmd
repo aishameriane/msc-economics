@@ -47,7 +47,7 @@ MathJax.Hub.Config({
 ```{r, message = FALSE, warning = FALSE}
 chooseCRANmirror(graphics = FALSE, ind = 10)
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify)
+pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify,reshape2)
 ``` 
 
 # Dúvidas
@@ -617,6 +617,113 @@ $$\norm{P^n(x, \cdot) - \pi} \to 0 $$
 Se $\norm{P^n(x, \cdot) - \pi} \to 0$ para todo $x$, a cadeia é $\pi$ irredutível, aperiódica, positiva recorrente e tem distribuição invariante $\pi$.
 
 Na prática, quando trabalhamos com MCMC, queremos construir um núcleo de transição irredutível, aperiódico e positivo recorrente para o qual a distribuição invariante é a distribuição alvo.
+
+### Exemplo: Fazendo um AR(1) convergir para a distribuição estacionária
+
+Considere o modelo AR(1) dado por
+$$X_{t+1} = a + b \cdot X_t + d \cdot u_{t+1} \qquad \text{com} \qquad \{u_t \}\sim^{\hspace{-.3cm}iid} \mathcal{N}(0,1) \quad \text{e} \quad |b| < 1 $$
+Uma simulação desse processo deixa claro que a sequência de marginais $\{F_t \}_{t=0}^T$ não será constante. Logo, como o processo tem marginais diferentes, ele não é estacionário e isso ocorre sempre que começarmos fora da distribuição estacionária. Porém, como $|b| < 1$, a diferença entre as distribuições sucessivas diminui com o tempo. Note que as médias e variâncias dos processos serão dadas por:
+
+\begin{align*}
+F(X_t) = \mathcal{N}(\mu_t, \sigma^2_t),\quad \text{com} \quad \mu_t = a \sum\limits_{k=0}^{t-1} b^k + b^t \mu_0 \quad \text{e} \quad \sigma^2_t = \sum\limits_{k=0}^{t-1} b^{2k}\cdot d^2 + b^{2t} \cdot \sigma_0^{2} 
+\end{align*}
+ou, da forma recursiva,
+
+\begin{align}\tag{06}
+\mu_{t+1} = a + b\mu_t \qquad \text{e} \qquad \sigma_{t+1}^2 = b^2 \sigma_t^2 + d^2
+\end{align}
+
+Analiticamente, tomando o limite de (06) quando $t \to \infty$, teremos:
+
+$$\mu_\infty = \frac{a}{1-b} \qquad \sigma_\infty^2 = \frac{d^2}{1-b^2} $$
+
+Denotando a distribuição associada com esses limites por $F_\infty$, temos:
+
+$$F_\infty = \mathcal{N}(\mu_\infty , \sigma_\infty^2) = \mathcal{N}\left(\frac{a}{1-b}, \frac{d^2}{1-b^2}\right) $$
+Intuitivamente, percebe-se que a sequência de marginais ficará contida a partir de um certo momento, se estabilizando em $F_\infty$ (demonstre!). Essa distribuição limite é o que chamamos de _distribuição estacionária_ (também chamada de distribuição invariante ou incondicional).
+
+Vamos simular o processo iniciando a cadeia em diferentes valores para ver o que ocorre com a convergência da distribuição.
+
+```{r}
+set.seed(6969)
+# Parâmetros do modelo
+a  <- 0.8
+b  <- 0.8
+d  <- 0.3
+
+# Calcula os valores dos parâmetros da distribuição estacionária
+muinf      <- a/(1-b)
+sigma2inf  <- d^2/(1-b^2)
+muinf
+sigma2inf
+
+# Parâmetros iniciais da cadeia
+mu0     <- -2.5
+sigma20 <- 3
+
+# Cria os paranauês
+nite <- 50 # número de iterações - sugiro não mudar pois os laços for estão programados considerando nite = 50
+x    <- as.vector(rep(NA,nite))
+x0   <- 0
+x[1] <- a + b*x0 + d*rnorm(1)
+mu        <- as.vector(rep(NA,nite))
+sigma2    <- as.vector(rep(NA,nite))
+mu[1]     <- mu0
+sigma2[1] <- sigma20
+
+# Itera
+for (i in 2:nite){
+  x[i]      <- a + b*x[i-1] + d*rnorm(1)
+  mu[i]     <- a + b*mu[i-1]
+  sigma2[i] <- b^2*sigma2[i-1] + d^2
+}
+
+# Agora vamos criar um grid
+eixox <- seq(-5, 5, 0.005)
+dens  <- data.frame(rep(NA, length(eixox)),rep(NA, length(eixox)),rep(NA, length(eixox)),rep(NA, length(eixox)),rep(NA, length(eixox)),rep(NA, length(eixox)),rep(NA, length(eixox)),rep(NA, length(eixox)),rep(NA, length(eixox)),rep(NA, length(eixox)))
+
+# Vamos usar 10 densidades apenas para o gráfico
+for (i in 1:10){
+  dens[,i] <- dnorm(eixox, mean=mu[(1+(i-1)*5)], sd = sigma2[(1+(i-1)*5)])
+}
+
+dens <- data.frame(eixox, dens)
+colnames(dens) <- c("X", 
+                    paste0("mu=",round(mu[1],2), ", s=", round(sigma2[1],2)), 
+                    paste0("mu=",round(mu[6],2), ", s=", round(sigma2[6],2)), 
+                    paste0("mu=",round(mu[11],2), ", s=", round(sigma2[11],2)), 
+                    paste0("mu=",round(mu[16],2), ", s=", round(sigma2[16],2)), 
+                    paste0("mu=",round(mu[21],2), ", s=", round(sigma2[21],2)), 
+                    paste0("mu=",round(mu[26],2), ", s=", round(sigma2[26],2)), 
+                    paste0("mu=",round(mu[31],2), ", s=", round(sigma2[31],2)), 
+                    paste0("mu=",round(mu[36],2), ", s=", round(sigma2[36],2)), 
+                    paste0("mu=",round(mu[41],2), ", s=", round(sigma2[41],2)), 
+                    paste0("mu=",round(mu[46],2), ", s=", round(sigma2[46],2)))
+
+df1   <- melt(dens, id.vars="X")
+
+# Agora plotamos o gráfico
+p <- ggplot(df1, aes(X,value, color = factor(variable))) +
+  geom_line(size = 1)+
+  scale_x_continuous(name = TeX("$X$")) +
+     scale_y_continuous(name = TeX("$f(x)$")) + 
+  ggtitle("Evolução de um processo AR(1)") +
+    scale_colour_brewer(palette="Dark2") +
+    labs(colour = "Parâmetros") +
+  theme_bw()
+
+p <- p + geom_vline(aes(xintercept=muinf),
+            color="black", linetype="dashed", size=1) + annotate("text", x = muinf-1, y = 1, label = paste0("Média\n incondicional"), size = 2.5)
+
+p
+```
+
+```{r, warning = FALSE, message = FALSE, eval = FALSE}
+# Altura e largura são em inches, default = 7
+pdf(file="C:\\Users\\Aishameriane\\OneDrive\\Documentos\\Mestrado Economia\\Bayesiana - 2018-01\\Notas de Aula 2018\\Imagens notas de aula\\Cap 4\\Fig-4.008.pdf", width = 7, height = 3)
+p
+dev.off()
+```
 
 # MCMC
 
