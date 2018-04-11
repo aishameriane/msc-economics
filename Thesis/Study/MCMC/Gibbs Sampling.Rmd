@@ -81,6 +81,10 @@ pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify, car, rgl,
 
 <span style="color:green">**Resposta**</span>: Na segunda coluna da página 2, abaixo da equação (2.7) diz que _"Figure 1 displays histograms of two samples $x_1, \ldots, x_m$ of size $m=500$ from the beta-binomial distribution with $n=16$, $\alpha=2$ and $\beta=4$."_. Tá, isso faz sentido porque no início do exemplo ele diz que está justamente interessado em $f(x)$, a marginal de $X$.
 
+5.  <span style="color:red">**Dúvida 5:**</span> Acho que tem um typo na equação 7.3 do [@casella_MCR], mas não achei errata do livro. No último termo, que é o núcleo da inversa gamma, acho que o $b$ não fica no denominador com a variável aleatória e esse expoente é negativo (ver a definição que ele dá no final da página 202).
+
+<span style="color:green">**Resposta**</span>: 
+
 # Introdução
 
 A origem do amostrador de Gibbs é o trabalho de Geman e Geman (1984), cuja aplicação era em [campos aleatórios de Gibbs](http://www.nlpr.ia.ac.cn/users/szli/MRF_Book/Chapter_1/node12.html) (_Gibbs random fields_). Pode-se mostrar que o amostrador de Gibbs é um caso particular do algoritmo de Metropolis-Hastings, onde os parâmetros são agrupados em blocos que, por sua vez, são amostrados de forma condicional uns aos outros. Por exemplo, supondo que temos interesse no parâmetro $\theta$ e que ele pode ser escrito como uma partição $\theta = (\theta_1, \theta_2, \ldots, \theta_p)$ (onde $\theta_i, \ i \in \{1, \ldots, p\}$ pode ser escalar ou vetorial), então usaremos as distribuições condicionais de $\theta_i| \theta_1, \ldots, \theta_{i-1}, \theta_{i+1}, \ldots, \theta_p$, $\forall\ i$ de maneira a obter amostras de todos os $\theta_i$ [@chib2001]. Esse procedimento equivale a escolher como densidade candidata as densidades condicionais a todos os outros parâmetros (também chamada de _full conditional_ - <span style="color:red">**Dúvida**: Qual a melhor tradução de _full conditional_? </span>). Como resultado, a probabilidade de aceitação, a cada passo, é sempre igual a $1$ [@chib2013]. No entanto, como não estou falando de Metropolis-Hastings antes, vou fazer a abordagem partindo diretamente do Gibbs.
@@ -366,6 +370,42 @@ grid.arrange(p1, p2, ncol = 2, nrow = 1)
 
 <span style="color:red">**Para a Aisha do futuro:** Tem problema nas funções `stat_function`, na primeira ele plota uma flat line e na segunda ele reclama que as coisas não tem mesmo número de linhas. Tem que dar uma pensada.</span>
 
+### Exemplo 3: A distribuição normal (adaptado de [@casella_MCR])
+
+Considere a distribuição posterior de $(\theta, \sigma^2)$ associada com o modelo conjunto dado por
+\begin{align*}
+X_i \sim \mathcal{N}(\theta, \sigma^2), \quad i = 1,\ldots, n\\
+\theta \sim \mathcal{N}(\theta_0, \tau^2) \quad \sigma^2 \sim \mathcal{IG}(a,b)
+\end{align*}
+em que $\mathcal{IG}$ denota a distribuição inversa-gama (definida no teorema 1) e $\theta_0$, $\tau^2$, $a$, $b$ são hiperparâmetros.
+
+**Teorema 1: Distribuição inversa gama**
+
+Seja $X$ uma v.a. que segue uma distribuição Gama($\alpha$, $\beta$). Então, $\frac{1}{X}$ segue uma distribuição inversa-gama de parâmetros $\alpha$ e $1/ \beta$.
+
+(tem outras versões que vão alterar o parâmetro $\beta$, essa parametrização que eu uso fica desse jeito. Na wikipedia, fica inversa-gama($\alpha$, $\beta$).)
+
+_Demonstração_:
+
+A densidade da Inversa-Gama($\alpha$, $\beta$) é dada por:
+$$f(z) = \frac{\beta^\alpha}{\Gamma(\alpha)} z^{-\alpha-1}\exp^{\frac{-\beta}{z}}$$
+Enquanto que a densidade da Gama($\alpha$, $\beta$) é dada por (obs: existe mais de uma forma de definir a densidade Gama):
+$$f(x) = \frac{1}{\beta^\alpha\Gamma(\alpha)} x^{\alpha-1}\exp^{-\frac{x}{\beta}}$$
+Agora, defina $Y=g(X)=\frac{1}{X}$. Como uma função de v.a. também é uma v.a., pode-se tentar descobrir qual é a densidade de $Y$. Isso pode ser feito com f.g.m. (primeiro teríamos que derivar a f.g.m da inversa gama, depois a da gama e finalmente calcular a de 1/X para X gama e comparar com a da inversa gama). Uma outra forma é usar o [teorema da transformação](http://math.arizona.edu/~jwatkins/f-transform.pdf). 
+
+\begin{align*}
+f_Y(y) = f_X(1/y) \lvert \frac{d}{dy}y^{-1} \rvert \\
+&= \frac{1}{\Gamma(\alpha) \beta^\alpha}\cdot y^{-\alpha+1} \exp \left\{- \frac{1}{\beta \cdot y} \right\} \cdot y^{-2}\\
+&= \frac{\frac{1}{\beta}^\alpha}{\Gamma(\alpha)} \cdot y^{-\alpha - 1} \exp \left\{- \frac{\frac{1}{\beta}}{y} \right\}.
+\end{align*}
+----
+
+Escrevendo $x=(x_1, \ldots, x_n)$ a distribuição à posteriori de $(\theta, \sigma^2)$ é dada por:
+
+\begin{align*}
+f(\theta, \sigma^2|x) &\propto \left[\frac{1}{(\sigma^2)^{n/2}}\exp\left\{-\frac{-\sum_i (x_i - \theta)^2}{2\sigma^2} \right\} \right]\\
+&\times \left[ \right]\cdot \left[\frac{1}{(\sigma^2)^{a+1}}\exp\left\{\frac{1}{b\sigma^2} \right\} \right]
+\end{align*}
 
 
 # Referências
