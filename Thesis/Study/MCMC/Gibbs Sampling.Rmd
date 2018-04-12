@@ -1,7 +1,7 @@
 ---
 title: "Amostrador de Gibbs"
 author: "Aishameriane Schmidt"
-date: "Última atualização: 10 abril 2018"
+date: "Última atualização: 11 abril 2018"
 header-includes:
    - \usepackage{bigints}
    - \usepackage[brazil]{babel}
@@ -60,10 +60,12 @@ MathJax.Hub.Config({
 ```{r, message = FALSE, warning = FALSE}
 chooseCRANmirror(graphics = FALSE, ind = 10)
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify, car, rgl, rglwidget, psych, rmutil)
+pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify, car, rgl, rglwidget, psych, rmutil, VGAM, invgamma)
 ``` 
 
 # Dúvidas
+
+Dúvidas em <span style="color:blue">**azul**</span> eu acho que já entendi, mas deixei aqui a resposta para que a Aisha do futuro possa consultar também. Dúvidas em <span style="color:red">**vermelho**</span> ainda precisam de resposta.
 
 1.  <span style="color:red">**Dúvida 1:**</span> Qual a melhor tradução para _full conditional_? Eu coloquei como ''densidade condicional a todos os outros parâmetros''.
 
@@ -73,17 +75,21 @@ pacman::p_load(ggplot2, gridExtra, latex2exp, RColorBrewer, ggfortify, car, rgl,
 
 <span style="color:green">**Resposta**</span>: 
 
-3.  <span style="color:red">**Dúvida 3:**</span> No segundo exemplo bivariadoo (da beta-binomial) nós construímos o Gibbs usando $f(X|\theta)$ e $f(\theta)$ para gerar as sequências $\{X,\theta\}$. Quer dizer então que não precisa ser sempre de uma condicional? Achei que sempre seria algo na linha do algoritmo 2. Esse exemplos está no [@casella_MCR] e no [@casella_george1992]. É por quê nesse exemplo específico ele quer apenas $f(x)$ e por isso está gerando amostras de $\theta$ apenas para conseguir plugar na condicional e não necessariamente quer os $\thetas$?
+3.  <span style="color:red">**Dúvida 3:**</span> No segundo exemplo bivariadoo (da beta-binomial) nós construímos o Gibbs usando $f(X|\theta)$ e $f(\theta)$ para gerar as sequências $\{X,\theta\}$. Quer dizer então que não precisa ser sempre de uma condicional? Achei que sempre seria algo na linha do algoritmo 2. Esse exemplos está no [@casella_MCR] e no [@casella_george1992]. É por quê nesse exemplo específico ele quer apenas $f(x)$ e por isso está gerando amostras de $\theta$ apenas para conseguir plugar na condicional e não necessariamente quer os $\theta$?
 
 <span style="color:green">**Resposta**</span>:
 
-4.  <span style="color:red">**Dúvida 4:**</span> Como é feito o histograma da Beta-Binomial da figura 1 de [@casella_george1992]? Porque nós temos um vetor bivariado de com $\{x,y\}$ (a distribuição conjunta deles que é beta binomial.)
+4.  <span style="color:blue">**Dúvida 4:**</span> Como é feito o histograma da Beta-Binomial da figura 1 de [@casella_george1992]? Porque nós temos um vetor bivariado de com $\{x,y\}$ (a distribuição conjunta deles que é beta binomial.)
 
 <span style="color:green">**Resposta**</span>: Na segunda coluna da página 2, abaixo da equação (2.7) diz que _"Figure 1 displays histograms of two samples $x_1, \ldots, x_m$ of size $m=500$ from the beta-binomial distribution with $n=16$, $\alpha=2$ and $\beta=4$."_. Tá, isso faz sentido porque no início do exemplo ele diz que está justamente interessado em $f(x)$, a marginal de $X$.
 
 5.  <span style="color:red">**Dúvida 5:**</span> Acho que tem um typo na equação 7.3 do [@casella_MCR], mas não achei errata do livro. No último termo, que é o núcleo da inversa gamma, acho que o $b$ não fica no denominador com a variável aleatória e esse expoente é negativo (ver a definição que ele dá no final da página 202).
 
 <span style="color:green">**Resposta**</span>: 
+
+6. <span style="color:blue">**Dúvida 6:**</span> No [casella_MCR] na página 203, no exemplo da Normal ele diz que não é um modelo conjugado e por isso não conseguimos uma densidade tabelada ao integrar $\theta$ e $\sigma^2$.
+
+<span style="color:green">**Resposta**</span>: Se olhar bem, os parâmetros a variância de $\theta$ não é $\sigma^2$ e por isso não estamos no modelo conjugado. 
 
 # Introdução
 
@@ -280,6 +286,9 @@ Ambos gráficos peguei [nesta thread](https://stackoverflow.com/questions/1994943
 
 Considere a distribuição dada por
 $$f(x, \theta) = {n\choose x} \frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)}\theta^{x+a+1}(1-\theta)^{n-x+b-1}, \qquad \text{com} \quad 0 \leq \theta \leq 1 \quad \text{e} \quad x = 1, 2, \ldots, n.$$
+
+Nosso interesse é amostrar da marginal de $X$, mas vamos supor que não temos como fazer isso diretamente.
+
 Vamos calcular a densidade marginal de $\theta$:
 
 \begin{align*}
@@ -296,11 +305,9 @@ f(x|\theta) &=\frac{f(x,\theta)}{f(\theta)} = \frac{{n\choose x} \frac{\Gamma(a+
 &= {n\choose x} \theta^{x}(1-\theta)^{n-x}
 \end{align*}
 
-Que é a densidade de uma v.a. Binomial com parâmetros $n$ e $\theta$. Assim, $X|\theta \sim \text{Binomial}(n,\theta)$ e $\theta \sim \mathcal{B}(a,b) \Rightarrow \theta|x \sim \mathcal{B}(x + a, n-x+b)$ e podemos implementar um amostrador de Gibbs da seguinte forma (peguei o código do [@casella_MCR]).
+Que é a densidade de uma v.a. Binomial com parâmetros $n$ e $\theta$. Assim, $X|\theta \sim \text{Binomial}(n,\theta)$ e $\theta \sim \mathcal{B}(a,b) \Rightarrow \theta|x \sim \mathcal{B}(x + a, n-x+b)$ e podemos implementar um amostrador de Gibbs da seguinte forma (adaptei o código do [@casella_MCR]).
 
 **Obs:** A densidade marginal de X é uma Beta-Binomial(n,a,b), mas estamos fingindo que não sabemos disso.
-
-<span style="color:red">**A dúvida 3 refere-se ao fato de que não usamos uma densidade condicional para $\theta$ neste exemplo.**</span>
 
 ```{r}
 Nsim  <- 5000
@@ -331,8 +338,8 @@ p1 <- ggplot(cadeiadf, aes(x=cadeiadf$x)) +
     #     dbetabinom.ab(x =x, size = n, shape1 = a, shape2 = b)
     # },
     # args = c(size = n, shape1 = a, shape2 = b, n = length(cadeiadf$x), bw = .5), colour = cores2[10], size = 1, geom = "line")+ #dont know what's wrong
-  geom_density(colour = cores2[10])+
-  labs(title= TeX('$X \\sim$ Beta-Binomial ($n$,$a$, $b$)'), y = "", x= TeX('$X$'), color = "Variável") +
+  #geom_density(colour = cores2[10])+
+  labs(title= TeX('$X \\sim$ Beta-Binomial ($n$,$a$, $b$) - Simulado'), y = "", x= TeX('$X$'), color = "Variável") +
     theme(plot.title=element_text(size = 12),
               text=element_text(size = 12),
               axis.text.x=element_text(colour="black", size = 10),
@@ -342,7 +349,7 @@ p1 <- ggplot(cadeiadf, aes(x=cadeiadf$x)) +
               panel.grid.minor = element_line(),
               panel.border = element_rect(colour = "black", fill = NA))
 p1 <- p1 + geom_vline(aes(xintercept=mean(cadeiadf$x)),
-            color="purple", linetype="dashed", size=1) + annotate("text", x = 8, y = 0.22, label = paste0("Média dos\n valores simulados\n", round(mean(cadeiadf$x),4)), size = 2.5)
+            color="purple", linetype="dashed", size=1) + annotate("text", x = 10, y = 0.15, label = paste0("Média dos\n valores simulados\n", round(mean(cadeiadf$x),4)), size = 2.5)
 
 p2<- ggplot(cadeiadf, aes(x=theta)) + 
     geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
@@ -352,7 +359,7 @@ p2<- ggplot(cadeiadf, aes(x=theta)) +
     #     dbeta(x = theta, shape1 = a, shape2 = b)
     # },
     # args = c(shape1 = a, shape2 = b, n = length(theta), bw = .5), colour = cores2[10], size = 1)+ #dont know what's wrong
-  geom_density(colour = cores2[4])+
+  #geom_density(colour = cores2[4])+
   labs(title= TeX('$\\theta \\sim B(a,b)$'), y = "", x= TeX('$\\theta$'), color = "Variável") +
     theme(plot.title=element_text(size = 12),
               text=element_text(size = 12),
@@ -363,10 +370,37 @@ p2<- ggplot(cadeiadf, aes(x=theta)) +
               panel.grid.minor = element_line(),
               panel.border = element_rect(colour = "black", fill = NA))
 p2 <- p2 + geom_vline(aes(xintercept=mean(theta)),
-            color="darkgreen", linetype="dashed", size=1) + annotate("text", x = 0.6, y = 1.5, label = paste0("Média dos\n valores simulados\n", round(mean(cadeiadf$theta),4)), size = 2.5)
+            color="darkgreen", linetype="dashed", size=1) + annotate("text", x = 0.65, y = 1.5, label = paste0("Média dos\n valores simulados\n", round(mean(cadeiadf$theta),4)), size = 2.5)
 
+df2 <- data.frame(seq(1,n), dbetabinom.ab(seq(1,n),n,a,b))
+names(df2) <- c("X", "densidade")
+
+p3 <- ggplot(df2, aes(x=X, y=densidade)) + 
+    geom_bar(stat="identity",
+      width=.5, fill = cores[4], colour = cores[4], alpha=0.5)+
+  labs(title= TeX('$X \\sim$ Beta-Binomial ($n$,$a$, $b$) - Teórico'), y = "", x= TeX('$X$'), color = "Variável") +
+    theme(plot.title=element_text(size = 12),
+              text=element_text(size = 12),
+              axis.text.x=element_text(colour="black", size = 10),
+              axis.text.y=element_text(colour="black", size = 10),
+              panel.background = element_blank(),
+              panel.grid.major = element_line(colour = "gray"),
+              panel.grid.minor = element_line(),
+              panel.border = element_rect(colour = "black", fill = NA))
+p3 <- p3 + geom_vline(aes(xintercept=n*a/(a+b)),
+            color="pink", linetype="dashed", size=1) + annotate("text", x = 8, y = 0.12, label = paste0("Média da\n distribuição teórica\n", round(n*a/(a+b),4)), size = 2.5)
+
+grid.arrange(p1, p3, ncol = 2, nrow = 1)
+
+#Plot as distribuições dos x e dos thetas
 grid.arrange(p1, p2, ncol = 2, nrow = 1)
 ```
+
+Obs: A altura dos histogramas dos valores simulados e teóricos está diferente pois para os valores simulados foi utilizada uma função que estima a densidade a partir do histograma. Se você plotar um histograma usando o plot simples do R, vai ver que eles dão iguais.
+
+Obs2: Usei uma função pronta para calcular a beta-binomial (função `dbetabinom.ab` do pacote `VGAM`), mas caso você não consiga usar ele, pode implementar diretamente a densidade a partir da equação:
+
+$$f(X|n, a, b) = \frac{\Gamma(n+1)}{\Gamma(x+1)\Gamma(n-x+1)}\cdot\frac{\Gamma(x+a)\Gamma(n-x+b)}{\Gamma(n+a+b)}\cdot\frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)} $$
 
 <span style="color:red">**Para a Aisha do futuro:** Tem problema nas funções `stat_function`, na primeira ele plota uma flat line e na segunda ele reclama que as coisas não tem mesmo número de linhas. Tem que dar uma pensada.</span>
 
@@ -379,6 +413,7 @@ X_i \sim \mathcal{N}(\theta, \sigma^2), \quad i = 1,\ldots, n\\
 \end{align*}
 em que $\mathcal{IG}$ denota a distribuição inversa-gama (definida no teorema 1) e $\theta_0$, $\tau^2$, $a$, $b$ são hiperparâmetros.
 
+----
 **Teorema 1: Distribuição inversa gama**
 
 Seja $X$ uma v.a. que segue uma distribuição Gama($\alpha$, $\beta$). Então, $\frac{1}{X}$ segue uma distribuição inversa-gama de parâmetros $\alpha$ e $1/ \beta$.
@@ -400,13 +435,133 @@ f_Y(y) = f_X(1/y) \lvert \frac{d}{dy}y^{-1} \rvert \\
 \end{align*}
 ----
 
-Escrevendo $x=(x_1, \ldots, x_n)$ a distribuição à posteriori de $(\theta, \sigma^2)$ é dada por:
+Escrevendo $\mathbf{x}=(x_1, \ldots, x_n)$ a distribuição à posteriori de $(\theta, \sigma^2)$ é dada por:
 
 \begin{align*}
-f(\theta, \sigma^2|x) &\propto \left[\frac{1}{(\sigma^2)^{n/2}}\exp\left\{-\frac{-\sum_i (x_i - \theta)^2}{2\sigma^2} \right\} \right]\\
-&\times \left[ \right]\cdot \left[\frac{1}{(\sigma^2)^{a+1}}\exp\left\{\frac{1}{b\sigma^2} \right\} \right]
+f(\theta, \sigma^2|\mathbf{x}) &\propto \left[\frac{1}{(\sigma^2)^{n/2}}\exp\left\{-\frac{-\sum_i (x_i - \theta)^2}{2\sigma^2} \right\} \right]\\
+&\times \left[\frac{1}{\tau}\exp \left\{-\frac{-(\theta-\theta_0)^2}{2\tau^2} \right\} \right]\cdot \left[\frac{1}{(\sigma^2)^{a+1}}\exp\left\{\frac{1}{b\sigma^2} \right\} \right]
+\end{align*}
+Note que essa não é uma distribuição conhecida (tabelada) e por isso não conseguimos amostrar dela. Porém, nós conseguimos calcular as condicionais, que serão dadas por:
+
+\begin{align}
+\pi(\theta|\mathbf{x}, \sigma^2) &\propto \exp\left\{\frac{1}{2\sigma^2}-\sum_i (x_i - \theta)^2 \right\} \exp \left\{-\frac{-(\theta-\theta_0)^2}{2\tau^2} \right\} \tag{7.4}\\
+\pi(\sigma^2|\mathbb{x}, \theta) &\propto \left(\frac{1}{\sigma^2} \right)^{\frac{n+2a+3}{2}}\exp \left\{-\frac{1}{2\sigma^2} \right\}
+\end{align}
+
+E essas densidades correspondem a
+
+\begin{align*}
+\theta|\textbf{x},\sigma^2 &\sim \mathcal{N}\left(\frac{\sigma^2}{\sigma^2 + n \tau^2}\theta_0 + \frac{n \tau^2}{\sigma^2 + n \tau^2}\bar{x} , \frac{\sigma^2\tau^2}{\sigma^2 + n \tau^2} \right)\\
+\sigma^2 | \textbf{x}, \theta &\sim \mathcal{IG}\left(\frac{n}{2}+a, \frac{1}{2}\sum_i (x_i - \theta)^2 + b \right)
 \end{align*}
 
+O valor de $\bar{x}$ é dado.
+
+```{r}
+x     <- c(91,504, 557, 609, 693, 727, 764, 803, 857, 929, 970, 1043, 1089, 1195, 1384, 1713)
+x <- log(x)
+xbar <- mean(x)
+n     <- length(x)
+Nsim  <- 5000
+
+# Hiperparametros
+theta0 <- 5
+tau2   <- 10
+a      <- 3
+b      <- 3
+
+sh1   <- (n/2)+a
+sigma2 <- rep(0, Nsim)
+theta <- rep(0, Nsim)
+sigma2[1] <- 1/rgamma(1, shape = a, rate = b)
+B <- sigma2[1]/(sigma2[1]+n*tau2)
+theta[1] <- rnorm(1, m = B*theta0+(1-B)*xbar, sd = sqrt(tau2*B))
+
+for (i in 2:Nsim){
+  B <- sigma2[i-1]/(sigma2[i-1]+n*tau2)
+  theta[i] <- rnorm(1, m = B*theta0 + (1-B)*xbar, sd = sqrt(tau2 * B))
+  ra1 <- (1/2)*(sum((x-theta[i])^2))+B
+  sigma2[i] <- 1/rgamma(1, shape=sh1, rate = ra1)
+}
+
+
+cores <- brewer.pal(6, "Dark2")
+cores2 <- brewer.pal(10, "Paired")
+cadeiadf <- data.frame(seq(5.5, 7.5, length.out = Nsim), theta, seq(0.4, 1.8, length.out = Nsim), sigma2)
+names(cadeiadf) <- c("X1", "theta", "X2", "sigma2")
+
+p1 <- ggplot(cadeiadf, aes(x=theta)) + 
+    geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
+      binwidth=.05, fill = cores[3], colour = cores[3], alpha=0.5)+
+  labs(title= TeX('$\\theta - Simulado'), y = "", x= TeX('$\\theta$'), color = "Variável") +
+    theme(plot.title=element_text(size = 12),
+              text=element_text(size = 12),
+              axis.text.x=element_text(colour="black", size = 10),
+              axis.text.y=element_text(colour="black", size = 10),
+              panel.background = element_blank(),
+              panel.grid.major = element_line(colour = "gray"),
+              panel.grid.minor = element_line(),
+              panel.border = element_rect(colour = "black", fill = NA))
+p1 <- p1 + geom_vline(aes(xintercept=mean(theta)),
+            color="purple", linetype="dashed", size=1) + annotate("text", x = 7.5, y = 1, label = paste0("Média dos\n valores simulados\n", round(mean(theta),4)), size = 2.5)
+
+p2<- ggplot(cadeiadf, aes(x=sigma2)) + 
+    geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
+      binwidth=.05, fill = cores[1], colour = cores[1], alpha=0.5)+
+  labs(title= TeX('$\\sigma^2 - Simulado$'), y = "", x= TeX('$\\sigma^2$'), color = "Variável") +
+    theme(plot.title=element_text(size = 12),
+              text=element_text(size = 12),
+              axis.text.x=element_text(colour="black", size = 10),
+              axis.text.y=element_text(colour="black", size = 10),
+              panel.background = element_blank(),
+              panel.grid.major = element_line(colour = "gray"),
+              panel.grid.minor = element_line(),
+              panel.border = element_rect(colour = "black", fill = NA))
+p2 <- p2 + geom_vline(aes(xintercept=mean(sigma2)),
+            color="darkgreen", linetype="dashed", size=1) + annotate("text", x = 0.7, y = 2, label = paste0("Média dos\n valores simulados\n", round(mean(sigma2),4)), size = 2.5)
+
+den <- mean(sigma2)+n*tau2
+df2 <- data.frame(seq(5.5,7.5, length.out = 30), dnorm(seq(5.5,7.5, length.out = 30), mean =  (1/den)*mean(sigma2)*theta0 + (1/den)*n*tau2*xbar, sd = sqrt(mean(sigma2)*tau2/den)))
+names(df2) <- c("theta", "densidade")
+
+p3 <- ggplot(df2, aes(x=theta, y=densidade)) + 
+    geom_bar(stat="identity",
+      width=.05, fill = cores[4], colour = cores[4], alpha=0.5)+
+  labs(title= TeX('$\\theta - Teórico'), y = "", x= TeX('$\\theta$'), color = "Variável") +
+    theme(plot.title=element_text(size = 12),
+              text=element_text(size = 12),
+              axis.text.x=element_text(colour="black", size = 10),
+              axis.text.y=element_text(colour="black", size = 10),
+              panel.background = element_blank(),
+              panel.grid.major = element_line(colour = "gray"),
+              panel.grid.minor = element_line(),
+              panel.border = element_rect(colour = "black", fill = NA))
+p3 <- p3 + geom_vline(aes(xintercept=(1/den)*mean(sigma2)*theta0 + (1/den)*n*tau2*xbar),
+            color="pink", linetype="dashed", size=1) + annotate("text", x = 7, y = 1.5, label = paste0("Média da\n distribuição teórica\n", round((1/den)*mean(sigma2)*theta0 + (1/den)*n*tau2*xbar,4)), size = 2.5)
+
+df3 <- data.frame(seq(0.2,1.8, length.out = 50), dinvgamma(seq(0.2,1.8, length.out = 50), shape = n/2+a, rate = 0.5*sum((x-mean(theta))^2)+b))
+names(df3) <- c("sigma2", "densidade")
+media <- (0.5*sum((x-mean(theta))^2)+b)/((n/2+a)-1)
+
+p4 <- ggplot(df3, aes(x=sigma2, y=densidade)) + 
+    geom_bar(stat="identity",
+      width=.03, fill = cores[5], colour = cores[5], alpha=0.5)+
+  labs(title= TeX('$\\sigma^2 - Teórico'), y = "", x= TeX('$\\sigma^2$'), color = "Variável") +
+    theme(plot.title=element_text(size = 12),
+              text=element_text(size = 12),
+              axis.text.x=element_text(colour="black", size = 10),
+              axis.text.y=element_text(colour="black", size = 10),
+              panel.background = element_blank(),
+              panel.grid.major = element_line(colour = "gray"),
+              panel.grid.minor = element_line(),
+              panel.border = element_rect(colour = "black", fill = NA))
+p4 <- p4 + geom_vline(aes(xintercept=media),
+            color="darkgreen", linetype="dashed", size=1) + annotate("text", x = 1, y = 2, label = paste0("Média da\n distribuição teórica\n", round(media,4)), size = 2.5)
+
+grid.arrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+
+
+```
 
 # Referências
 
