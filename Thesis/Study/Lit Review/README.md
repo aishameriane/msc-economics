@@ -1,5 +1,9 @@
 This folder is where I intend to save my notes on the articles and related literature that I'm studying. 
 
+<p align = "left">
+    <img src="https://imgs.xkcd.com/comics/dubious_study.png" alt="xkcd Study" width="300" align = "right">
+</p>
+
 # To-do
 
 * Maybe I should organize this folder and throw my notes on a separate space, like [this one](https://github.com/dennybritz/deeplearning-papernotes);
