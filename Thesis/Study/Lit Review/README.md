@@ -1,5 +1,12 @@
 This folder is where I intend to save my notes on the articles and related literature that I'm studying. 
 
+# To-do
+
+* Maybe I should organize this folder and throw my notes on a separate space, like [this one](https://github.com/dennybritz/deeplearning-papernotes);
+* Write the articles I'll study next;
+* Get my notes from other stuff (Uhlig?) in here;
+* Organize better, maybe including the link to the original work and then a link to my notes (and code, if any).
+
 # Inequality
 ## Non-econometric
 - [Thomas Piketty, A economia da Desigualdade (2015)](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/Economia%20da%20Desigualdade.md) [BOOK]. Started notes on 09/05/2018. Just finished chapter 1.
