@@ -15,6 +15,10 @@ independently of interest rates_. Não entendi como que o BC pode fazer algo sem
 2. What's the meaning of _100 basis points reduction in policy rates_?
 ** Some thoughts**: Check the [original article](https://academic.oup.com/ser/article-abstract/12/2/245/1666588) from Huber and Stephens.
 
+3. Am I studying conventional/unconventional/everythong monetary policy?
+
+4. I didn't understand the meaning of "orthogonal unexpected changes in policy rates with respect to unexpected changes in growth and inflation".
+
 ## Abstract
 
 They constructed a measure of unanticipated changes in policy rates for a penal of 32 advanced and emerging market countries for the period between 1990 and 2013.
@@ -62,10 +66,15 @@ Empirically, what has been observed up until now is also controverse, in the sen
 * Saiki and Frost (2014) [[article, 2014](https://www.tandfonline.com/doi/abs/10.1080/00036846.2014.962229)] [[working paper, 2014](https://www.dnb.nl/binaries/Working%20Paper%20423_tcm46-307334.pdf)] - expansionary unconventional monetary policy in japan is related to augmented inequality levels.
 * Casiraghi et al (2016) [[article, 2018](https://www.sciencedirect.com/science/article/pii/S0261560617302292)], [[working paper, 2016](https://www.bancaditalia.it/pubblicazioni/temi-discussione/2016/2016-1077/en_tema_1077.pdf)] - "find that recent monetary policy measures have a negligible overall effect on inequality in Italy".
 
+## Paper contributions
 
+The paper investigates the effect of _conventional_ monetary policy on a panel of 32 countries (advanced and emerging economies) during the period between 1990-2013. More specifically:
+* They "identify the causal effect of monetary policy shocks on inequality" - for this, they used a recent methodology to build the series of unexpected changes in policy rates "that are orthogonal to unexpected changes in growth and inflation";
+* Different from other works, theirs examines a large cohort of countries over a 23 year period;
+* They investigated if there are asymmetries in positive and negative monetary policy shocks.
 
+## Results
 
+An unexpected increase of 1% ([100 basis points](https://www.investopedia.com/terms/b/basispoint.asp)) increases inequality (measured by Gini index) in approximately 1.25% in 1 year after the shock, 2.25% after 5 years. This effect is said to be economically significant (since Gini index is very stable across time) and is robust when the inequality variable is replaced.
 
-
-
-
+This effective is larger for positive shocks than in negative shocks.
