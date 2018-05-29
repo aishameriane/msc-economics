@@ -37,7 +37,7 @@ This folder is where I intend to save my notes on the articles and related liter
 
 (I gave up trying to keep up w/ all changes, so let's assume there will be "a model" at some point and "a method to estimate the model")
 
-- Windle and Carvalho, _A tractable state-space model for symmetric positive definite matrices_, Bayesian Analysis (2014). Started notes on 06/05/2018. *Still in the introduction*. [[my notes](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/Windle_e_Carvalho.html)][[original paper](https://projecteuclid.org/euclid.ba/1416579176)[comment by cassarin](https://doi.org/10.1214/14-BA918)][[comment by ter Horst and Molina](https://projecteuclid.org/euclid.ba/1416579179)][[comment by Forbes](https://projecteuclid.org/euclid.ba/1416579178)][[reply to comments](https://projecteuclid.org/euclid.ba/1416579180)].
+- Windle and Carvalho, _A tractable state-space model for symmetric positive definite matrices_, Bayesian Analysis (2014). Started notes on 06/05/2018. *Still in the introduction*. [[my notes](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/Windle_e_Carvalho.html)][[original paper](https://projecteuclid.org/euclid.ba/1416579176)][[comment by cassarin](https://doi.org/10.1214/14-BA918)][[comment by ter Horst and Molina](https://projecteuclid.org/euclid.ba/1416579179)][[comment by Forbes](https://projecteuclid.org/euclid.ba/1416579178)][[reply to comments](https://projecteuclid.org/euclid.ba/1416579180)].
 
 ### MCMC
 
