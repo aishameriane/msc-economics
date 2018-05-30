@@ -143,44 +143,120 @@ $(document).ready(function () {
 <div id="windle-carvalho-2014" class="section level1">
 <h1>Windle &amp; Carvalho (2014)</h1>
 <p>This document summarizes what I understood (or not) from Windle &amp; Carvalho - <em>A tractable state-space model for symmetric positive definite matrices</em>, Bayesian Analysis (2014).</p>
-<div id="to-do-or-_what-i-want-to-achieve-reading-this" class="section level2">
-<h2>To-do (or _what <strong>I</strong> want to achieve reading this)</h2>
+<div id="to-do-or-what-i-want-to-achieve-by-reading-this" class="section level2">
+<h2>To-do (or <em>what <strong>I</strong> want to achieve by reading this</em>)</h2>
 <ol style="list-style-type: decimal">
 <li>Read the article and summarize main ideas</li>
 <li>Implement a Gibbs sampler to estimate something similar to the article example (not sure if I’ll be successful replicating the same example because I’m not sure about the data)</li>
 </ol>
-<p>The goal is to use Windle and Carvalho work to generalize Uhlig’s model from 1997 to a TVP-VAR with stochastic volatility (instead a constant parameter framework).</p>
+<p><del>The goal is to use Windle and Carvalho work to generalize Uhlig’s model from 1997 to a TVP-VAR with stochastic volatility (instead a constant parameter framework).</del> Aparently my advisor thinks that this is not necessary.</p>
 </div>
 <div id="questions-stuff-i-need-to-answer" class="section level2">
 <h2>Questions (stuff I need to answer)</h2>
 <p>Dúvidas em <span style="color:blue"><strong>azul</strong></span> eu acho que já entendi, mas deixei aqui a resposta para que a Aisha do futuro possa consultar também. Dúvidas em <span style="color:red"><strong>vermelho</strong></span> ainda precisam de resposta.</p>
 <ol style="list-style-type: decimal">
-<li><span style="color:red"><strong>Question 1:</strong></span></li>
+<li><span style="color:red"><strong>Question 1:</strong></span> É uma dúvida que o Mateus também tinha. No Windle e Carvalho está escrito _“(…) <span class="citation">(Uhlig 1997)</span>, who showed how to construct a state space model with_ <span class="math inline">\(S_{m,1}^+\)</span> <em>observations and</em> <span class="math inline">\(S_m^+\)</span> _hidden states (…) We extende his approch to observarions of arbitrary rank“_ . A pergunta está relacionada ao posto dessas matrizes (a convenção em <span class="citation">(Windle, Carvalho, and others 2014)</span> é que <span class="math inline">\(S_{m,k}^+\)</span> é o conjunto de matrizes simétricas positivas <strong>semi</strong>-definidas de tamanho <span class="math inline">\(m \times m\)</span> e posto <span class="math inline">\(k\)</span> enquanto que <span class="math inline">\(S_{m,1}^+\)</span> é o conjunto de matrizes positivas definidas de tamanho <span class="math inline">\(m \times m\)</span>). O Mateus, num rascunho dele argumenta que o Uhlig fez para <span class="math inline">\(S_{m,1}^+\)</span> pois uma vez que <span class="math inline">\(y_t\)</span> está definido para um <span class="math inline">\(T\)</span>, todos as outras observáveis para <span class="math inline">\(t &lt; T\)</span> estão definidas também.</li>
 </ol>
 <ul>
 <li><span style="color:green"><strong>Answer 1:</strong></span></li>
 </ul>
 <ol start="2" style="list-style-type: decimal">
-<li><span style="color:red"><strong>Question 2:</strong></span></li>
+<li><span style="color:red"><strong>Question 2:</strong></span> Como enxergar o modelo do Uhlig como um “<a href="https://www.itl.nist.gov/div898/handbook/pmc/section4/pmc43.htm">exponential smoothing</a>”?</li>
 </ol>
 <ul>
 <li><span style="color:green"><strong>Answer 2:</strong></span></li>
 </ul>
+<ol start="3" style="list-style-type: decimal">
+<li><span style="color:red"><strong>Question 3:</strong></span> No modelo de <span class="citation">(Windle, Carvalho, and others 2014)</span> é possível que observações e matrizes de covariância estejam em frequências diferentes? Como??</li>
+</ol>
+<ul>
+<li><span style="color:green"><strong>Answer 3:</strong></span></li>
+</ul>
+<ol start="4" style="list-style-type: decimal">
+<li><span style="color:red"><strong>Question 4:</strong></span> Não entendi o que eles querem dizer com <em>Often, ensuring positive definiteness is most easily accomplished by defining the process in a different, unconstrained coordinate system.</em> (página 3),</li>
+</ol>
+<ul>
+<li><span style="color:green"><strong>Answer 4:</strong></span></li>
+</ul>
+<ol start="5" style="list-style-type: decimal">
+<li><span style="color:red"><strong>Question 5:</strong></span></li>
+</ol>
+<ul>
+<li><span style="color:green"><strong>Answer 5:</strong></span></li>
+</ul>
 </div>
-<div id="main-ideas" class="section level2">
-<h2>Main ideas</h2>
+<div id="notation" class="section level2">
+<h2>Notation</h2>
+<ul>
+<li><span class="math inline">\(\{y_t \}_{t=1}^T\)</span> is the observation set.</li>
+<li><span class="math inline">\(\{x_t \}_{t=1}^T\)</span> is the set of latent states (not in matrix form).</li>
+<li><span class="math inline">\(\mathcal{D}_t\)</span> is the data up until period <span class="math inline">\(t\)</span>, i.e., <span class="math inline">\(\{y_s \}_{s=1}^t\)</span>.</li>
+<li><span class="math inline">\(\theta\)</span> is the system’s parameters.</li>
+<li><em>filtering</em> refers to the iterative derivation of the distributions <span class="math inline">\(p(x_t|\mathcal{D}_t, \mathbf{\theta})\)</span>.</li>
+<li><em>backward sampling</em> is the process of taking a joint sample of the posterior distribution of the latent states <span class="math inline">\(p(\{x_t\}_{t=1}^T| \mathcal{D}_t, \mathbf{\theta})\)</span> using the condicional distributions <span class="math inline">\(p(x_t|x_{t+1}, \mathcal{D}_t, \mathbf{\theta})\)</span>.</li>
+<li><span class="math inline">\(S_{m,k}^+\)</span> denotes the set of symmetric positive semi-definite matrices of rank <span class="math inline">\(k\)</span> and size <span class="math inline">\(m \times m\)</span> (for an explanation on how to interpret covariance matrices <a href="https://math.stackexchange.com/questions/1258863/whats-the-best-way-to-think-about-the-covariance-matrix?rq=1">look here</a> and for a discussion on how a matrix of this kind can be singular, <a href="https://math.stackexchange.com/questions/1479483/when-does-the-inverse-of-a-covariance-matrix-exist">look here</a>).</li>
+</ul>
 </div>
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>State-space models can be characterized by a system of equations where we observe some variable across time, for example, y_t, which has a movement law governing its behavior (called <em>measurement equation</em>), for example</p>
+<p>State-space models can be characterized by a system of equations where we observe some variable across time, for example, <span class="math inline">\(y_t\)</span>, which has a movement law governing its behavior (called <em>measurement equation</em>), for example</p>
 <p><span class="math display">\[y_t = \alpha_t \cdot X_t + \varepsilon_t \qquad \text{whith} \quad \varepsilon_t \sim \mathcal{N}(0, \Omega).\]</span> In the case where the <span class="math inline">\(\alpha_t\)</span> are unknown, they are called “latent variables”. In order to make some inference, we must to impose a law for these states, called <strong>transition equation</strong> (<span style="color:purple">not so sure if we must… it is possible to have a state-space model without this part? hmmm</span>). A common choice for this equation is to assume a random walk structure:</p>
 <p><span class="math display">\[\alpha_t = \alpha_{t-1} + u_t \qquad \text{whith} \quad u_t \sim \mathcal{N}(0, \Sigma).\]</span></p>
+<p>Using the article notation, we have the observations (responses) <span class="math inline">\(\{y_t \}_{t=1}^T\)</span> following an observation density (the <em>measurement equation</em>) given by</p>
+<p><span class="math display">\[f(y_t|x_t).\]</span> The latent states <span class="math inline">\(\{x_t\}_{t=1}^T\)</span> follow their transistion density <span class="math display">\[g(x_t|x_{t-1})\]</span> These latent states usually (in many applications) assume any real value; however there are times when they are restricted to a subset of <span class="math inline">\(\mathbb{R}^n\)</span>. This situation occurs, for example, when dealing with conditional covariance matrices (of daily asset returns). In this situation, the latent states are symmetric positive-definite matrix-valued statistics and we can model a state-space system with covariance matrix-valued responses characterized by</p>
+<p><span class="math display">\[f(\mathbf{Y}_t|\mathbf{V}_t)\]</span> and covariance matrix-valued latent quantities (the time-varying covariance matrices) denoted by <span class="math display">\[g(\mathbf{V}_t|\mathbf{V}_{t-1}).\]</span> The Bayesian computation of such models is not a trivial task, since one needs to take into account the nature of the latent variables in order to choose prior densities that will lead to proper posterior distributions (and the posterior must be a distribution that holds for the restrictions in the space defined by <span class="math inline">\(\{V_t \}_{t=1}^T\)</span>). The filtering part (obtaining estimates based on the sample until time <span class="math inline">\(t\)</span>) is a less difficult task and several papers developed methods for this. The problem lies in sampling from the posterior distribution: without this, it is not possible to make inference for the parameters or even forward the filter.</p>
 <div id="what-they-do" class="section level3">
 <h3>What they do?</h3>
 <p>They present the method to build the forward filter, backward sampler and marginalize the hidden states to estimate system’s parameters in a state-space model with symmetric positive-definite latent spaces. In other words, they generalize Uhlig (1997) model and show the distributions needed to perform inference.</p>
 </div>
-<div id="how-they-do" class="section level3">
-<h3>How they do?</h3>
+</div>
+<div id="motivation" class="section level2">
+<h2>Motivation</h2>
+<ul>
+<li>They become interested in the issue of estimating the conditional covariance matrix of a vector of daily asset returns using the realized covariance statistic.</li>
+<li>In their study, they found out that exponentially weighted moving average of realized covariance matrices out-performs factor stochastic volatility models.
+<ul>
+<li>Exponential smoothing refers to iteratively calculating a geometrically weighted average of observations and some initial value.</li>
+</ul></li>
+<li>Their approach produces better 1-step forecast of daily covariance matrices (in comparison to factor stochastic volatility - which only uses daily returns).</li>
+</ul>
+</div>
+<div id="literature-review" class="section level2">
+<h2>Literature Review</h2>
+<ul>
+<li>There are three commom models to deal with latent dynamic covariance matrices
+<ol style="list-style-type: decimal">
+<li>Factor-like models</li>
+<li>GARCH-like models</li>
+<li>Stochastic volatility-like models</li>
+</ol></li>
+<li>In general, one observes either a vector, <span class="math inline">\(\mathbf{r}_t\)</span> or a <em>covariance matrix</em> <span class="math inline">\(\mathbf{Y}_t\)</span> (<span style="color:red"><strong>Aisha</strong>: This is important</span>), whose conditional distribution, <span class="math inline">\(\mathbb{P}(\mathbf{V}_t)\)</span> (uai, num era <span class="math inline">\(Y\)</span>?)m depends upon a sequence of covariance matrices <span class="math inline">\(\{\mathbf{V}_t\}_{t=1}^T\)</span>, that are correlated across time.</li>
+<li>They do not discuss models (1) and (2) because differ much from what they are doing.</li>
+</ul>
+<div id="univariate-stochastic-volatility-models" class="section level3">
+<h3>Univariate stochastic volatility models</h3>
+<ul>
+<li>They treat dynamic variances as stochastic processes, both in univariate and multivariate setting;
+<ul>
+<li>This implies that building such model is nontrivial. This occurs because
+<ol style="list-style-type: decimal">
+<li>we need to assure for positive definiteness (a requisite for covariance matrices)</li>
+<li>we want something that can adjust nicely to the observations in order to produce a posterior of known form.</li>
+</ol></li>
+</ul></li>
+<li>In many applications the positive definiteness is accomplished by defining the process in a different, unconstrained coordinate system.</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references">
+<div id="ref-uhlig1997">
+<p>Uhlig, Harald. 1997. “Bayesian Vector Autoregressions with Stochastic Volatility.” <em>Econometrica: Journal of the Econometric Society</em>. JSTOR, 59–73.</p>
+</div>
+<div id="ref-windle_carvalho2014">
+<p>Windle, Jesse, Carlos M Carvalho, and others. 2014. “A Tractable State-Space Model for Symmetric Positive-Definite Matrices.” <em>Bayesian Analysis</em> 9 (4). International Society for Bayesian Analysis: 759–92.</p>
 </div>
 </div>
 </div>
