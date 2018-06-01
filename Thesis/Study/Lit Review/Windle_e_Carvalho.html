@@ -120,11 +120,22 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Windle &amp; Carvalho (2014)</h1>
 <h4 class="author"><em>A. Schmidt</em></h4>
-<h4 class="date"><em>Última atualização: 7 de maio de 2018</em></h4>
+<h4 class="date"><em>Last update: May 31, 2018.</em></h4>
 
 </div>
 
 
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { 
+      equationNumbers: {
+ 
+            autoNumber: "all",
+            formatNumber: function (n) {return '9.'+n}
+      } 
+  }
+});
+</script>
 <span class="math display">\[\begin{align*}
 \newcommand{\norm}[1]{\left\lVert#1\right\rVert}\\
 \def\I{{\mathbb I}}\\
@@ -155,8 +166,10 @@ $(document).ready(function () {
 <h2>Questions (stuff I need to answer)</h2>
 <p>Dúvidas em <span style="color:blue"><strong>azul</strong></span> eu acho que já entendi, mas deixei aqui a resposta para que a Aisha do futuro possa consultar também. Dúvidas em <span style="color:red"><strong>vermelho</strong></span> ainda precisam de resposta.</p>
 <ol style="list-style-type: decimal">
-<li><span style="color:red"><strong>Question 1:</strong></span> É uma dúvida que o Mateus também tinha. No Windle e Carvalho está escrito _“(…) <span class="citation">(Uhlig 1997)</span>, who showed how to construct a state space model with_ <span class="math inline">\(S_{m,1}^+\)</span> <em>observations and</em> <span class="math inline">\(S_m^+\)</span> _hidden states (…) We extende his approch to observarions of arbitrary rank“_ . A pergunta está relacionada ao posto dessas matrizes (a convenção em <span class="citation">(Windle, Carvalho, and others 2014)</span> é que <span class="math inline">\(S_{m,k}^+\)</span> é o conjunto de matrizes simétricas positivas <strong>semi</strong>-definidas de tamanho <span class="math inline">\(m \times m\)</span> e posto <span class="math inline">\(k\)</span> enquanto que <span class="math inline">\(S_{m,1}^+\)</span> é o conjunto de matrizes positivas definidas de tamanho <span class="math inline">\(m \times m\)</span>). O Mateus, num rascunho dele argumenta que o Uhlig fez para <span class="math inline">\(S_{m,1}^+\)</span> pois uma vez que <span class="math inline">\(y_t\)</span> está definido para um <span class="math inline">\(T\)</span>, todos as outras observáveis para <span class="math inline">\(t &lt; T\)</span> estão definidas também.</li>
+<li><span style="color:red"><strong>Question 1:</strong></span> É uma dúvida que o Mateus também tinha. No Windle e Carvalho está escrito “<em>(…) <span class="citation">(Uhlig 1997)</span>, who showed how to construct a state space model with</em> <span class="math inline">\(S_{m,1}^+\)</span> <em>observations and</em> <span class="math inline">\(S_m^+\)</span> <em>hidden states (…) We extende his approch to observarions of arbitrary rank</em>” .</li>
 </ol>
+<p>A pergunta está relacionada ao posto dessas matrizes (a convenção em <span class="citation">(J. Windle, Carvalho, and others 2014)</span> é que <span class="math inline">\(S_{m,k}^+\)</span> é o conjunto de matrizes simétricas positivas <strong>semi</strong>-definidas de tamanho <span class="math inline">\(m \times m\)</span> e posto <span class="math inline">\(k\)</span> enquanto que <span class="math inline">\(S_{m,1}^+\)</span> é o conjunto de matrizes positivas definidas de tamanho <span class="math inline">\(m \times m\)</span>).</p>
+<p>O Mateus, num rascunho dele argumenta que o Uhlig fez para <span class="math inline">\(S_{m,1}^+\)</span> pois uma vez que <span class="math inline">\(y_t\)</span> está definido para um <span class="math inline">\(T\)</span>, todos as outras observáveis para <span class="math inline">\(t &lt; T\)</span> estão definidas também. Afinal, se fosse realmente assim, o Windle e Carvalho não teriam motivação para permitir posto maior que 1<span class="math inline">\(1\)</span>. Além disso, acho que o argumento do Mateus não cola, pois uma coluna seria algo como o deslocamento vertical da outra e isso não configura uma combinação linear. Enfim, não estou entendendo a interpretação do posto da matriz de observáveis.</p>
 <ul>
 <li><span style="color:green"><strong>Answer 1:</strong></span></li>
 </ul>
@@ -167,7 +180,7 @@ $(document).ready(function () {
 <li><span style="color:green"><strong>Answer 2:</strong></span></li>
 </ul>
 <ol start="3" style="list-style-type: decimal">
-<li><span style="color:red"><strong>Question 3:</strong></span> No modelo de <span class="citation">(Windle, Carvalho, and others 2014)</span> é possível que observações e matrizes de covariância estejam em frequências diferentes? Como??</li>
+<li><span style="color:red"><strong>Question 3:</strong></span> No modelo de <span class="citation">(J. Windle, Carvalho, and others 2014)</span> é possível que observações e matrizes de covariância estejam em frequências diferentes? Como??</li>
 </ol>
 <ul>
 <li><span style="color:green"><strong>Answer 3:</strong></span></li>
@@ -179,7 +192,7 @@ $(document).ready(function () {
 <li><span style="color:green"><strong>Answer 4:</strong></span></li>
 </ul>
 <ol start="5" style="list-style-type: decimal">
-<li><span style="color:red"><strong>Question 5:</strong></span></li>
+<li><span style="color:red"><strong>Question 5:</strong></span> Eles escrevem na página (4) que <span class="math inline">\(\mathbf{r}_t \sim \mathcal{N}(0, \mathbf{V}_t)\)</span> é um caso especial de <span class="math inline">\(\mathbf{Y}_t \sim \mathcal{W}_m(k, \mathbf{V}_t/k)\)</span> pois <span class="math inline">\(\mathbf{r}_t\mathbf{r}_t' \sim \mathcal{W}_1(1, \mathbf{V}_t)\)</span>. Minha dúvida é se o caso geral também pode ser visto em termos do caso simples, isto é, podemos ver a matriz <span class="math inline">\(\mathbf{Y}_t\)</span> como um produto de <span class="math inline">\(\mathbf{r}_t\)</span>’s?</li>
 </ol>
 <ul>
 <li><span style="color:green"><strong>Answer 5:</strong></span></li>
@@ -200,7 +213,7 @@ $(document).ready(function () {
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
 <p>State-space models can be characterized by a system of equations where we observe some variable across time, for example, <span class="math inline">\(y_t\)</span>, which has a movement law governing its behavior (called <em>measurement equation</em>), for example</p>
-<p><span class="math display">\[y_t = \alpha_t \cdot X_t + \varepsilon_t \qquad \text{whith} \quad \varepsilon_t \sim \mathcal{N}(0, \Omega).\]</span> In the case where the <span class="math inline">\(\alpha_t\)</span> are unknown, they are called “latent variables”. In order to make some inference, we must to impose a law for these states, called <strong>transition equation</strong> (<span style="color:purple">not so sure if we must… it is possible to have a state-space model without this part? hmmm</span>). A common choice for this equation is to assume a random walk structure:</p>
+<p><span class="math display">\[y_t = \alpha_t \cdot X_t + \varepsilon_t \qquad \text{whith} \quad \varepsilon_t \sim \mathcal{N}(0, \Omega).\]</span> In the case where the <span class="math inline">\(\alpha_t\)</span> are unknown, they are called “latent variables”. In order to make some inference, we must to impose a law for these states, called <strong>transition equation</strong> (<span style="color:purple">not so sure if we <strong>must</strong>… it is possible to have a state-space model without this part? hmmm</span> <span style="color:green"><strong>Future Aisha</strong>: Obviously not. Note that in order to have a <em>state space</em> model, you need the <del>damm</del> states and if you have them, you are going to need their movement law.</span>). A common choice for this equation is to assume a random walk structure:</p>
 <p><span class="math display">\[\alpha_t = \alpha_{t-1} + u_t \qquad \text{whith} \quad u_t \sim \mathcal{N}(0, \Sigma).\]</span></p>
 <p>Using the article notation, we have the observations (responses) <span class="math inline">\(\{y_t \}_{t=1}^T\)</span> following an observation density (the <em>measurement equation</em>) given by</p>
 <p><span class="math display">\[f(y_t|x_t).\]</span> The latent states <span class="math inline">\(\{x_t\}_{t=1}^T\)</span> follow their transistion density <span class="math display">\[g(x_t|x_{t-1})\]</span> These latent states usually (in many applications) assume any real value; however there are times when they are restricted to a subset of <span class="math inline">\(\mathbb{R}^n\)</span>. This situation occurs, for example, when dealing with conditional covariance matrices (of daily asset returns). In this situation, the latent states are symmetric positive-definite matrix-valued statistics and we can model a state-space system with covariance matrix-valued responses characterized by</p>
@@ -230,7 +243,7 @@ $(document).ready(function () {
 <li>GARCH-like models</li>
 <li>Stochastic volatility-like models</li>
 </ol></li>
-<li>In general, one observes either a vector, <span class="math inline">\(\mathbf{r}_t\)</span> or a <em>covariance matrix</em> <span class="math inline">\(\mathbf{Y}_t\)</span> (<span style="color:red"><strong>Aisha</strong>: This is important</span>), whose conditional distribution, <span class="math inline">\(\mathbb{P}(\mathbf{V}_t)\)</span> (uai, num era <span class="math inline">\(Y\)</span>?)m depends upon a sequence of covariance matrices <span class="math inline">\(\{\mathbf{V}_t\}_{t=1}^T\)</span>, that are correlated across time.</li>
+<li>In general, one observes either a vector, <span class="math inline">\(\mathbf{r}_t\)</span> or a <em>covariance matrix</em> <span class="math inline">\(\mathbf{Y}_t\)</span> (<span style="color:red"><strong>Aisha</strong>: This is important</span>), whose conditional distribution, <span class="math inline">\(\mathbb{P}(\mathbf{V}_t)\)</span> (<span style="color:purple">uai, num era <span class="math inline">\(Y\)</span>?</span>), depends upon a sequence of covariance matrices <span class="math inline">\(\{\mathbf{V}_t\}_{t=1}^T\)</span>, that are correlated across time.</li>
 <li>They do not discuss models (1) and (2) because differ much from what they are doing.</li>
 </ul>
 <div id="univariate-stochastic-volatility-models" class="section level3">
@@ -244,16 +257,97 @@ $(document).ready(function () {
 <li>we want something that can adjust nicely to the observations in order to produce a posterior of known form.</li>
 </ol></li>
 </ul></li>
-<li>In many applications the positive definiteness is accomplished by defining the process in a different, unconstrained coordinate system.</li>
+<li>In many applications the positive definiteness is accomplished by defining the process in a different, unconstrained coordinate system (<span style="color:purple"><strong>Aisha</strong>: ver dúvida no início do documento</span>).
+<ul>
+<li>This transformations tende to make it more difficult to do state-space inference, because the product of the measurement equation with the transition will most likely be something with unknown form.</li>
+</ul></li>
+<li>In the univariate case, we have the observation distribution given by</li>
 </ul>
+<span class="math display">\[\begin{equation}\tag{01}
+r_t \sim \mathcal{N}(0, v_t)
+\end{equation}\]</span>
+<p>where <span class="math inline">\(\{r_t \}_{t=1}^T\)</span> are an asset’s returns and <span class="math inline">\(\{v_t \}_{t=1}^T\)</span> is the variance process.</p>
+<ul>
+<li>The problem lies in choosing a stochastic process for <span class="math inline">\(\{v_t \}_{t=1}^T\)</span> that, combined with (1), gives a tractable posterior distribution <span class="math inline">\(p(\{v_t \}_{t=1}^T, \mathbf{\theta}\ | \ \{r_t \}_{t=1}^T)\)</span> for the hidden states <span class="math inline">\(\{v_t \}_{t=1}^T\)</span> and any system parameters <span class="math inline">\(\mathbf{\theta}\)</span>.</li>
+<li>The most usual way to do this is to model the log variances, <span class="math inline">\(h_t = log\ v_t\)</span> (it is a more convenient coordinate system). In the simplest case it is assumed that <span class="math inline">\(h_t\)</span> follows an AR(<span class="math inline">\(1\)</span>) process.</li>
+<li>The fundamental element here is taking the transformed observation equation</li>
+</ul>
+<span class="math display">\[\begin{equation}\tag{02}
+log \ r_t^2 = h_t + \nu_t, \quad \nu_t \sim log\ \chi_1^2
+\end{equation}\]</span>
+<p>and introduce the auxiliary variables <span class="math inline">\(\{\eta_t \}_{t=1}^T\)</span>, such that <span class="math inline">\((\nu_t, \eta_t) \sim \mathcal{N}(0, \eta_t)\)</span> marginalizes to a <span class="math inline">\(log\ \chi_1^2\)</span> distribution or an approximation. This way, conditional to <span class="math inline">\(\{\eta_t \}_{t=1}^T\)</span>, the observation and transition equations are</p>
+<span class="math display">\[\begin{equation}\tag{03}   
+     \begin{cases}
+       log\ r_t^2 &amp;= h_t + \varepsilon_t, \qquad \varepsilon_t \sim \mathcal{N}(0, \eta_t)\\
+       h_t &amp;= h_t + \mu_t + \phi(h_{t-1} - \mu) + \omega_t, \qquad \omega_t \sim \mathcal{N}(0, W) \\
+     \end{cases}
+\end{equation}\]</span>
+<p>which is just a dynamic linear model.</p>
+<span style="color:Purple"><strong>Rascunho da Aisha:</strong></span> <span style="color:Green">Vou tentar entender de onde saiu a expressão <span class="math inline">\(log \ r_t^2 = h_t + \nu_t\)</span>. Inicialmente tínhamos <span class="math display">\[r_t = v_t \cdot u_t, \quad u_t \sim \mathcal{N}(0,1) \]</span> Calculando o quadrado, temos:
+<span class="math display">\[\begin{align*}
+r_t^2 &amp;= (v_t \cdot u_t)^2\\
+&amp;= v_t^2 \cdot u_t^2.
+\end{align*}\]</span>
+<p>O termo <span class="math inline">\(u_t^2\)</span>, por ser uma normal padrão ao quadrado, se torna uma qui-quadrado com um grau de liberdade. Já o termo <span class="math inline">\(v_t^2\)</span> não tem muito o que fazer ainda. Se tomarmos o log, teremos</p>
+<span class="math display">\[\begin{align*}
+log\ r_t^2 &amp;=log\ v_t^2 + log\ u_t^2\\
+&amp;= 2 \cdot log\ v_t + log\ \chi^2_1
+&amp;= 2 \cdot h_t + log\ \chi^2_1
+\end{align*}\]</span>
+<p>… É, por aqui não vai rolar não.</span></p>
+<span style="color:Blue"> Uma outra tentativa é baseada na tese do <span class="citation">(J. B. Windle 2013)</span>… Vamos considerar <span class="math display">\[r_t = e^{h_t}\cdot u_t \sim \mathcal{N}(0,1) \]</span> Calculando o quadrado, temos:
+<span class="math display">\[\begin{align*}
+r_t^2 &amp;= (e^{h_t} \cdot u_t)^2\\
+&amp;= e^{2h_t} \cdot u_t^2 \\
+\Rightarrow log\ r_t^2 &amp;= 2\cdot h_t + log (u_t^2)
+&amp;= 2 \cdot h_t + log\ \chi^2_1
+\end{align*}\]</span>
+<p>De qualquer jeito eu fico com aquele doisinho ali incomodando… Vou pular isso por enquanto.</span></p>
+<p>Since (3) is a dynamic linear model (in terms of the variance), we can foward filter and backward sample to generate a joint draw from the conditional posterior distribution <span class="math inline">\(p(\{h_t \}_{t=1}^T|\{^r_t \}_{t=1}^T, \mathbf{\theta})\)</span> using algorithms like <span class="citation">(Carter and Kohn 1994)</span> or <span class="citation">(Frühwirth-Schnatter 1994)</span>.</p>
+</div>
+<div id="going-multivariate" class="section level3">
+<h3>Going multivariate</h3>
+<ul>
+<li>Assuming that the response is a matrix <span class="math inline">\(\mathbf{Y}_t\)</span> whose distribution, conditional upon the latent <span class="math inline">\(m \times m\)</span> covariances <span class="math inline">\(\{\mathbf{V}_t \}_{t=1}^T\)</span> is given by a Wishart distribution</li>
+</ul>
+<span class="math display">\[\begin{equation}\tag{04}
+\mathbf{Y}_t \sim \mathcal{W}_m(k, \mathbf{V}_t/k)
+\end{equation}\]</span>
+<p><span style="color:Purple"><strong>Aisha:</strong> They say in page 4 that <span class="math inline">\(\mathbf{r}_t \sim \mathcal{N}(0, \mathbf{V}_t)\)</span> is a special case of (4) because <span class="math inline">\(\mathbf{r}_t\mathbf{r}_t' \sim \mathcal{W}_1(1, \mathbf{V}_t)\)</span>, but I didn’t understand; it means that <span class="math inline">\(\mathbf{Y}_t\)</span> can be seen as a product of <span class="math inline">\(\mathbf{r}_t\)</span>’s? How to understand <span class="math inline">\(\mathbf{Y}_t\)</span> in terms of <span class="math inline">\(\mathbf{r}_t\)</span>?</span></p>
+<ul>
+<li>There are at least two ways to transform the coordinates of <span class="math inline">\(\mathbf{V}_t\)</span> (or its inverse) into an unconstrained coordinate system in <span class="math inline">\(\R^n\)</span>, <span class="math inline">\(n = m(m+1)/2\)</span>
+<ul>
+<li><span style="color:Purple"> <strong>Aisha’s remark 1:</strong> Note that <span class="math inline">\(m(m+1)/2\)</span> is the number of “free” elements in the covariance matrix <span class="math inline">\(\mathbf{V}_t\)</span>. Since this guy is symmetric and <span class="math inline">\(m \times m\)</span>, we have above the main diagonal an arithmetic progression: first line (removing element <span class="math inline">\(1,1\)</span> will have <span class="math inline">\(m-1\)</span> elements, second line will have <span class="math inline">\(m-2\)</span> elements, and so on, until just one element is left. Thus, we have <span class="math inline">\(\sum_{i=1}^{m-1}\)</span> elements outside the main diagonal. This sum is equal to <span class="math inline">\((m-1)(1+(m-1))/2 = m(m-1)/2\)</span>. We have to add the <span class="math inline">\(m\)</span> elements from the diagonal, which gives us <span class="math inline">\((2m + m(m-1))/2 = m(m+1)/2\)</span> elements.</span></li>
+<li><span style="color:Blue"> <strong>Aisha’s remark 2:</strong> We say unconstrained because the original matrix is restricted in the <span class="math inline">\(S^+_m\)</span> and we are going to let the values free in the real domain, like wen we took the logarithm.</span></li>
+</ul></li>
+</ul>
+<ol style="list-style-type: decimal">
+<li><strong>First way</strong> is to transform the latent covariance matrices using the matrix logarithm and then vectorize the lower diagonal portion <span class="math display">\[\mathbf{W}_t = log\ \mathbf{V}_t, \qquad \mathbf{w}_t = vech(\mathbf{W}_t)\]</span> where <code>vech</code> vectorizes the lower the lower diagonal portion of a matrix.
+<ul>
+<li>The matrix logarithm is defined as <span class="math display">\[log\ \mathbf{A} = \mathbf{B}\mathbf{\Delta}\mathbf{B}'\]</span> where <span class="math inline">\(\mathbf{BDB}'\)</span> is the eigenvalue decomposition of <span class="math inline">\(\textbf{A}\)</span> and <span class="math inline">\(\Delta\)</span> is diagonal with <span class="math inline">\(\Delta_{ii} = log \ \mathbf{D}_{ii},\ i= 1, \ldots, m\)</span>. This means that <span class="math inline">\(U\)</span> is the matrix with the orthonormalized eigenvectors (<span style="color:Purple"> thus, <span class="math inline">\(U' = U^{-1}\)</span> - this occurs because when we multiply <span class="math inline">\(U\)</span> by <span class="math inline">\(U'\)</span>, the columns’ innerproduct will be equal <span class="math inline">\(1\)</span> only in the position of the vector multiplying for itself, remember that the columns are ortogonal!</span>).</li>
+</ul></li>
+<li>The second way is to model the covariances matrices in the coordinates of its Cholesky decomposition: <span class="math display">\[\mathbf{W}_t = \text{lower chol}\ \mathbf{V}_t, \qquad \mathbf{w}_t' = (log\ \text{vecd}(\mathbf{W}_t)',  log\ \text{vecl}(\mathbf{W}_t)')\]</span> where <code>vecd</code> maps the diagonal portion of a matrix to a vector and <code>vecl</code> vectorizes the lower off-diagonall portion of a matrix.
+<ul>
+<li>There are variations of this methods, like using the <span class="math inline">\(LDL'\)</span> factorization of <span class="math inline">\(\mathbf{V}_t\)</span> and arrive at a similar set of coordinates.</li>
+</ul></li>
+</ol>
 </div>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>
 <div id="refs" class="references">
+<div id="ref-carter_kohn1994">
+<p>Carter, Chris K, and Robert Kohn. 1994. “On Gibbs Sampling for State Space Models.” <em>Biometrika</em> 81 (3). Oxford University Press: 541–53.</p>
+</div>
+<div id="ref-fruhwirth1994">
+<p>Frühwirth-Schnatter, Sylvia. 1994. “Applied State Space Modelling of Non-Gaussian Time Series Using Integration-Based Kalman Filtering.” <em>Statistics and Computing</em> 4 (4). Springer: 259–69.</p>
+</div>
 <div id="ref-uhlig1997">
 <p>Uhlig, Harald. 1997. “Bayesian Vector Autoregressions with Stochastic Volatility.” <em>Econometrica: Journal of the Econometric Society</em>. JSTOR, 59–73.</p>
+</div>
+<div id="ref-windle2013">
+<p>Windle, Jesse Bennett. 2013. “Forecasting High-Dimensional, Time-Varying Variance-Covariance Matrices with High-Frequency Data and Sampling Pólya-Gamma Random Variates for Posterior Distributions Derived from Logistic Likelihoods.” PhD thesis.</p>
 </div>
 <div id="ref-windle_carvalho2014">
 <p>Windle, Jesse, Carlos M Carvalho, and others. 2014. “A Tractable State-Space Model for Symmetric Positive-Definite Matrices.” <em>Bayesian Analysis</em> 9 (4). International Society for Bayesian Analysis: 759–92.</p>
