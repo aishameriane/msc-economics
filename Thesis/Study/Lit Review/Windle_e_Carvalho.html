@@ -120,7 +120,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Windle &amp; Carvalho (2014)</h1>
 <h4 class="author"><em>A. Schmidt</em></h4>
-<h4 class="date"><em>Last update: May 31, 2018.</em></h4>
+<h4 class="date"><em>Last update: June 01, 2018.</em></h4>
 
 </div>
 
@@ -196,6 +196,32 @@ MathJax.Hub.Config({
 </ol>
 <ul>
 <li><span style="color:green"><strong>Answer 5:</strong></span></li>
+</ul>
+<ol start="6" style="list-style-type: decimal">
+<li><span style="color:red"><strong>Question 6:</strong></span> on page 5, they say that the stochastic process imposed on <span class="math inline">\(\{\mathbf{w}_t \}_{t=1}^T\)</span> will impose a structure in <span class="math inline">\(\{\mathbf{V}_t \}_{t=1}^T\)</span> and then they start citing some people who worked with that. Minha dúvida está relacionada com a parte em negrito. Por que estar interessado em modelar a matriz de covariância realizada (ao invés de tratar como um ruído de uma matriz latente) faz com que eles não precisem se preocupar com a interação do processo estocástico induzido por <span class="math inline">\(\{\mathbf{w}_t \}_{t=1}^T\)</span> com as observáveis? Eu também não entendi o último pedaço (mas pq eu não sei o que é um factor model).</li>
+</ol>
+<p><em>Bauer and Vorkink (2011) exploit the log-based coordinates while Chiriac and Voev (2010) and Loddo et al. (2011) take advantage of Cholesky-based coordinates.</em></p>
+<p><em><strong>Both Bauer and Vorkink (2011) and Chiriac and Voev (2010) are interested in modeling realized covariance matrices directly, as opposed to treating them as noisy observations of some true latent covariance matrix; thus, they need not worry about how these stochastic processes interact with an observation equation</strong>, while Loddo et al. (2011) use the Cholesky-based coordinates to devise a factor-like model. Adapting any of these approaches to generate a tractable matrix-variate state-space model is di???cult.</em></p>
+<ul>
+<li><span style="color:green"><strong>Answer 6:</strong></span></li>
+</ul>
+<ol start="7" style="list-style-type: decimal">
+<li><span style="color:red"><strong>Question 7:</strong></span> No artigo (página 5) eles dizem que para conseguir mimetizar volatilidade estocástica univariada usando tanto a transformação em log quanto as coordenadas usando a decomposição de Cholesky seria necessário conseguir uma função <span class="math inline">\(g\)</span> que fizesse com que <span class="math inline">\(g(\mathbf{Y}_t)\)</span> fosse linear em <span class="math inline">\(\mathbf{w}_t\)</span> (condicional a um conjunto de variáveis auxiliares), mas eles não estão cientes de nenhum trabalho que faça isso. Como que o Cogley e Sargent, Primiceri e outros fazem, então? O deles é univariado? Qual a diferença, afinal?</li>
+</ol>
+<ul>
+<li><span style="color:green"><strong>Answer 7:</strong></span></li>
+</ul>
+<ol start="8" style="list-style-type: decimal">
+<li><span style="color:red"><strong>Question 8:</strong></span> Na página 5 eles começam novamente com o modelo univariado (4o parágrafo) e falam sobre a necessidade de restringir as inovações <span class="math inline">\(\varepsilon_t\)</span> para serem positivas no caso onde <span class="math inline">\(x_t\)</span> é positivo. Só que além disso, eles dizem que é preciso encontrar uma <span class="math inline">\(f\)</span> que encolha <span class="math inline">\(x_t\)</span> para zero, no modelo aditivo. Eu não entendi essa parte. Pra mim é claro que se <span class="math inline">\(x_t\)</span> precisa ser positivo, não se pode escolher qualquer <span class="math inline">\(f\)</span> mesmo quando <span class="math inline">\(\varepsilon_t\)</span> é positivo. No entanto, eu não entendo porque <span class="math inline">\(f\)</span> não pode ser, por exemplo, a função identidade (<span class="math inline">\(f(x_t) = x_t\)</span>) ou ainda uma coisa quadrática como <span class="math inline">\(f(x_t)=x_t^2\)</span>.</li>
+</ol>
+<ul>
+<li><span style="color:green"><strong>Answer 8:</strong></span></li>
+</ul>
+<ol start="9" style="list-style-type: decimal">
+<li><span style="color:red"><strong>Question 9:</strong></span> A Wishart sempre é simétrica positiva definida? Não, né? Tem que fazer um sanduichinho? - ver no Muirhead</li>
+</ol>
+<ul>
+<li><span style="color:green"><strong>Answer 9:</strong></span></li>
 </ul>
 </div>
 <div id="notation" class="section level2">
@@ -328,9 +354,35 @@ r_t^2 &amp;= (e^{h_t} \cdot u_t)^2\\
 </ul></li>
 <li>The second way is to model the covariances matrices in the coordinates of its Cholesky decomposition: <span class="math display">\[\mathbf{W}_t = \text{lower chol}\ \mathbf{V}_t, \qquad \mathbf{w}_t' = (log\ \text{vecd}(\mathbf{W}_t)',  log\ \text{vecl}(\mathbf{W}_t)')\]</span> where <code>vecd</code> maps the diagonal portion of a matrix to a vector and <code>vecl</code> vectorizes the lower off-diagonall portion of a matrix.
 <ul>
-<li>There are variations of this methods, like using the <span class="math inline">\(LDL'\)</span> factorization of <span class="math inline">\(\mathbf{V}_t\)</span> and arrive at a similar set of coordinates.</li>
+<li>There are variations of this methods, like using the <span class="math inline">\(LDL'\)</span> factorization of <span class="math inline">\(\mathbf{V}_t\)</span> and arrive at a similar set of coordinates. Independently from the method chosen, both have the property to let the entrances of the vector <span class="math inline">\(\mathbf{w}_t\)</span> assume any real value, i.e., any value in <span class="math inline">\(\R^n\)</span>, one can invert <span class="math inline">\(\mathbf{w}_t\)</span> to get back to the original symmetric positive definite matrix.</li>
 </ul></li>
 </ol>
+<p>The stochastic process chosen to model <span class="math inline">\(\{\mathbf{w}_t\}_{t=1}^T\)</span> will impose a process in <span class="math inline">\(\{\mathbf{V}_t\}_{t=1}^T\)</span>. <span class="citation">(J. Windle, Carvalho, and others 2014)</span> cite some works where the approaches used do not lead to a tractable matrix-variable state-space model.</p>
+<p><strong>Problem:</strong> To mimic univariate stochastic volatility using any of this coordinate systems, one need to find a transformation <span class="math inline">\(g\)</span> and auxiliary variables that make <span class="math inline">\(g(\mathbf{Y}_t)\)</span> a linear model in <span class="math inline">\(\mathbf{w}_t\)</span>, conditional to the auxiliary variables. They are not aware of any sucess case in doing this. Another possibility is to draw sequentially (one at a time) the matrices <span class="math inline">\(\{\mathbf{V}_t \}_{t=1}^T\)</span> using a MH algorithm, but this produces high correlated samples than drawing <span class="math inline">\(\{\mathbf{V}_t \}_{t=1}^T\)</span> jointly (using foward filter and backward sampler).</p>
+<p><span style="color:Purple"> <strong>Aisha</strong>: This seems important - using a MH or Gibbs algorithm produces highly correlated samples (because we sample each <span class="math inline">\(\{\mathbf{V}_t \}_{t=1}^T\)</span> at a time in comparison to filtering procedures, which generates jointly draws (both forward filter and backward sampler works this way). I have to check <a href="https://amstat.tandfonline.com/doi/full/10.1080/01621459.2013.829001">Windle et. al. (2013)</a> about that. </span></p>
+</div>
+</div>
+<div id="wishart-processes" class="section level2">
+<h2>Wishart Processes</h2>
+<div id="univariate-case" class="section level3">
+<h3>Univariate case</h3>
+<p>The strategy of imposing a stochastic process on <span class="math inline">\(\{\mathbf{w} \}_t\)</span> is not very usefull to give a tractable matrix-variable state-space model. So, an alternative is to think in a stochastic process on the covariance matrix itself that can couple nicely with the observation equation. For this end, we are going again start with the univariate case.</p>
+<ul>
+<li>Suppose we want to construct a Markov process <span class="math inline">\(\{x_t \}_{t=1}^T\)</span>.
+<ul>
+<li>If <span class="math inline">\(x_t\)</span> can assume any real value, it is natural to think in the additive model <span class="math inline">\(x_t = f(x_{t-1}) + \varepsilon_t\)</span>, where the elements of the sequence <span class="math inline">\(\{\varepsilon_t \}_{t=1}^T\)</span> can be any value in the real line.</li>
+<li>In the case where <span class="math inline">\(x_t\)</span> is constrained (to be positive, for example), the above approach is not possible, since it is possible that a given sequence of <span class="math inline">\(\varepsilon_t\)</span>’s leads to values of <span class="math inline">\(x_t\)</span> outside its domain.</li>
+<li>A possible solution is to require <span class="math inline">\(\varepsilon_t\)</span> to be positive and <strong>choose <span class="math inline">\(f(\cdot)\)</span> in a way that shrinks <span class="math inline">\(x_t\)</span> towards zero</strong></li>
+<li>Another option is to use a multiplicative model, <span class="math inline">\(x_t = f(x_{t=1})\cdot \psi_t\)</span> where all <span class="math inline">\(\psi_t\)</span>, <span class="math inline">\(t=1, \ldots, T\)</span> are positive. <strong>This is easier to adapt for the multivariate setting.</strong></li>
+</ul></li>
+</ul>
+</div>
+<div id="multivariate-case" class="section level3">
+<h3>Multivariate case</h3>
+<ul>
+<li>Let <span class="math inline">\(\{\mathbf{\Psi}_t \}_{t=1}^T\)</span> be a sequence of independent and identically distributed symmetric positive definite innovations and define the following process <span class="math display">\[\mathbf{X}_t = \mathbf{S}_t\ \mathbf{\Psi}_t\ \mathbf{S}_t', \qquad \mathbf{S}_t\mathbf{S}_t' = f(\mathbf{X}_{t-1}).\]</span> As long the square root <span class="math inline">\(\mathbf{S}_t\)</span> is not singular, <span class="math inline">\(\mathbf{X}_t\)</span> will be symmetric and positive definite.</li>
+</ul>
+<p><span style="color:Blue"> OBS: Isso ocorre porque <span class="math inline">\(\mathbf{\Psi}_t\)</span> é positiva definida. Então qualquer decomposição de uma matriz vezes <span class="math inline">\(\mathbf{\Psi}_t\)</span> vezes a matriz transposta será positiva SEMI definida. Para ser positiva definida, é necessário que, adicionalmente, a matriz seja inversível, pois assim todos os autovalores do sanduíche serão maiores que zero, resultando numa matriz positiva definida.</span></p>
 </div>
 </div>
 </div>
