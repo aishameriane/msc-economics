@@ -168,7 +168,7 @@ MathJax.Hub.Config({
 <ol style="list-style-type: decimal">
 <li><span style="color:red"><strong>Question 1:</strong></span> É uma dúvida que o Mateus também tinha. No Windle e Carvalho está escrito “<em>(…) <span class="citation">(Uhlig 1997)</span>, who showed how to construct a state space model with</em> <span class="math inline">\(S_{m,1}^+\)</span> <em>observations and</em> <span class="math inline">\(S_m^+\)</span> <em>hidden states (…) We extende his approch to observarions of arbitrary rank</em>” .</li>
 </ol>
-<p>A pergunta está relacionada ao posto dessas matrizes (a convenção em <span class="citation">(J. Windle, Carvalho, and others 2014)</span> é que <span class="math inline">\(S_{m,k}^+\)</span> é o conjunto de matrizes simétricas positivas <strong>semi</strong>-definidas de tamanho <span class="math inline">\(m \times m\)</span> e posto <span class="math inline">\(k\)</span> enquanto que <span class="math inline">\(S_{m,1}^+\)</span> é o conjunto de matrizes positivas definidas de tamanho <span class="math inline">\(m \times m\)</span>).</p>
+<p>A pergunta está relacionada ao posto dessas matrizes (a convenção em <span class="citation">(Windle, Carvalho, and others 2014)</span> é que <span class="math inline">\(S_{m,k}^+\)</span> é o conjunto de matrizes simétricas positivas <strong>semi</strong>-definidas de tamanho <span class="math inline">\(m \times m\)</span> e posto <span class="math inline">\(k\)</span> enquanto que <span class="math inline">\(S_{m,1}^+\)</span> é o conjunto de matrizes positivas definidas de tamanho <span class="math inline">\(m \times m\)</span>).</p>
 <p>O Mateus, num rascunho dele argumenta que o Uhlig fez para <span class="math inline">\(S_{m,1}^+\)</span> pois uma vez que <span class="math inline">\(y_t\)</span> está definido para um <span class="math inline">\(T\)</span>, todos as outras observáveis para <span class="math inline">\(t &lt; T\)</span> estão definidas também. Afinal, se fosse realmente assim, o Windle e Carvalho não teriam motivação para permitir posto maior que 1<span class="math inline">\(1\)</span>. Além disso, acho que o argumento do Mateus não cola, pois uma coluna seria algo como o deslocamento vertical da outra e isso não configura uma combinação linear. Enfim, não estou entendendo a interpretação do posto da matriz de observáveis.</p>
 <ul>
 <li><span style="color:green"><strong>Answer 1:</strong></span></li>
@@ -180,7 +180,7 @@ MathJax.Hub.Config({
 <li><span style="color:green"><strong>Answer 2:</strong></span></li>
 </ul>
 <ol start="3" style="list-style-type: decimal">
-<li><span style="color:red"><strong>Question 3:</strong></span> No modelo de <span class="citation">(J. Windle, Carvalho, and others 2014)</span> é possível que observações e matrizes de covariância estejam em frequências diferentes? Como??</li>
+<li><span style="color:red"><strong>Question 3:</strong></span> No modelo de <span class="citation">(Windle, Carvalho, and others 2014)</span> é possível que observações e matrizes de covariância estejam em frequências diferentes? Como??</li>
 </ol>
 <ul>
 <li><span style="color:green"><strong>Answer 3:</strong></span></li>
@@ -321,7 +321,7 @@ log\ r_t^2 &amp;=log\ v_t^2 + log\ u_t^2\\
 &amp;= 2 \cdot h_t + log\ \chi^2_1
 \end{align*}\]</span>
 <p>… É, por aqui não vai rolar não.</span></p>
-<span style="color:Blue"> Uma outra tentativa é baseada na tese do <span class="citation">(J. B. Windle 2013)</span>… Vamos considerar <span class="math display">\[r_t = e^{h_t}\cdot u_t \sim \mathcal{N}(0,1) \]</span> Calculando o quadrado, temos:
+<span style="color:Blue"> Uma outra tentativa é baseada na tese do <span class="citation">(Windle 2013)</span>… Vamos considerar <span class="math display">\[r_t = e^{h_t}\cdot u_t \sim \mathcal{N}(0,1) \]</span> Calculando o quadrado, temos:
 <span class="math display">\[\begin{align*}
 r_t^2 &amp;= (e^{h_t} \cdot u_t)^2\\
 &amp;= e^{2h_t} \cdot u_t^2 \\
@@ -357,7 +357,7 @@ r_t^2 &amp;= (e^{h_t} \cdot u_t)^2\\
 <li>There are variations of this methods, like using the <span class="math inline">\(LDL'\)</span> factorization of <span class="math inline">\(\mathbf{V}_t\)</span> and arrive at a similar set of coordinates. Independently from the method chosen, both have the property to let the entrances of the vector <span class="math inline">\(\mathbf{w}_t\)</span> assume any real value, i.e., any value in <span class="math inline">\(\R^n\)</span>, one can invert <span class="math inline">\(\mathbf{w}_t\)</span> to get back to the original symmetric positive definite matrix.</li>
 </ul></li>
 </ol>
-<p>The stochastic process chosen to model <span class="math inline">\(\{\mathbf{w}_t\}_{t=1}^T\)</span> will impose a process in <span class="math inline">\(\{\mathbf{V}_t\}_{t=1}^T\)</span>. <span class="citation">(J. Windle, Carvalho, and others 2014)</span> cite some works where the approaches used do not lead to a tractable matrix-variable state-space model.</p>
+<p>The stochastic process chosen to model <span class="math inline">\(\{\mathbf{w}_t\}_{t=1}^T\)</span> will impose a process in <span class="math inline">\(\{\mathbf{V}_t\}_{t=1}^T\)</span>. <span class="citation">(Windle, Carvalho, and others 2014)</span> cite some works where the approaches used do not lead to a tractable matrix-variable state-space model.</p>
 <p><strong>Problem:</strong> To mimic univariate stochastic volatility using any of this coordinate systems, one need to find a transformation <span class="math inline">\(g\)</span> and auxiliary variables that make <span class="math inline">\(g(\mathbf{Y}_t)\)</span> a linear model in <span class="math inline">\(\mathbf{w}_t\)</span>, conditional to the auxiliary variables. They are not aware of any sucess case in doing this. Another possibility is to draw sequentially (one at a time) the matrices <span class="math inline">\(\{\mathbf{V}_t \}_{t=1}^T\)</span> using a MH algorithm, but this produces high correlated samples than drawing <span class="math inline">\(\{\mathbf{V}_t \}_{t=1}^T\)</span> jointly (using foward filter and backward sampler).</p>
 <p><span style="color:Purple"> <strong>Aisha</strong>: This seems important - using a MH or Gibbs algorithm produces highly correlated samples (because we sample each <span class="math inline">\(\{\mathbf{V}_t \}_{t=1}^T\)</span> at a time in comparison to filtering procedures, which generates jointly draws (both forward filter and backward sampler works this way). I have to check <a href="https://amstat.tandfonline.com/doi/full/10.1080/01621459.2013.829001">Windle et. al. (2013)</a> about that. </span></p>
 </div>
@@ -383,17 +383,38 @@ r_t^2 &amp;= (e^{h_t} \cdot u_t)^2\\
 <li>Let <span class="math inline">\(\{\mathbf{\Psi}_t \}_{t=1}^T\)</span> be a sequence of independent and identically distributed symmetric positive definite innovations and define the following process <span class="math display">\[\mathbf{X}_t = \mathbf{S}_t\ \mathbf{\Psi}_t\ \mathbf{S}_t', \qquad \mathbf{S}_t\mathbf{S}_t' = f(\mathbf{X}_{t-1}).\]</span> As long the square root <span class="math inline">\(\mathbf{S}_t\)</span> is not singular, <span class="math inline">\(\mathbf{X}_t\)</span> will be symmetric and positive definite.</li>
 </ul>
 <p><span style="color:Blue"> OBS: Isso ocorre porque <span class="math inline">\(\mathbf{\Psi}_t\)</span> é positiva definida. Então qualquer decomposição de uma matriz vezes <span class="math inline">\(\mathbf{\Psi}_t\)</span> vezes a matriz transposta será positiva SEMI definida. Para ser positiva definida, é necessário que, adicionalmente, a matriz seja inversível, pois assim todos os autovalores do sanduíche serão maiores que zero, resultando numa matriz positiva definida.</span></p>
+<ul>
+<li><p><span class="citation">(Windle, Carvalho, and others 2014)</span> point out to be careful when choosing the distribution of the innovations <span class="math inline">\(\mathbf{\Psi}_t\)</span>. This distribution must be invariant to transformations of the sandwich form (<span class="math inline">\(\mathbf{O\Psi_tO}'\)</span>, where <span class="math inline">\(\mathbf{O}\)</span> is an orthogonal matrix) or else it will matters how one computes the square root <span class="math inline">\(\mathbf{S}_t\)</span>.</p></li>
+<li>There are some possible choices for doing this task, in particular these 3:
+<ul>
+<li><span class="citation">(Philipov and Glickman 2006b)</span> and <span class="citation">(Philipov and Glickman 2006a)</span> - They used <span class="math inline">\(f(\mathbf{X}_{t-1}) = \mathbf{A}^{1/2} \mathbf{X}_{t-1}^{d} \mathbf{A}^{1/2} '\)</span> and <span class="math inline">\(\mathbf{\Psi}_t \sim \mathcal{W}(\rho, \I_m/ \rho)\)</span>.</li>
+<li><span class="citation">(Asai and McAleer 2009)</span> - They used <span class="math inline">\(f(\mathbf{X}_{t-1}) = \mathbf{X}_{t-1}^{d/2}\mathbf{A}\mathbf{X}_{t-1}^{d/2}\)</span> and <span class="math inline">\(\mathbf{\Psi}_t \sim \mathcal{W}(\rho, \I_m/ \rho)\)</span>. <span style="color:Red"> Dar uma conferida se está ok… </span>.</li>
+<li><span class="citation">(Uhlig 1997)</span> - Used <span class="math inline">\(f(\mathbf{X}_{t-1}) = \lambda^{-1}\mathbf{X}_{t-1}\)</span> and <span class="math inline">\(\mathbf{\Psi}_t \sim \mathcal{B}_m(n/2, 1/2)\)</span>.</li>
+</ul></li>
+</ul>
+<p><strong>Other possibilities</strong>: Triantafyllopoulos (2008) has since extended Uhlig’s approach using the transformation <span class="math inline">\(f(\mathbf{X}_{t-1}) = \mathbf{A}^{1/2}\mathbf{X}_{t-1}\mathbf{A}^{1/2}\)</span> <span style="color:Red"> Dar uma conferida se está ok… não tem transposto? </span>. Jin and Maheu (2012) suggest various extensions to the transformations of <span class="citation">(Philipov and Glickman 2006b)</span> and <span class="citation">(Asai and McAleer 2009)</span> by letting <span class="math inline">\(f\)</span> depend on not only <span class="math inline">\(\mathbf{X}_{t???1}\)</span>, but also on <span class="math inline">\(\mathbf{X}_{t???k}, \ k = 2, \ldots, \rho\)</span>.</p>
+<p><span style="color:Purple"><strong>What Windle and Carvalho are proposing is</strong></span> a variation to <span class="citation">(Uhlig 1997)</span> model, in the case where <span class="math inline">\(\mathbf{\Psi}_t \sim \mathcal{B}_m(n/2, k/2)\)</span>, for <span class="math inline">\(k \neq 1\)</span>.</p>
+<p><span style="color:Red"> For future Aisha: they afirm that Prado and West (2010) did this too, I have to take a look on this book later.</span></p>
 </div>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>
 <div id="refs" class="references">
+<div id="ref-asai_mcaleer2009">
+<p>Asai, Manabu, and Michael McAleer. 2009. “The Structure of Dynamic Correlations in Multivariate Stochastic Volatility Models.” <em>Journal of Econometrics</em> 150 (2). Elsevier: 182–92.</p>
+</div>
 <div id="ref-carter_kohn1994">
 <p>Carter, Chris K, and Robert Kohn. 1994. “On Gibbs Sampling for State Space Models.” <em>Biometrika</em> 81 (3). Oxford University Press: 541–53.</p>
 </div>
 <div id="ref-fruhwirth1994">
 <p>Frühwirth-Schnatter, Sylvia. 1994. “Applied State Space Modelling of Non-Gaussian Time Series Using Integration-Based Kalman Filtering.” <em>Statistics and Computing</em> 4 (4). Springer: 259–69.</p>
+</div>
+<div id="ref-philipov_glickman2006b">
+<p>Philipov, Alexander, and Mark E Glickman. 2006a. “Factor Multivariate Stochastic Volatility via Wishart Processes.” <em>Econometric Reviews</em> 25 (2-3). Taylor &amp; Francis: 311–34.</p>
+</div>
+<div id="ref-philipov_glickman2006a">
+<p>———. 2006b. “Multivariate Stochastic Volatility via Wishart Processes.” <em>Journal of Business &amp; Economic Statistics</em> 24 (3). Taylor &amp; Francis: 313–28.</p>
 </div>
 <div id="ref-uhlig1997">
 <p>Uhlig, Harald. 1997. “Bayesian Vector Autoregressions with Stochastic Volatility.” <em>Econometrica: Journal of the Econometric Society</em>. JSTOR, 59–73.</p>
