@@ -405,8 +405,10 @@ r_t^2 &amp;= (e^{h_t} \cdot u_t)^2\\
 <p>where <span class="math inline">\(\{\mathbf{\Psi}_t \}_{t=1}^T\)</span> are independent and identically distributed.</p>
 <ul>
 <li>The challenge now is to build the foward filter and backward sampler to make joint draws from the latent states conditional upon the data and system parameters.</li>
-<li><span class="citation">(Philipov and Glickman 2006b)</span>, <span class="citation">(Philipov and Glickman 2006a)</span> and <span class="citation">(Asai and McAleer 2009)</span> make a workaround by sampling each latent state at a time, i.e., in their Gibbs scheme, they suggested to use <span class="math inline">\(p(\mathbf{X}_t | \mathbf{X}_{-t}, \{\mathbf{Y}_s \}_{s=1}^t)\)</span> instead <span class="math inline">\(p(\{\mathbf{X}_t\}_{t=1}^T|\{\mathbf{Y}_t\}_{t=1}^T)\)</span>, which is unknown and must be approximated by a MH algorithm.</li>
+<li><span class="citation">(Philipov and Glickman 2006b)</span>, <span class="citation">(Philipov and Glickman 2006a)</span> and <span class="citation">(Asai and McAleer 2009)</span> make a workaround by sampling each latent state at a time, i.e., in their Gibbs scheme, they suggested to use <span class="math inline">\(p(\mathbf{X}_t | \mathbf{X}_{-t}, \{\mathbf{Y}_s \}_{s=1}^t)\)</span> instead <span class="math inline">\(p(\{\mathbf{X}_t\}_{t=1}^T|\{\mathbf{Y}_t\}_{t=1}^T)\)</span>, which is unknown and must be approximated by a MH algorithm. This method is likely to deliver high correlated samples than if it just sampled jointly the latent states using known distributions.</li>
+<li>Another problem is related to non-stationarity of the covariance matrices. It is known that in financial applications (<span style="color:Purple"><strong>Aisha</strong>: and in macro as well</span>) the volatilities are not explosive. (<span style="color:Purple"> <strong>Aisha</strong> I’ll not go into this, but it is well explained in the article </span>).</li>
 </ul>
+<p><strong>Recap:</strong> There are tons of works, but neither provide a good and practical way to obtain draws from the posterior distribution of the hidden states and the system’s parameters. Therefore, <span class="citation">(Windle, Carvalho, and others 2014)</span> proposal is to build something using <span class="citation">(Uhlig 1997)</span> model.</p>
 </div>
 </div>
 </div>
