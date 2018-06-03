@@ -120,7 +120,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Windle &amp; Carvalho (2014)</h1>
 <h4 class="author"><em>A. Schmidt</em></h4>
-<h4 class="date"><em>Last update: June 01, 2018.</em></h4>
+<h4 class="date"><em>Last update: June 02, 2018.</em></h4>
 
 </div>
 
@@ -223,13 +223,22 @@ MathJax.Hub.Config({
 <ul>
 <li><span style="color:green"><strong>Answer 9:</strong></span></li>
 </ul>
+<ol start="10" style="list-style-type: decimal">
+<li><span style="color:red"><strong>Question 10:</strong></span> O que é o tal do discount model ou variance discounting? Acho que tem no Prado and West…</li>
+</ol>
+<ul>
+<li><span style="color:green"><strong>Answer 10:</strong></span></li>
+</ul>
 </div>
 <div id="notation" class="section level2">
 <h2>Notation</h2>
 <ul>
 <li><span class="math inline">\(\{y_t \}_{t=1}^T\)</span> is the observation set.</li>
 <li><span class="math inline">\(\{x_t \}_{t=1}^T\)</span> is the set of latent states (not in matrix form).</li>
-<li><span class="math inline">\(\mathcal{D}_t\)</span> is the data up until period <span class="math inline">\(t\)</span>, i.e., <span class="math inline">\(\{y_s \}_{s=1}^t\)</span>.</li>
+<li><span class="math inline">\(\mathcal{D}_t\)</span> is the data up until period <span class="math inline">\(t\)</span>, i.e., <span class="math inline">\(\{y_s \}_{s=1}^t\)</span>.
+<ul>
+<li>After, they define <span class="math inline">\(\mathcal{D}_t \equiv \{\mathbf{Y}_t\} \cup \mathcal{D}_{t-1}\)</span>, for <span class="math inline">\(t=1, \ldots, T\)</span> and <span class="math inline">\(\mathcal{D}_0 = \{\Sigma_0 \}\)</span>, where <span class="math inline">\(\Sigma_0\)</span> is some covariance matrix. This means that <span class="math inline">\(\mathcal{D}_1 = \{\mathbf{Y}_1\} \cup \{\Sigma_0\}\)</span> and <span class="math inline">\(\mathcal{D}_T = \{\mathbf{Y}_T\} \cup \{\mathbf{Y}_{T-1}\} \cup \ldots \cup \{\mathbf{Y}_1\} \cup \{\Sigma_0\}\)</span>.</li>
+</ul></li>
 <li><span class="math inline">\(\theta\)</span> is the system’s parameters.</li>
 <li><em>filtering</em> refers to the iterative derivation of the distributions <span class="math inline">\(p(x_t|\mathcal{D}_t, \mathbf{\theta})\)</span>.</li>
 <li><em>backward sampling</em> is the process of taking a joint sample of the posterior distribution of the latent states <span class="math inline">\(p(\{x_t\}_{t=1}^T| \mathcal{D}_t, \mathbf{\theta})\)</span> using the condicional distributions <span class="math inline">\(p(x_t|x_{t+1}, \mathcal{D}_t, \mathbf{\theta})\)</span>.</li>
@@ -406,10 +415,50 @@ r_t^2 &amp;= (e^{h_t} \cdot u_t)^2\\
 <ul>
 <li>The challenge now is to build the foward filter and backward sampler to make joint draws from the latent states conditional upon the data and system parameters.</li>
 <li><span class="citation">(Philipov and Glickman 2006b)</span>, <span class="citation">(Philipov and Glickman 2006a)</span> and <span class="citation">(Asai and McAleer 2009)</span> make a workaround by sampling each latent state at a time, i.e., in their Gibbs scheme, they suggested to use <span class="math inline">\(p(\mathbf{X}_t | \mathbf{X}_{-t}, \{\mathbf{Y}_s \}_{s=1}^t)\)</span> instead <span class="math inline">\(p(\{\mathbf{X}_t\}_{t=1}^T|\{\mathbf{Y}_t\}_{t=1}^T)\)</span>, which is unknown and must be approximated by a MH algorithm. This method is likely to deliver high correlated samples than if it just sampled jointly the latent states using known distributions.</li>
-<li>Another problem is related to non-stationarity of the covariance matrices. It is known that in financial applications (<span style="color:Purple"><strong>Aisha</strong>: and in macro as well</span>) the volatilities are not explosive. (<span style="color:Purple"> <strong>Aisha</strong> I’ll not go into this, but it is well explained in the article </span>).</li>
+<li>Another problem is related to non-stationarity of the covariance matrices. It is known that in financial applications (<span style="color:Purple"><strong>Aisha</strong>: and in macro as well</span>) the volatilities are not explosive. (<span style="color:Purple"> <strong>Aisha</strong>: I’ll not go into this, but it is well explained in the article </span>).</li>
 </ul>
 <p><strong>Recap:</strong> There are tons of works, but neither provide a good and practical way to obtain draws from the posterior distribution of the hidden states and the system’s parameters. Therefore, <span class="citation">(Windle, Carvalho, and others 2014)</span> proposal is to build something using <span class="citation">(Uhlig 1997)</span> model.</p>
 </div>
+</div>
+</div>
+<div id="a-covariance-matrix-valued-state-space-model" class="section level1">
+<h1>A covariance matrix-valued state-space model</h1>
+<p>Uhlig’s model, assuming <span class="math inline">\(\E[r_t] = 0\)</span> (<span style="color:Purple"> <strong>Aisha</strong>: This is confusing to me, because Uhlig’s model is a VAR with a constant term…</span>), can be written as</p>
+<span class="math display">\[\begin{equation}
+    \begin{cases}
+        \mathbf{r}_t \sim \mathcal{N}(0, \mathbf{X}_t^{-1})\\
+        \mathbf{X}_t = \mathbf{T}_{t-1}'\mathbf{\Psi}_t \mathbf{T}_{t-1}\lambda^{-1}, \qquad \mathbf{\Psi} \sim \mathcal{B}_m (n/2, 1/2),\\
+        \mathbf{T}_{t-1} \equiv \text{upper chol } \mathbf{X}_{t-1}
+    \end{cases}
+\end{equation}\]</span>
+<p>where <span class="math inline">\(n &gt; m-1\)</span> is an integer and <span class="math inline">\(\mathcal{B}_m\)</span> is the multivariate beta distribution. Uhlig developed the forward filter in closed formula that requires only the knowledge of <span class="math inline">\(\mathbf{r}_t\mathbf{r}_t'\)</span>. Defining <span class="math inline">\(\mathbf{Y}_t = \mathbf{r}_t\mathbf{r}_t'\)</span> results in a new observation equation given by <span class="math display">\[\mathbf{Y}_t \sim \mathcal{W}_m(1, \mathbf{X}_t^{-1})\]</span> where <span class="math inline">\(\mathcal{W}_m(1, \mathbf{X}_t^{-1})\)</span> is the order <span class="math inline">\(m\)</span> Wishart distribution with <span class="math inline">\(1\)</span> degree of freedom and scale matrix <span class="math inline">\(\mathbf{X}_t^{-1}\)</span>.</p>
+<ul>
+<li>Windle and Carvalho extended Uhlig’s model for <span class="math inline">\(\mathbf{Y}_t\)</span> to any rank using
+<span class="math display">\[\begin{equation}
+\begin{cases}
+    \mathbf{Y}_t \sim \mathcal{W}(k, (k\mathbf{X}_t)^{-1})\\
+    \mathbf{X}_t = \mathbf{T}_{t-1}'\mathbf{\Psi}_t \mathbf{T}_{t-1}\lambda^{-1}, \qquad \mathbf{\Psi} \sim \mathcal{B}_m (n/2, k/2),\\
+    \mathbf{T}_{t-1} \equiv \text{upper chol } \mathbf{X}_{t-1}
+\end{cases}
+\end{equation}\]</span>
+where <span class="math inline">\(n &gt; m-1\)</span> and <span class="math inline">\(k\)</span> is a positive integer less than <span class="math inline">\(m\)</span> or is a real number greater than <span class="math inline">\(m-1\)</span>.</li>
+</ul>
+<p><span style="color:Purple"> <strong>Aisha</strong>: They proceed to compare their model to Prado and West model, but I’m skipping this part.</span></p>
+<div id="main-results" class="section level2">
+<h2>Main results</h2>
+<p>They now are going to present their main propositions. Remember that the collection of data is defined as <span class="math inline">\(\mathcal{D}_t = \{\mathbf{Y}_t \} \cup\mathcal{D}_{t-1}\)</span> for <span class="math inline">\(t=1,\ldots, T\)</span> with <span class="math inline">\(\mathcal{D}_0 = \{\Sigma_0 \}\)</span>, where <span class="math inline">\(\Sigma_0\)</span> is some covariance matrix. Let the prior for <span class="math inline">\((\mathbf{X}_1|\mathcal{D}_0)\)</span> be <span class="math inline">\(\mathcal{W}_m(n, (k\Sigma_0)^{-1}/\lambda)\)</span> (note that <span class="math inline">\((k\Sigma_0)^{-1}/\lambda) = (k\lambda\Sigma_0)^{-1}\)</span>). In the following propositions, the distributions are conditioned on the parameters <span class="math inline">\(n\)</span>, <span class="math inline">\(k\)</span> and <span class="math inline">\(\lambda\)</span>.</p>
+<p><strong>Proposition 1.</strong> (<em>Forward Filtering</em>) Suppose <span class="math inline">\((X_t|\mathcal{D}_{t-1}) \sim \mathcal{W}_m(n, (k\Sigma_{t-1})^{-1}/\lambda)\)</span>. After observing <span class="math inline">\(\mathcal{Y}_t\)</span>, the updated distribution is <span class="math display">\[(\mathbf{X}_t|\mathcal{D}_t) \sim \mathcal{W}_m(k+n, (k\Sigma_{t})^{-1})\]</span> where <span class="math display">\[\Sigma_t = \lambda \Sigma_{t-1} + \mathbf{Y}_t\]</span> (i.e. the new scale matrix (or part of it) is a linear combination of the previous one and the observations that arrived at time <span class="math inline">\(t\)</span>).</p>
+<p>Evolving <span class="math inline">\(\mathbf{X}_t\)</span> one step ahead leads to</p>
+<p><span class="math display">\[(\mathbf{X}_{t+1}|\mathcal{D}_t) \sim \mathcal{W}_m(n, (k\Sigma_{t})^{-1}/\lambda)\]</span> <strong>Proof (proposition 1):</strong> <span style="color:Purple"> <strong>Aisha</strong>: The proofs are very technical and I really doubt that someday I’ll be able to understand them, so I’ll just spare myself from the torture.</span></p>
+<p><strong>Proposition 2.</strong> (<em>Backward Sampler</em>) The joint density of <span class="math inline">\((\{\mathbf{X}_t \}_{t=1}^T|\mathcal{D}_t)\)</span> can be decomposed as</p>
+<p><span class="math display">\[p(\{\mathbf{X}_t \}_{t=1}^T|\mathcal{D}_t) = p(\mathbf{X}_t|\mathcal{D}_T)\prod_{t=1}^{T-1} p(\mathbf{X}_t|\mathbf{X}_{t+1}, \mathcal{D}_t)\]</span> where <span class="math inline">\(p(\mathbf{X}_t|\mathbf{X}_{t+1}, \mathcal{D}_t)\)</span> is a shifted Wishart distribution</p>
+<p><span class="math display">\[(\mathbf{X}_t|\mathbf{X}_{t+1}, \mathcal{D}_t) = \lambda \mathbf{X}_{t+1} + \mathbf{Z}_{t+1}, \qquad \mathbf{Z}_{t+1} \sim \mathcal{W}_m(k, (k \Sigma_t)^{-1})\]</span> <strong>Proof (proposition 2):</strong> Same as proposition 1, just shows the vastness of my own ignorance.</p>
+<p><strong>Proposition 3.</strong> (<em>Marginalization</em>) The joint density of <span class="math inline">\(\{\mathbf{Y}_t \}_{t=1}^T\)</span> is given by</p>
+<p><span class="math display">\[p(\{\mathbf{Y}_t \}_{t=1}^T|\mathcal{D}_0) = \prod_{t=1}^T p(\mathbf{Y}_t | \mathcal{D}_{t-1}) \]</span> (…) with <span class="math inline">\(p(\mathbf{Y}_t | \mathcal{D}_{t-1})\)</span> given by</p>
+<p><span class="math display">\[\pi^{-(mk - k^2)/2} \frac{\Gamma_m(\nu/2)}{\Gamma_m(n/2)\Gamma_m(k/2)}\frac{|\mathbf{L}_t|^{(k-m-1)/2}|\mathbf{C}_t|^{n/2}}{|\mathbf{C}_t + \mathbf{Y}_t|^{\nu/2}}\]</span> in the rank-deficient case and</p>
+<p><span class="math display">\[\frac{\Gamma_m(\nu/2)}{\Gamma_m(n/2)\Gamma_m(k/2)}\frac{|\mathbf{Y}_t|^{(k-m-1)/2}|\mathbf{C}_t|^{n/2}}{|\mathbf{C}_t + \mathbf{Y}_t|^{\nu/2}}\]</span> in the full rank case.</p>
+<p><strong>Proof (proposition 3):</strong> Why do I even bother?</p>
+<p>(there are some more notes in this part that I’ll finish tomorrow and before going into their application, I’ll try to implement Casarin’s univariate model)</p>
 </div>
 </div>
 <div id="references" class="section level1 unnumbered">
