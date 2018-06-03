@@ -120,7 +120,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Windle &amp; Carvalho (2014)</h1>
 <h4 class="author"><em>A. Schmidt</em></h4>
-<h4 class="date"><em>Last update: June 02, 2018.</em></h4>
+<h4 class="date"><em>Last update: June 03, 2018.</em></h4>
 
 </div>
 
@@ -226,6 +226,14 @@ MathJax.Hub.Config({
 <ol start="10" style="list-style-type: decimal">
 <li><span style="color:red"><strong>Question 10:</strong></span> O que é o tal do discount model ou variance discounting? Acho que tem no Prado and West…</li>
 </ol>
+<ul>
+<li><span style="color:green"><strong>Answer 10:</strong></span></li>
+</ul>
+<ol start="11" style="list-style-type: decimal">
+<li><span style="color:red"><strong>Question 10:</strong></span> Na proposição 3 aparece uma matriz <span class="math inline">\(\mathbf{L}_t\)</span> para o caso rank deficient, que na demonstração não fica bem claro como calcular. Mais especificamente, eu estou olhando na página 785 (ou página 27 do pdf) na prova da proposição 3. Como encontrar as matrizes <span class="math inline">\(\mathbf{L}_t\)</span> e <span class="math inline">\(\mathbf{H}_t\)</span> da forma <span class="math inline">\(\mathbf{Y}_t = \mathbf{H}_t \mathbf{L}_t \mathbf{H}_t'\)</span> (apesar de não ter transposto no artigo eu acho que vai ter pois <span class="math inline">\(\mathbf{Y}_t\)</span> é <span class="math inline">\(m \times m\)</span>) e <span class="math inline">\(\mathbf{L}_t\)</span> é <span class="math inline">\(k \times k\)</span> com <span class="math inline">\(k &lt; m\)</span>. No artigo está escrito que <span class="math inline">\(\mathbf{H}_t\)</span> está na variedade de Stiefel. Até agora tudo que descobri é que isso significa que suas k colunas são ortonormais.</li>
+</ol>
+<p>No fundo preciso saber como, dado <span class="math inline">\(\mathbf{Y}_t\)</span>, encontrar a matriz <span class="math inline">\(\mathbf{L}_t\)</span>. Eu encontrei esse <a href="https://arxiv.org/pdf/1606.04478.pdf">trabalho aqui</a> que diz o seguinte: <em>Under the assumption of dimension reduction (<span class="math inline">\(d &gt; k\)</span>), the singular value decomposition (SVD) <span class="math inline">\(F = U\Lambda V^T\)</span> can be modified so that <span class="math inline">\(U\)</span> and <span class="math inline">\(V\)</span> are, respectively, <span class="math inline">\(d \times k\)</span> and <span class="math inline">\(k \times k\)</span> matrices with orthonormal columns, while <span class="math inline">\(\Lambda\)</span> is a <span class="math inline">\(k \times k\)</span> diagonal matrix with non-negative entries (the singular values) in decreasing order. Assuming the singular values are all distinct, <span class="math inline">\(F\)</span> is uniquely specified by <span class="math inline">\(U\)</span>, <span class="math inline">\(\Lambda\)</span>, and <span class="math inline">\(V\)</span>.</em></p>
+<p>Mandei um e-mail para a Melissa (03/06/2018) e amanhã vou olhar no Strang para ver sobre a SVD.</p>
 <ul>
 <li><span style="color:green"><strong>Answer 10:</strong></span></li>
 </ul>
@@ -456,10 +464,34 @@ where <span class="math inline">\(n &gt; m-1\)</span> and <span class="math inli
 <p><strong>Proposition 3.</strong> (<em>Marginalization</em>) The joint density of <span class="math inline">\(\{\mathbf{Y}_t \}_{t=1}^T\)</span> is given by</p>
 <p><span class="math display">\[p(\{\mathbf{Y}_t \}_{t=1}^T|\mathcal{D}_0) = \prod_{t=1}^T p(\mathbf{Y}_t | \mathcal{D}_{t-1}) \]</span> (…) with <span class="math inline">\(p(\mathbf{Y}_t | \mathcal{D}_{t-1})\)</span> given by</p>
 <p><span class="math display">\[\pi^{-(mk - k^2)/2} \frac{\Gamma_m(\nu/2)}{\Gamma_m(n/2)\Gamma_m(k/2)}\frac{|\mathbf{L}_t|^{(k-m-1)/2}|\mathbf{C}_t|^{n/2}}{|\mathbf{C}_t + \mathbf{Y}_t|^{\nu/2}}\]</span> in the rank-deficient case and</p>
-<p><span class="math display">\[\frac{\Gamma_m(\nu/2)}{\Gamma_m(n/2)\Gamma_m(k/2)}\frac{|\mathbf{Y}_t|^{(k-m-1)/2}|\mathbf{C}_t|^{n/2}}{|\mathbf{C}_t + \mathbf{Y}_t|^{\nu/2}}\]</span> in the full rank case.</p>
-<p><strong>Proof (proposition 3):</strong> Why do I even bother?</p>
-<p>(there are some more notes in this part that I’ll finish tomorrow and before going into their application, I’ll try to implement Casarin’s univariate model)</p>
+<p><span class="math display">\[\frac{\Gamma_m(\nu/2)}{\Gamma_m(n/2)\Gamma_m(k/2)}\frac{|\mathbf{Y}_t|^{(k-m-1)/2}|\mathbf{C}_t|^{n/2}}{|\mathbf{C}_t + \mathbf{Y}_t|^{\nu/2}}\]</span> in the full rank case. <span class="math inline">\(\nu = n+k\)</span>, and <span class="math inline">\(\mathbf{C}_t = \lambda \Sigma_{t-1}\)</span> with <span class="math inline">\(\Sigma_t = \lambda \Sigma_{t-1} + \mathbf{Y}_t\)</span> (same as before). The matrix <span class="math inline">\(\mathbf{L}_t\)</span> came from the form <span class="math inline">\(\mathbf{Y}_t = \mathbf{H}_t\mathbf{L}_t\mathbf{H}_t'\)</span> and is a <span class="math inline">\(k\times k\)</span> diagonal matrix with decreasing entries and <span class="math inline">\(\mathbf{H}_t\)</span> is in the Stiefel manifold <span class="math inline">\(V_{m,k}\)</span> (this means that <span class="math inline">\(\mathbf{H}_t\)</span> is <span class="math inline">\(m\times k\)</span> and its <span class="math inline">\(k\)</span> columns are orthonormal, besides, means that, contrary to what is written in the article, we need to transpose the latter <span class="math inline">\(\mathbf{H}_t\)</span> in order to do the calculations).</p>
+<p><strong>Proof (proposition 3):</strong> <span style="color:Purple"> <strong>Aisha</strong>: There is some hope in looking the proofs available on J. Windle dissertation, I’ll come back to it later. </span></p>
+<ul>
+<li>They claim that eximining the one-step ahead forecasts of <span class="math inline">\(\mathbf{Y}_t\)</span> elucidates how the model smooths.</li>
+<li>By the law of iterated expectations, we have</li>
+</ul>
+<p><span class="math display">\[\E[\mathbf{Y}_{t+1}|\mathcal{D}_t] =  \E[\mathbf{X}^{-1}_{t+1}|\mathcal{D}_t]\]</span></p>
+<p>Since <span class="math inline">\((\mathbf{X}^{-1}_{t+1}|\mathcal{D}_t)\)</span> is an inverse Wishart distribution, its expectation is proportional to <span class="math inline">\(\Sigma_t\)</span> <span style="color:Red"> <strong>Aisha</strong>: Go get it, girl. </span></p>
+<ul>
+<li>Solving the recursion for <span class="math inline">\(\Sigma_t\)</span> from proposition (1) yelds (<span style="color:Red"> <strong>Aisha</strong>: Try to do it, future Aisha, it is just a regular stochastic difference equation.</span>)</li>
+</ul>
+<p><span class="math display">\[\Sigma_t = \sum_{i=0}^{t-1}\lambda^i \mathbf{Y}_{t-i} + \lambda^t\Sigma_0\]</span> The result above shows that the one-step forecast of <span class="math inline">\(\mathbf{Y}_t\)</span> will be a scaled, geometrically weighted sum of the previous observations.</p>
+<ul>
+<li>Forcing <span class="math inline">\(\lambda\)</span> to be equal to <span class="math inline">\(1 + \frac{k}{n-m-1}\)</span> gives <span class="math display">\[\E[\mathbf{X}_{t+1}^{-1}|\mathcal{D}_t] = (1-\lambda)\Sigma_t  = (1-\lambda)\sum_{i=0}^{t-1}\lambda^i \mathbf{Y}_{t-i} + (1-\lambda)\lambda^t\Sigma_0\]</span></li>
+</ul>
+<p>Hence, in the constrained case, the one-step ahead forecast is the geometrically weighted average of past observations. * The most recent observations are given more weight as <span class="math inline">\(\lambda\)</span> decreases. * This is a nice feature for forecasts.</p>
 </div>
+</div>
+<div id="multiple-smoothing-parameters" class="section level1">
+<h1>Multiple Smoothing Parameters</h1>
+<ul>
+<li>Not satisfied, <span class="citation">(Windle, Carvalho, and others 2014)</span> introduces a more sophisticated smoothing procedure.</li>
+<li>They ended up concluding this does not improve forecasts.
+<ul>
+<li><span class="math inline">\(\Rightarrow\)</span> I’ll not bother with this.</li>
+</ul></li>
+</ul>
+<p>(now I’m going to implement Casarin univariate code before coming back here)</p>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1>References</h1>
