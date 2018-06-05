@@ -151,6 +151,16 @@ MathJax.Hub.Config({
 \newcommand{\K}{{\mathbb K}}\\
 \newcommand{\Z}{{\mathbb Z}}
 \end{align*}\]</span>
+<div id="duvidas" class="section level1">
+<h1>Dúvidas</h1>
+<p>Dúvidas em <span style="color:blue"><strong>azul</strong></span> eu acho que já entendi, mas deixei aqui a resposta para que a Aisha do futuro possa consultar também. Dúvidas em <span style="color:red"><strong>vermelho</strong></span> ainda precisam de resposta.</p>
+<ol style="list-style-type: decimal">
+<li><span style="color:red"><strong>Question 1:</strong></span></li>
+</ol>
+<ul>
+<li><span style="color:green"><strong>Answer 1:</strong></span></li>
+</ul>
+</div>
 <div id="comment-on-article-by-windle-and-carvalho" class="section level1">
 <h1>Comment on Article by Windle and Carvalho</h1>
 <p>I’m studying this comment because prof. Casarin sent me his code (for the univariate case). Since I don’t have any idea on how to work on Windle and Carvalho multivariate case, I’m going univariate first.</p>
@@ -164,6 +174,18 @@ MathJax.Hub.Config({
 </div>
 <div id="the-univariate-version-of-windle-and-carvalho-2014" class="section level2">
 <h2>The univariate version of Windle and Carvalho (2014)</h2>
+<p>Let <span class="math inline">\(y_t\)</span> be the observable variable, then the univariate model correspondent to <span class="math inline">\(m=1\)</span> in Windle and Carvalho model, is given by:</p>
+<span class="math display">\[\begin{align}
+y_t|x_t &amp;\sim \mathcal{G}(k/2, kx_t/2) \tag{01}\\
+x_t|x_{t-1} &amp;\sim x_{t-1}\psi_t/\lambda, \qquad \psi_t \sim \mathcal{B}(n/2, k/2) \tag{02}
+\end{align}\]</span>
+<p>for <span class="math inline">\(t = 1, \ldots, T\)</span>, with <span class="math inline">\(x_0 = x\)</span>, where <span class="math inline">\(\mathcal{G}(a,b)\)</span> denotes the gamma distribution and <span class="math inline">\(\mathcal{B}(a,b)\)</span> is the beta distribution. The parametrization of the gamma distribution is: <span class="math display">\[f(x)= \Gamma(a)^{-1}b^a \exp\{-bx\}x^{a-1}\]</span> <span style="color:Purple"><strong>Observação:</strong> a distribuição gamma(a,s) do R é definida por <span class="math display">\[f(x) = \Gamma(a)^{-1}s^{-a} x^{a-1} \exp\{-x/s \} \]</span> O que nos leva a concluir que <span class="math inline">\(b=1/s\)</span> e preciso ter isso em mente na hora de implementar no R. A equação (01) passa a ser <span class="math inline">\(y_t|x_t \sim \mathcal{G}(k/2, 2(kx_t)^{-1})\)</span> </span></p>
+<p>Adapting proposition (1) and (2) from <span class="citation">(Windle, Carvalho, and others 2014)</span> to the univariate case gives us the forward filter and backard sampler (I already adjusted for the Gamma distribution in R):</p>
+<span class="math display">\[\begin{align}
+x_t|\mathcal{D}_t &amp;\sim \mathcal{G}\left(\frac{n+k}{2}, \frac{2}{k\sigma_t^2}\right) \tag{03}
+x_{t+1}|\mathcal{D}_t &amp;\sim \mathcal{G}\left(\frac{n}{2}, \frac{2}{\lambda k \sigma^2_t}\right)
+\end{align}\]</span>
+<p>where <span class="math inline">\(\sigma^2_t = y_t + \lambda \sigma^2_{t-1}\)</span> and the backward sampling distribution <span class="math display">\[x_t|x_{t+1}\mathcal{D}_t \sim \lambda x_{t+1} + z_{t+1}, \qquad z_{t+1} \sim \mathcal{G}\left(\frac{k}{2}, \frac{2}{k\sigma^2_t} \right) \]</span> <span style="color:Red"><strong>Aisha:</strong> compare with W&amp;C equations… </span></p>
 </div>
 </div>
 <div id="code" class="section level1">
@@ -182,6 +204,9 @@ MathJax.Hub.Config({
 </div>
 <div id="ref-triantafyllopoulos2012">
 <p>Triantafyllopoulos, Kostas. 2012. “Multi-Variate Stochastic Volatility Modelling Using Wishart Autoregressive Processes.” <em>Journal of Time Series Analysis</em> 33 (1). Wiley Online Library: 48–60.</p>
+</div>
+<div id="ref-windle_carvalho2014">
+<p>Windle, Jesse, Carlos M Carvalho, and others. 2014. “A Tractable State-Space Model for Symmetric Positive-Definite Matrices.” <em>Bayesian Analysis</em> 9 (4). International Society for Bayesian Analysis: 759–92.</p>
 </div>
 </div>
 </div>
