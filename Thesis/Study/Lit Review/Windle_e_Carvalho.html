@@ -160,7 +160,7 @@ MathJax.Hub.Config({
 <li>Read the article and summarize main ideas</li>
 <li>Implement a Gibbs sampler to estimate something similar to the article example (not sure if I’ll be successful replicating the same example because I’m not sure about the data)</li>
 </ol>
-<p><del>The goal is to use Windle and Carvalho work to generalize Uhlig’s model from 1997 to a TVP-VAR with stochastic volatility (instead a constant parameter framework).</del> Aparently my advisor thinks that this is not necessary.</p>
+<p><del>The goal is to use Windle and Carvalho work to generalize Uhlig’s model from 1997 to a TVP-VAR with stochastic volatility (instead a constant parameter framework).</del></p>
 </div>
 <div id="questions-stuff-i-need-to-answer" class="section level2">
 <h2>Questions (stuff I need to answer)</h2>
@@ -235,7 +235,7 @@ MathJax.Hub.Config({
 <p>No fundo preciso saber como, dado <span class="math inline">\(\mathbf{Y}_t\)</span>, encontrar a matriz <span class="math inline">\(\mathbf{L}_t\)</span>. Eu encontrei esse <a href="https://arxiv.org/pdf/1606.04478.pdf">trabalho aqui</a> que diz o seguinte: <em>Under the assumption of dimension reduction (<span class="math inline">\(d &gt; k\)</span>), the singular value decomposition (SVD) <span class="math inline">\(F = U\Lambda V^T\)</span> can be modified so that <span class="math inline">\(U\)</span> and <span class="math inline">\(V\)</span> are, respectively, <span class="math inline">\(d \times k\)</span> and <span class="math inline">\(k \times k\)</span> matrices with orthonormal columns, while <span class="math inline">\(\Lambda\)</span> is a <span class="math inline">\(k \times k\)</span> diagonal matrix with non-negative entries (the singular values) in decreasing order. Assuming the singular values are all distinct, <span class="math inline">\(F\)</span> is uniquely specified by <span class="math inline">\(U\)</span>, <span class="math inline">\(\Lambda\)</span>, and <span class="math inline">\(V\)</span>.</em></p>
 <p>Mandei um e-mail para a Melissa (03/06/2018) e amanhã vou olhar no Strang para ver sobre a SVD.</p>
 <ul>
-<li><span style="color:green"><strong>Answer 10:</strong></span></li>
+<li><span style="color:green"><strong>Answer 10:</strong></span> Resposta da Mel: L é a matriz dos autovalores e H é a matriz dos autovetores (que no caso da matriz simétrica são ortonormais entre si). o fato de estar na variedade de stiefel é um jeito chique de dizer que tem coluna ortonormais rs. só que pelo que entendi a decomposição vai ser assim: nas colunas de H (que são k, cada um com m entradas) vão estar os primeiros k autovetores de A. L é kxk pq a Y deve ser semidefinida positiva, e por isso tem alguns autovalores nulos.</li>
 </ul>
 </div>
 <div id="notation" class="section level2">
