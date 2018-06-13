@@ -32,7 +32,7 @@ Pretty much if the central bank is using open market, "redesconto" (don't know t
 ## Abstract
 
 They constructed a measure of unanticipated changes in policy rates for a penal of 32 advanced and emerging market countries for the period between 1990 and 2013.
-They conclusion is that contractionary monetary actions (increases in interest rates) increase income inequality. The other way is also verified: expansionary monetary policies can reduce income inequality.
+Their conclusion is that contractionary monetary actions (increases in interest rates) increase income inequality. The other way is also verified: expansionary monetary policies can reduce income inequality.
 The effect is not homogeneous across time and depends also from the type of the shock, the economy status (whether in expansion or recession), depends on the share of labor income and redistribution policies.
 
 ## Some remarks
@@ -45,8 +45,8 @@ The studies reach different conclusions and this is coherent with the idea that 
 * Expansionary policy can reduce inequality through savings redistribution: when the interest rate is lower, the borrowers (usually the ones with higher marginal propensity to consume, the poorer people) will benefit more than the people who are lending money;
 * Expancionary policy can reduce inequality because is creates a stimulus in the economy, increasing employment and salaries.
 
-**I really don't get** what they are saying in pag 9 about the shocks. What's the meaning of _"This metodology overcomes two problems that may confound the causal estimation of the effect of monetary policy shocks on inequality"_ 
-They argue that is necessary to use "exogenous" monetary policy shocks (pag 8).
+**I really don't get** what they are saying in pag 9 about the shocks. What's the meaning of _"This metodology overcomes two problems that may confound the causal estimation of the effect of monetary policy shocks on inequality"_.
+They argue that it is necessary to use "exogenous" monetary policy shocks (pag 8).
 
 ## Introduction
 
@@ -62,7 +62,7 @@ As said, the interaction between the monetary policy and inequality is not clear
 
 So, their conclusion is that there are competitive views about the subject (impact of conventional/unconventional monetary policy on inequality) and this is due to the existance of many different transmission channels (the transmission channels I'll discuss in my review from Auclert, 2017). Simplifying, we have this theoretical results:
 
-* Inflation and asset prices go up when the interest rates go down (expansionary policy) - well, in the case of asset prices we have to take a deeper lool into the household portfolio composition to understand the effect - increasing inequality;
+* Inflation and asset prices go up when the interest rates go down (expansionary policy) - well, in the case of asset prices we have to take a deeper look into the household portfolio composition to understand the effect - increasing inequality;
 * Borrowers can benefit from low interest rates, since, well, they will take credit at a lower price at the same time the lenders will loose money, which can decrease inequality;
 * Workers benefit from expansionary monetary because the investment tend to increase, increasing production, employment and wages.
 
