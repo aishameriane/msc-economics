@@ -13,18 +13,21 @@ the risk-free nominal interest rate now or in the future. This includes several 
 independently of interest rates_. Não entendi como que o BC pode fazer algo sem que isso reflita na taxa de juros nominal (se é que a ideia é essa).
 
 2. What's the meaning of _100 basis points reduction in policy rates_?
-~~** Some thoughts**: Check the [original article](https://academic.oup.com/ser/article-abstract/12/2/245/1666588) from Huber and Stephens.~~
+~~*Some thoughts*: Check the [original article](https://academic.oup.com/ser/article-abstract/12/2/245/1666588) from Huber and Stephens.~
+
 [It is a fucking 1%](https://www.investopedia.com/terms/b/basispoint.asp) >.<
+
 _"Basis point (BPS) refers to a common unit of measure for interest rates and other percentages in finance. One basis point is equal to 1/100th of 1%, or 0.01%, or 0.0001, and is used to denote the percentage change in a financial instrument. The relationship between percentage changes and basis points can be summarized as follows: 1% change = 100 basis points, and 0.01% = 1 basis point."_
 
 3. Am I studying conventional/unconventional/everythong monetary policy?
 **Conventional**. Conventional monetary policy is described below (I took from [here](https://www.ecb.europa.eu/press/key/date/2009/html/sp090428.en.html) )
-_Let me first clarify what we mean by ‘conventional’ measures. Nowadays, monetary policy mainly acts by setting a target for the overnight interest rate in the interbank money market and adjusting the supply of central bank money to that target through open market operations. To minimise the risk exposure of the central bank’s balance sheet, all liquidity-providing operations normally take place in the form of reverse transactions against a menu of eligible collateral. In other words, **in normal times the central bank is neither involved in direct lending to the private sector or the government, nor in outright purchases of government bonds, corporate debt or other types of debt instrument**. By steering the level of the key interest rates, the central bank effectively manages the liquidity conditions in money markets and pursues its primary objective of maintaining price stability over the medium term. This has proved to be a reliable way of providing sufficient monetary stimulus to the economy during downturns, of containing inflationary pressures during upturns and of ensuring the sound functioning of money markets._
+_"Let me first clarify what we mean by ‘conventional’ measures. Nowadays, monetary policy mainly acts by setting a target for the overnight interest rate in the interbank money market and adjusting the supply of central bank money to that target through open market operations. To minimise the risk exposure of the central bank’s balance sheet, all liquidity-providing operations normally take place in the form of reverse transactions against a menu of eligible collateral. In other words, **in normal times the central bank is neither involved in direct lending to the private sector or the government, nor in outright purchases of government bonds, corporate debt or other types of debt instrument**. By steering the level of the key interest rates, the central bank effectively manages the liquidity conditions in money markets and pursues its primary objective of maintaining price stability over the medium term. This has proved to be a reliable way of providing sufficient monetary stimulus to the economy during downturns, of containing inflationary pressures during upturns and of ensuring the sound functioning of money markets."_
 
 Pretty much if the central bank is using open market, "redesconto" (don't know the name in English) and compulsory deposits, then the CB is doing conventional policy. Once I'm analyzing the interest rates, I think it is safe to assume this is all about conventional policy.
 
 4. I didn't understand the meaning of "orthogonal unexpected changes in policy rates with respect to unexpected changes in growth and inflation".
-** Some thoughts**: Probably I'll have to take a look at the article describind this methodology for fiscal policy.
+
+**Some thoughts** : Probably I'll have to take a look at the article describind this methodology for fiscal policy.
 
 ## Abstract
 
