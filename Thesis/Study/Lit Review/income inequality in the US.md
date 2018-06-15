@@ -1,6 +1,6 @@
 # Income Inequality in the United States 1913-1998
 
-Full reference: IKETTY, Thomas; SAEZ, Emmanuel. **Income inequality in the United States, 1913–1998.** The Quarterly journal of economics, v. 118, n. 1, p. 1-41, 2003. [[article](https://academic.oup.com/qje/article-abstract/118/1/1/1917000)]
+Full reference: PIKETTY, Thomas; SAEZ, Emmanuel. **Income inequality in the United States, 1913–1998.** The Quarterly journal of economics, v. 118, n. 1, p. 1-41, 2003. [[article](https://academic.oup.com/qje/article-abstract/118/1/1/1917000)]
 
 ## Abstract
 
