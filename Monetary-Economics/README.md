@@ -8,4 +8,4 @@ This folder contains the stuff I made for the Monetary Economics course.
 
 The lecture notes (jointly made with [Leilane Cambará](https://github.com/leilanefrc)) are available here: https://www.overleaf.com/read/dnkzhgfscdtt .
 
-* [Demanda por moeda](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Monetary-Economics/Demanda_por_moeda.html) - This is a classical and a bayesian VAR models (with constant coefficients) to estimate the demand for money in Brazil.
+* [Demanda por moeda](https://htmlpreview.github.io/?https://raw.githubusercontent.com/aishameriane/msc-economics/master/Monetary-Economics/Demanda_por_moeda.html?token=ACpkztqegGBiMQGlvZDR_uW3_npP7CCqks5blxsMwA%3D%3D) - This is a classical and a bayesian VAR models (with constant coefficients) to estimate the demand for money in Brazil.
