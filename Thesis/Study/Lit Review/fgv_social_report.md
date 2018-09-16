@@ -54,5 +54,6 @@ It would be nice to find a published article or working paper with similar data.
     * The most astouning data is that the mean income dropped 7% in 2015 but if we look to the loss of income among the 5% poorest, it was about 14%;
         * One explanation was the lack of rise in the Bolsa Familia program, while inflation and unemployment were exploding;
     * **Their conclusion was that the crisis effect among the poors was much worse than it was for the general population.**
+    * **Also, the inequality rise was higher than the poverty rate increase**.
     
         
