@@ -44,9 +44,13 @@ This folder is where I intend to save my notes on the articles and related liter
 * FRÜHWIRTH-SCHNATTER, Sylvia. **Finite mixture and Markov switching models**. Springer Science & Business Media, 2006. [[book](https://www.amazon.com/Finite-Mixture-Switching-Springer-Statistics-ebook/dp/B00DZ0NSK6/)]
 * GHOSSOUB, Edgar A.; REED, Robert R. **Financial development, income inequality, and the redistributive effects of monetary policy.** Journal of Development Economics, v. 126, p. 167-189, 2017. [[article](https://www.sciencedirect.com/science/article/pii/S0304387816301195)]
 
+* MISHKIN, Frederic S. **The transmission mechanism and the role of asset prices in monetary policy.** National bureau of economic research, 2001. [[working paper](http://www.nber.org/papers/w8617)] [[my notes]()]
+
 * MUMTAZ, Haroon; THEOPHILOPOULOU, Angeliki. **The impact of monetary policy on inequality in the UK. An empirical analysis.** European Economic Review, v. 98, p. 410-423, 2017. [[article, 2017](https://www.sciencedirect.com/science/article/pii/S0014292117301332)] [[working paper 1, 2015](https://editorialexpress.com/cgi-bin/conference/download.cgi?db_name=EEAMannheim2015&paper_id=1615)] [[working paper 2, 2016](http://www.econ.qmul.ac.uk/media/econ/research/workingpapers/2016/items/wp783.pdf)] [[my notes]()]
 
 * NAKAJIMA, Jouchi et al. **Time-varying parameter VAR model with stochastic volatility: An overview of methodology and empirical applications**. Institute for Monetary and Economic Studies, Bank of Japan, 2011. [[article](http://www.imes.boj.or.jp/research/abstracts/english/me29-6.html)] [[my notes]()]
+
+* NAKAMURA, Emi; STEINSSON, Jón. **Identification in macroeconomics**. Journal of Economic Perspectives, v. 32, n. 3, p. 59-86, 2018. [[article](https://www.aeaweb.org/articles?id=10.1257/jep.32.3.59)] [[my notes]()]
 
 * PRADO, Raquel; WEST, Mike. Time series: modeling, computation, and inference. CRC Press, 2010. Chapter 10. [[book](https://www.amazon.com/Time-Modeling-Computation-Inference-Statistical-ebook/dp/B008GXJS24/)]
 
@@ -80,15 +84,21 @@ This folder is where I intend to save my notes on the articles and related liter
 
 * BOWLES, Samuel. **The new economics of inequality and redistribution**. Cambridge University Press, 2012. [[book](https://www.amazon.com.br/New-Economics-Inequality-Redistribution/dp/1107601606?__mk_pt_BR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&keywords=samuel+bowles&qid=1527897366&sr=1-11&ref=sr_1_11)] [[my notes](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/the%20new%20economics%20of%20inequality%20and%20redistribution.md)]
 
+* DOEPKE, Matthias; SCHNEIDER, Martin; SELEZNEVA, Veronika. **Distributional effects of monetary policy**. Unpublished manuscript, 2015. [[working paper](https://www.cepweb.org/wp-content/uploads/CEP_St_Louis_Fed_Schneider.pdf)] [[my notes]()]
+
 * Furceri, Davide, Prakash Loungani, and Aleksandra Zdzienicka. **"The Effects of Monetary Policy Shocks on Inequality."** IMF Working Paper: 16.245 (2016). [[Working Paper]]() [[Article on Journal of International Money and Finance](https://www.sciencedirect.com/science/article/pii/S0261560617302279)] [[my notes](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/The%20effects%20of%20monetary%20policy%20shocks%20on%20inequality.md)] (based on the article)
 
 * HERRAN, Carlos Alberto. **Reduzindo a pobreza e a desigualdade no Brasil**. BID, 2005. [[book](https://www.livrariacultura.com.br/p/livros/ciencias-sociais/sociologia/reduzindo-a-pobreza-e-a-desigualdade-no-brasil-9002857)] [[my notes]()]
 
 * Kaplan, Greg, and Giovanni L. Violante. **"Microeconomic Heterogeneity and Macroeconomic Shocks."** Journal of Economic Perspectives, Special Issue on "The State of Macroeconomics a Decade After The Crisis" (2018). [[article](https://gregkaplan.uchicago.edu/sites/gregkaplan.uchicago.edu/files/uploads/kaplan_violante_2018_JEP_draft.pdf)] [[more technical version](https://gregkaplan.uchicago.edu/sites/gregkaplan.uchicago.edu/files/uploads/kaplan_violante_2018_JEP_w24734.pdf)] [[my notes](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/micro_het_and_macro_shocks.md)] 
 
+* LUDVIGSON, Sydney; STEINDEL, Charles; LETTAU, Martin. **Monetary policy transmission through the consumption-wealth channel.** FRBNY Economic Policy Review, v. 5, p. 117-133, 2002. [[article](https://www.newyorkfed.org/research/epr/02v08n1/0205ludv/0205ludv.html)] [[appendix](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.132.835&rep=rep1&type=pdf)] [[my notes]()]
+
 * Mumtaz, Haroon, and Paolo Surico. **The transmission mechanism in good and bad times.** International Economic Review 56.4 (2015): 1237-1260. [[article](https://onlinelibrary.wiley.com/doi/abs/10.1111/iere.12136)] [[my notes](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/Transmission%20in%20good%20and%20bad%20times.md)]
 
 * Neri, Marcelo. **Qual foi o Impacto da Crise sobre a Pobreza e a Distribuição de Renda?** Working paper (?). [[executive summary](https://cps.fgv.br/Pobreza_Desigualdade)] [[slides](https://www.cps.fgv.br/cps/bd/slides/SLIDE-NOTA-Dis_Pobreza_Desigualdade_Crise_Neri_FGV_Social_FGV.pdf)] [[website](https://cps.fgv.br/Pobreza_Desigualdade)] [[my notes](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/fgv_social_report.md)]
+
+* O'FARRELL, Rory; RAWDANOWICZ, Lukasz. **Monetary policy and inequality: Financial channels.** International Finance, v. 20, n. 2, p. 174-188, 2017. [[article](https://onlinelibrary.wiley.com/doi/abs/10.1111/infi.12108)] [[my notes]()]
 
 * Thomas Piketty, **A economia da Desigualdade** (2015). Started notes on 09/05/2018. *Just finished chapter 1*. [[my notes](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/Economia%20da%20Desigualdade.md)][[book](https://www.amazon.com.br/economia-desigualdade-Thomas-Piketty-ebook)].
 
@@ -106,4 +116,10 @@ This folder is where I intend to save my notes on the articles and related liter
 
 * UHLIG, Harald. **Bayesian vector autoregressions with stochastic volatility**. Econometrica: Journal of the Econometric Society, p. 59-73, 1997. [[Notes from 2017](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/uhlig97.html)][[original paper](http://www.jstor.org/stable/2171813)][[my code based on Uligh's code](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Bayesian-macro/article/self-study/codigo_uhlig.html)] (the code is still missing 2 parts to calculate the IRFs)
 
-## Other
+## Monetary Policy
+
+* MISHKIN, Frederic S. **Symposium on the monetary transmission mechanism**. Journal of Economic perspectives, v. 9, n. 4, p. 3-10, 1995. [[article](https://www.aeaweb.org/articles?id=10.1257/jep.9.4.3)] [[my notes]()]
+
+* TAYLOR, John B. **Discretion versus policy rules in practice.** In: Carnegie-Rochester conference series on public policy. North-Holland, 1993. p. 195-214. [[article](https://www.sciencedirect.com/science/article/pii/016722319390009L)] [[my notes]()]
+
+
