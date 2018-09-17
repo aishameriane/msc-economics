@@ -82,7 +82,9 @@ This folder is where I intend to save my notes on the articles and related liter
 
 * Furceri, Davide, Prakash Loungani, and Aleksandra Zdzienicka. **"The Effects of Monetary Policy Shocks on Inequality."** IMF Working Paper: 16.245 (2016). [[Working Paper]]() [[Article on Journal of International Money and Finance](https://www.sciencedirect.com/science/article/pii/S0261560617302279)] [[my notes](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/The%20effects%20of%20monetary%20policy%20shocks%20on%20inequality.md)] (based on the article)
 
-* HERRAN, Carlos Alberto. *Reduzindo a pobreza e a desigualdade no Brasil*. BID, 2005. [[book](https://www.livrariacultura.com.br/p/livros/ciencias-sociais/sociologia/reduzindo-a-pobreza-e-a-desigualdade-no-brasil-9002857)] [[my notes]()]
+* HERRAN, Carlos Alberto. **Reduzindo a pobreza e a desigualdade no Brasil**. BID, 2005. [[book](https://www.livrariacultura.com.br/p/livros/ciencias-sociais/sociologia/reduzindo-a-pobreza-e-a-desigualdade-no-brasil-9002857)] [[my notes]()]
+
+* Kaplan, Greg, and Giovanni L. Violante. **"Microeconomic Heterogeneity and Macroeconomic Shocks."** Journal of Economic Perspectives, Special Issue on "The State of Macroeconomics a Decade After The Crisis" (2018). [[article](https://gregkaplan.uchicago.edu/sites/gregkaplan.uchicago.edu/files/uploads/kaplan_violante_2018_JEP_draft.pdf)] [[more technical version](https://gregkaplan.uchicago.edu/sites/gregkaplan.uchicago.edu/files/uploads/kaplan_violante_2018_JEP_w24734.pdf)] [[my notes](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/micro_het_and_macro_shocks.md)] 
 
 * Mumtaz, Haroon, and Paolo Surico. **The transmission mechanism in good and bad times.** International Economic Review 56.4 (2015): 1237-1260. [[article](https://onlinelibrary.wiley.com/doi/abs/10.1111/iere.12136)] [[my notes](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/Transmission%20in%20good%20and%20bad%20times.md)]
 
