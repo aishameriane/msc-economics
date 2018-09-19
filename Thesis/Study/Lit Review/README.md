@@ -15,6 +15,8 @@ This folder is where I intend to save my notes on the articles and related liter
 
 * Alvaredo, Chancel, Piketty, Saez, Zucman. **World Inequality Report**. [[executive summary](http://wir2018.wid.world/files/download/wir2018-summary-english.pdf)] [[full report](http://wir2018.wid.world/files/download/wir2018-full-report-english.pdf)]
 
+* ANAND, Sudhir; SEGAL, Paul. **What do we know about global income inequality?**. Journal of Economic Literature, v. 46, n. 1, p. 57-94, 2008. [[article](https://www.aeaweb.org/articles?id=10.1257/jel.46.1.57)] [[my notes]()]
+
 * ARBACHE, Jorge Saba. Pobreza e mercados no Brasil. En: Pobreza e mercados no Brasil: uma análise de iniciativas de políticas públicas-Brasília: CEPAL/DFID, 2003-p. 9-115, 2003. [[book](https://repositorio.cepal.org/handle/11362/28351)]
 
 * AREOSA, Waldyr Dutra; AREOSA, Marta BM. **The inequality channel of monetary transmission**. Journal of Macroeconomics, v. 48, p. 214-230, 2016. [[article](https://www.sciencedirect.com/science/article/pii/S0164070416300076)] [[working paper - BACEN](https://www.bcb.gov.br/pec/wps/ingl/wps114.pdf)]
@@ -42,7 +44,12 @@ This folder is where I intend to save my notes on the articles and related liter
 * EISENSTAT, Eric; CHAN, Joshua CC; STRACHAN, Rodney W. **Stochastic model specification search for time-varying parameter VARs.** Econometric Reviews, v. 35, n. 8-10, p. 1638-1665, 2016. [[article](https://www.tandfonline.com/doi/abs/10.1080/07474938.2015.1092808?journalCode=lecr20)] [[working paper](http://joshuachan.org/papers/Eisenstat-Chan-Strachan-2014.pdf)] [[code](http://joshuachan.org/code/ECS2014-replication.zip)]
 
 * FRÜHWIRTH-SCHNATTER, Sylvia. **Finite mixture and Markov switching models**. Springer Science & Business Media, 2006. [[book](https://www.amazon.com/Finite-Mixture-Switching-Springer-Statistics-ebook/dp/B00DZ0NSK6/)]
+
 * GHOSSOUB, Edgar A.; REED, Robert R. **Financial development, income inequality, and the redistributive effects of monetary policy.** Journal of Development Economics, v. 126, p. 167-189, 2017. [[article](https://www.sciencedirect.com/science/article/pii/S0304387816301195)]
+
+* GOTTSCHALK, Peter. **Inequality, income growth, and mobility: The basic facts**. Journal of Economic Perspectives, v. 11, n. 2, p. 21-40, 1997. [[article]()] [[my notes](https://pubs.aeaweb.org/doi/pdfplus/10.1257/jep.11.2.21)]
+
+* LUCAS, Robert E. **Some macroeconomics for the 21st century**. Journal of Economic Perspectives, v. 14, n. 1, p. 159-168, 2000. [[article](https://pubs.aeaweb.org/doi/pdfplus/10.1257/jep.14.1.159)] [[my notes]()]
 
 * MISHKIN, Frederic S. **The transmission mechanism and the role of asset prices in monetary policy.** National bureau of economic research, 2001. [[working paper](http://www.nber.org/papers/w8617)] [[my notes]()]
 
@@ -52,7 +59,9 @@ This folder is where I intend to save my notes on the articles and related liter
 
 * NAKAMURA, Emi; STEINSSON, Jón. **Identification in macroeconomics**. Journal of Economic Perspectives, v. 32, n. 3, p. 59-86, 2018. [[article](https://www.aeaweb.org/articles?id=10.1257/jep.32.3.59)] [[my notes]()]
 
-* PRADO, Raquel; WEST, Mike. Time series: modeling, computation, and inference. CRC Press, 2010. Chapter 10. [[book](https://www.amazon.com/Time-Modeling-Computation-Inference-Statistical-ebook/dp/B008GXJS24/)]
+* PIKETTY, Thomas. **Putting distribution back at the center of economics: Reflections on capital in the twenty-first century.** Journal of Economic Perspectives, v. 29, n. 1, p. 67-88, 2015. [[article](https://pubs.aeaweb.org/doi/pdfplus/10.1257/jep.29.1.67)] [[my notes]()]
+
+* PRADO, Raquel; WEST, Mike. **Time series: modeling, computation, and inference**. CRC Press, 2010. Chapter 10. [[book](https://www.amazon.com/Time-Modeling-Computation-Inference-Statistical-ebook/dp/B008GXJS24/)]
 
 * PRIMICERI, Giorgio E. **Time varying structural vector autoregressions and monetary policy.** The Review of Economic Studies, v. 72, n. 3, p. 821-852, 2005. [[article](https://academic.oup.com/restud/article-abstract/72/3/821/1556589)] [[corrigendum](https://academic.oup.com/restud/article-abstract/82/4/1342/2607353)] [[code](https://drive.google.com/file/d/13_wyg4Jpvjn6kQ5-NI-KTCgPsieZi_L0/view)] [[bvarv R package](https://github.com/FK83/bvarsv)] [[my notes]()]
 
