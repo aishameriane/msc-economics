@@ -1280,7 +1280,7 @@ MarginalWish_n <- function(ut, T., M., cSig0_n, n., k.) {
     lambda = n./(n.+1)
     
   # Evaluate constants outside the loop
-    n. <- matrix(rep(n.,3), nrow = M., byrow = T)
+    n. <- matrix(rep(n., M.), nrow = M., byrow = T)
     nu <- n.+k.
     dimgrid <- (1:M.) %*% matrix(1, ncol = grid.)
     
@@ -1336,12 +1336,12 @@ pos_ipca   <- grep("ipca", names(var))
 #saveRDS(var, "D:\\Onedrive - Aisha\\OneDrive\\Documentos\\Mestrado Economia\\Dissertação\\Estudo\\TVP-VAR\\var.rds") 
 #var <- readRDS("D:\\Onedrive - Aisha\\OneDrive\\Documentos\\Mestrado Economia\\Dissertação\\Estudo\\TVP-VAR\\var.rds")
 
-#Y <- var
+Y <- var
 ```
 
 This block uses the data from Guiilherme just to test the routines
 
-```{r}  
+```{r, eval = FALSE}  
 # Readind  data
 Y <- data.frame(read.table("D:\\Onedrive - Aisha\\OneDrive\\Documentos\\Mestrado Economia\\Dissertação\\Estudo\\TVP-VAR\\ToreKleppe\\ydata.dat"))
 ```
@@ -1503,7 +1503,7 @@ for (irep in 1:(nrep+nburn)){
   #Wdraw_CK <- read.table("D:\\Onedrive - Aisha\\OneDrive\\Documentos\\Mestrado Economia\\Dissertação\\Estudo\\TVP-VAR\\ToreKleppe\\Wdraw_CK2.txt", sep=',')
   
   #iWdraw   <- solve(matrix(Wdraw_CK, ncol = 21, nrow =21), Is)
-  iWdraw   <- solve(matrix(Wdraw_CK, ncol = 21, nrow =21), Is)
+  iWdraw   <- solve(matrix(Wdraw_CK, ncol = ncol(Wdraw_CK), nrow =nrow(Wdraw_CK)), Is)
 
   ## Sample n_H and J jointly from a colapsed Gibbs
 
