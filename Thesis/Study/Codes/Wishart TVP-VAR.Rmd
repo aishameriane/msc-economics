@@ -1538,8 +1538,9 @@ for (irep in 1:(nrep+nburn)){
   ciS_bar <- chol(first_am_Hdraw * Hdraw[, ,1]+invS0)
   cinvS   <- solve(ciS_bar, Im)
   S_bar   <- cinvS %*% t(cinvS)
-  cSig0_draw <- chol(matrix(rWishart(1, nu_Hdraw+nu_H0, S_bar), ncol =M., nrow = M.))
-
+  #cSig0_draw <- chol(matrix(rWishart(1, nu_Hdraw+nu_H0, S_bar), ncol =M., nrow = M.))
+  cSig0_draw <- chol(matrix(wishrnd(df = nu_Hdraw+nu_H0, sigma. = S_bar), ncol =M., nrow = M.))
+ 
   #Compute moments after burn in
   if (irep > nburn){
     nuH_save[irep-nburn] <- nu_Hdraw
