@@ -10,44 +10,45 @@ This folder is where I intend to save my notes on the articles and related liter
 * Write the articles I'll study next;
 * Get my notes from other stuff (Uhlig?) in here;
 * ~~Organize better, maybe including the link to the original work and then a link to my notes (and code, if any)~~.
+* Review if I'm not missing something from [this list](https://sites.google.com/site/baohoai/var-dsge/tvp-var).
 
 # To read (or type my notes)
 
-* Alvaredo, Chancel, Piketty, Saez, Zucman. **World Inequality Report**. [[executive summary](http://wir2018.wid.world/files/download/wir2018-summary-english.pdf)] [[full report](http://wir2018.wid.world/files/download/wir2018-full-report-english.pdf)]
+* ALVAREDO, Facundo et al. **Global inequality dynamics: New findings from WID. world.** American Economic Review, v. 107, n. 5, p. 404-09, 2017. [[article](https://www.aeaweb.org/articles?id=10.1257/aer.p20171095)] [[my notes]()]
 
-* ANAND, Sudhir; SEGAL, Paul. **What do we know about global income inequality?**. Journal of Economic Literature, v. 46, n. 1, p. 57-94, 2008. [[article](https://www.aeaweb.org/articles?id=10.1257/jel.46.1.57)] [[my notes]()]
+* Alvaredo, Chancel, Piketty, Saez, Zucman. **World Inequality Report**. [[executive summary](http://wir2018.wid.world/files/download/wir2018-summary-english.pdf)] [[full report](http://wir2018.wid.world/files/download/wir2018-full-report-english.pdf)] [[my notes]()]
 
-* ARBACHE, Jorge Saba. Pobreza e mercados no Brasil. En: Pobreza e mercados no Brasil: uma análise de iniciativas de políticas públicas-Brasília: CEPAL/DFID, 2003-p. 9-115, 2003. [[book](https://repositorio.cepal.org/handle/11362/28351)]
+* ARBACHE, Jorge Saba. Pobreza e mercados no Brasil. En: Pobreza e mercados no Brasil: uma análise de iniciativas de políticas públicas-Brasília: CEPAL/DFID, 2003-p. 9-115, 2003. [[book](https://repositorio.cepal.org/handle/11362/28351)] [[my notes]()]
 
-* AREOSA, Waldyr Dutra; AREOSA, Marta BM. **The inequality channel of monetary transmission**. Journal of Macroeconomics, v. 48, p. 214-230, 2016. [[article](https://www.sciencedirect.com/science/article/pii/S0164070416300076)] [[working paper - BACEN](https://www.bcb.gov.br/pec/wps/ingl/wps114.pdf)]
+* AREOSA, Waldyr Dutra; AREOSA, Marta BM. **The inequality channel of monetary transmission**. Journal of Macroeconomics, v. 48, p. 214-230, 2016. [[article](https://www.sciencedirect.com/science/article/pii/S0164070416300076)] [[working paper - BACEN](https://www.bcb.gov.br/pec/wps/ingl/wps114.pdf)] [[my notes]()]
 
-* ARKELOF, G; STIGLITZ, J; ROMER, D; BLANCHARD, O. **O Que Nós Aprendemos? - A Política Macroeconômica No Pós-Crise**. Editora Alta Books. 2016. [[book](https://www.saraiva.com.br/o-que-nos-aprendemos-a-politica-macroeconomica-no-pos-crise-9338951.html)]
+* ARKELOF, G; STIGLITZ, J; ROMER, D; BLANCHARD, O. **O Que Nós Aprendemos? - A Política Macroeconômica No Pós-Crise**. Editora Alta Books. 2016. [[book](https://www.saraiva.com.br/o-que-nos-aprendemos-a-politica-macroeconomica-no-pos-crise-9338951.html)] [[my notes]()]
 
-* BACH, George Leland; STEPHENSON, James B. **Inflation and the Redistribution of Wealth**. The Review of Economics and Statistics, p. 1-13, 1974 (important to understand one of the redistribution channels) [[article](http://www.jstor.org/stable/1927521?seq=1#page_scan_tab_contents)].
+* BACH, George Leland; STEPHENSON, James B. **Inflation and the Redistribution of Wealth**. The Review of Economics and Statistics, p. 1-13, 1974 (important to understand one of the redistribution channels) [[article](http://www.jstor.org/stable/1927521?seq=1#page_scan_tab_contents)] [[my notes]()].
 
-* BITTO, Angela; FRÜHWIRTH-SCHNATTER, Sylvia. **Achieving shrinkage in a time-varying parameter model framework.** arXiv preprint arXiv:1611.01310, 2016. [[article - arxive](https://arxiv.org/abs/1611.01310)] [[my notes]()]
+* BITTO, Angela; FRÜHWIRTH-SCHNATTER, Sylvia. **Achieving shrinkage in a time-varying parameter model framework.** arXiv preprint arXiv:1611.01310, 2016. [[article - arxive](https://arxiv.org/abs/1611.01310)] [[my notes]()] [[my notes]()]
 
-* CASIRAGHI, Marco et al. **A “reverse Robin Hood”? The distributional implications of non-standard monetary policy for Italian households**. Journal of International Money and Finance, 2017 [[article](https://www.sciencedirect.com/science/article/pii/S0261560617302292)]
+* CASIRAGHI, Marco et al. **A “reverse Robin Hood”? The distributional implications of non-standard monetary policy for Italian households**. Journal of International Money and Finance, 2017 [[article](https://www.sciencedirect.com/science/article/pii/S0261560617302292)] [[my notes]()]
 
-* CHAN, Joshua CC; JELIAZKOV, Ivan. **Efficient simulation and integrated likelihood estimation in state space models.** International Journal of Mathematical Modelling and Numerical Optimisation, v. 1, n. 1-2, p. 101-120, 2009. [[article](http://www.inderscience.com/offer.php?id=30090)] [[working paper](http://joshuachan.org/papers/statespace1.pdf)] [[code](http://joshuachan.org/code/sp_code.zip)]
+* CHAN, Joshua CC; JELIAZKOV, Ivan. **Efficient simulation and integrated likelihood estimation in state space models.** International Journal of Mathematical Modelling and Numerical Optimisation, v. 1, n. 1-2, p. 101-120, 2009. [[article](http://www.inderscience.com/offer.php?id=30090)] [[working paper](http://joshuachan.org/papers/statespace1.pdf)] [[code](http://joshuachan.org/code/sp_code.zip)] [[my notes]()]
 
 * CLARK, Todd E.; RAVAZZOLO, Francesco. **Macroeconomic forecasting performance under alternative specifications of time‐varying volatility**. Journal of Applied Econometrics, v. 30, n. 4, p. 551-575, 2015. [[article](https://onlinelibrary.wiley.com/doi/abs/10.1002/jae.2379)] [[online appendix](https://onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fjae.2379&file=jae2379-sup-0001-supinfo.pdf)] [[my notes]()]
 
-* COGLEY, Timothy; SARGENT, Thomas J. **Evolving post-world war II US inflation dynamics**. NBER macroeconomics annual, v. 16, p. 331-373, 2001. [[article](https://www.journals.uchicago.edu/doi/pdfplus/10.1086/654451)] [[my notes]()] [[Code for a homoskedastic TVP-VAR using the Durbin and Koopman (2002)](https://drive.google.com/file/d/0BzOpR8T359fhLUZ4NWRrLXB2ZDQ/view)]
+* COGLEY, Timothy; SARGENT, Thomas J. **Evolving post-world war II US inflation dynamics**. NBER macroeconomics annual, v. 16, p. 331-373, 2001. [[article](https://www.journals.uchicago.edu/doi/pdfplus/10.1086/654451)] [[my notes]()] [[Code for a homoskedastic TVP-VAR using the Durbin and Koopman (2002)](https://drive.google.com/file/d/0BzOpR8T359fhLUZ4NWRrLXB2ZDQ/view)] [[my notes]()]
 
-* COGLEY, Timothy; SARGENT, Thomas J. **Drifts and volatilities: monetary policies and outcomes in the post WWII US**. Review of Economic dynamics, v. 8, n. 2, p. 262-302, 2005. [[article](https://www.sciencedirect.com/science/article/pii/S1094202505000049)] [[my notes]()] [[Matlab Code]()] 
+* COGLEY, Timothy; SARGENT, Thomas J. **Drifts and volatilities: monetary policies and outcomes in the post WWII US**. Review of Economic dynamics, v. 8, n. 2, p. 262-302, 2005. [[article](https://www.sciencedirect.com/science/article/pii/S1094202505000049)] [[my notes]()] [[Python Code](https://github.com/szokeb87/cs2005_pymc)] [[my notes]()]
 
-* COIBION, Olivier et al. **Innocent Bystanders? Monetary policy and inequality**. Journal of Monetary Economics, v. 88, p. 70-89, 2017. [[article](https://www.sciencedirect.com/science/article/pii/S0304393217300466)] [[working paper](http://www.nber.org/papers/w18170)]
+* COIBION, Olivier et al. **Innocent Bystanders? Monetary policy and inequality**. Journal of Monetary Economics, v. 88, p. 70-89, 2017. [[article](https://www.sciencedirect.com/science/article/pii/S0304393217300466)] [[working paper](http://www.nber.org/papers/w18170)] [[my notes]()]
 
-* DEATON, Angus. *A grande saída.* Editora Intrinseca, 2017. [[book](https://www.saraiva.com.br/a-grande-saida-9732076.html)] 
+* DEATON, Angus. *A grande saída.* Editora Intrinseca, 2017. [[book](https://www.saraiva.com.br/a-grande-saida-9732076.html)] [[my notes]()]
 
-* EISENSTAT, Eric; CHAN, Joshua CC; STRACHAN, Rodney W. **Stochastic model specification search for time-varying parameter VARs.** Econometric Reviews, v. 35, n. 8-10, p. 1638-1665, 2016. [[article](https://www.tandfonline.com/doi/abs/10.1080/07474938.2015.1092808?journalCode=lecr20)] [[working paper](http://joshuachan.org/papers/Eisenstat-Chan-Strachan-2014.pdf)] [[code](http://joshuachan.org/code/ECS2014-replication.zip)]
+* EISENSTAT, Eric; CHAN, Joshua CC; STRACHAN, Rodney W. **Stochastic model specification search for time-varying parameter VARs.** Econometric Reviews, v. 35, n. 8-10, p. 1638-1665, 2016. [[article](https://www.tandfonline.com/doi/abs/10.1080/07474938.2015.1092808?journalCode=lecr20)] [[working paper](http://joshuachan.org/papers/Eisenstat-Chan-Strachan-2014.pdf)] [[code](http://joshuachan.org/code/ECS2014-replication.zip)] [[my notes]()]
 
-* FRÜHWIRTH-SCHNATTER, Sylvia. **Finite mixture and Markov switching models**. Springer Science & Business Media, 2006. [[book](https://www.amazon.com/Finite-Mixture-Switching-Springer-Statistics-ebook/dp/B00DZ0NSK6/)]
+* FRÜHWIRTH-SCHNATTER, Sylvia. **Finite mixture and Markov switching models**. Springer Science & Business Media, 2006. [[book](https://www.amazon.com/Finite-Mixture-Switching-Springer-Statistics-ebook/dp/B00DZ0NSK6/)] [[my notes]()]
 
-* GHOSSOUB, Edgar A.; REED, Robert R. **Financial development, income inequality, and the redistributive effects of monetary policy.** Journal of Development Economics, v. 126, p. 167-189, 2017. [[article](https://www.sciencedirect.com/science/article/pii/S0304387816301195)]
+* GHOSSOUB, Edgar A.; REED, Robert R. **Financial development, income inequality, and the redistributive effects of monetary policy.** Journal of Development Economics, v. 126, p. 167-189, 2017. [[article](https://www.sciencedirect.com/science/article/pii/S0304387816301195)] [[my notes]()]
 
-* GOTTSCHALK, Peter. **Inequality, income growth, and mobility: The basic facts**. Journal of Economic Perspectives, v. 11, n. 2, p. 21-40, 1997. [[article]()] [[my notes](https://pubs.aeaweb.org/doi/pdfplus/10.1257/jep.11.2.21)]
+* GOTTSCHALK, Peter. **Inequality, income growth, and mobility: The basic facts**. Journal of Economic Perspectives, v. 11, n. 2, p. 21-40, 1997. [[article]()] [[my notes](https://pubs.aeaweb.org/doi/pdfplus/10.1257/jep.11.2.21)] [[my notes]()]
 
 * LUCAS, Robert E. **Some macroeconomics for the 21st century**. Journal of Economic Perspectives, v. 14, n. 1, p. 159-168, 2000. [[article](https://pubs.aeaweb.org/doi/pdfplus/10.1257/jep.14.1.159)] [[my notes]()]
 
@@ -61,25 +62,25 @@ This folder is where I intend to save my notes on the articles and related liter
 
 * PIKETTY, Thomas. **Putting distribution back at the center of economics: Reflections on capital in the twenty-first century.** Journal of Economic Perspectives, v. 29, n. 1, p. 67-88, 2015. [[article](https://pubs.aeaweb.org/doi/pdfplus/10.1257/jep.29.1.67)] [[my notes]()]
 
-* PRADO, Raquel; WEST, Mike. **Time series: modeling, computation, and inference**. CRC Press, 2010. Chapter 10. [[book](https://www.amazon.com/Time-Modeling-Computation-Inference-Statistical-ebook/dp/B008GXJS24/)]
+* PRADO, Raquel; WEST, Mike. **Time series: modeling, computation, and inference**. CRC Press, 2010. Chapter 10. [[book](https://www.amazon.com/Time-Modeling-Computation-Inference-Statistical-ebook/dp/B008GXJS24/)] [[my notes]()]
 
 * PRIMICERI, Giorgio E. **Time varying structural vector autoregressions and monetary policy.** The Review of Economic Studies, v. 72, n. 3, p. 821-852, 2005. [[article](https://academic.oup.com/restud/article-abstract/72/3/821/1556589)] [[corrigendum](https://academic.oup.com/restud/article-abstract/82/4/1342/2607353)] [[code](https://drive.google.com/file/d/13_wyg4Jpvjn6kQ5-NI-KTCgPsieZi_L0/view)] [[bvarv R package](https://github.com/FK83/bvarsv)] [[my notes]()]
 
-* DE SOUZA, Pedro HG. **Poverty, inequality and social policies in Brazil, 1995-2009**. Working Paper, International Policy Centre for Inclusive Growth, 2012. [[working paper, 2012](https://www.econstor.eu/handle/10419/71804)]
+* DE SOUZA, Pedro HG. **Poverty, inequality and social policies in Brazil, 1995-2009**. Working Paper, International Policy Centre for Inclusive Growth, 2012. [[working paper, 2012](https://www.econstor.eu/handle/10419/71804)] [[my notes]()]
 
-* STIEGLITZ, Joseph. *The price of inequality. How Today’s Divided Society Endangers Our Future.* New York City, 2012. [[book](https://www.amazon.com/Price-Inequality-Divided-Society-Endangers/dp/0393345068/)]
+* STIEGLITZ, Joseph. *The price of inequality. How Today’s Divided Society Endangers Our Future.* New York City, 2012. [[book](https://www.amazon.com/Price-Inequality-Divided-Society-Endangers/dp/0393345068/)] [[my notes]()]
 
-* STIGLITZ, Joseph E. *O Grande Abismo-Sociedades desiguais e o que podemos fazer sobre isso*. Alta Books Editora, 2016. [[book](https://www.saraiva.com.br/o-grande-abismo-sociedades-desiguais-e-o-que-podemos-fazer-sobre-isso-9341269.html)]
+* STIGLITZ, Joseph E. *O Grande Abismo-Sociedades desiguais e o que podemos fazer sobre isso*. Alta Books Editora, 2016. [[book](https://www.saraiva.com.br/o-grande-abismo-sociedades-desiguais-e-o-que-podemos-fazer-sobre-isso-9341269.html)] [[my notes]()]
 
-* Triantafyllopoulos, K. (2012) **Multivariate stochastic volatility modelling using Wishart autoregressive processes.** Journal of Time Series Analysis, 33, 48-60. [[article](https://onlinelibrary.wiley.com/doi/full/10.1111/j.1467-9892.2011.00738.x)]
+* Triantafyllopoulos, K. (2012) **Multivariate stochastic volatility modelling using Wishart autoregressive processes.** Journal of Time Series Analysis, 33, 48-60. [[article](https://onlinelibrary.wiley.com/doi/full/10.1111/j.1467-9892.2011.00738.x)] [[my notes]()]
 
-* Triantafyllopoulos, K. (2011) **Time-varying vector autoregressive models with stochastic volatility.** Journal of Applied Statistics, 38, 369-382.  [[article](https://www.tandfonline.com/doi/abs/10.1080/02664760903406512)]
+* Triantafyllopoulos, K. (2011) **Time-varying vector autoregressive models with stochastic volatility.** Journal of Applied Statistics, 38, 369-382.  [[article](https://www.tandfonline.com/doi/abs/10.1080/02664760903406512)] [[my notes]()]
 
-* Triantafyllopoulos, K. (2008) **Multivariate stochastic volatility with Bayesian dynamic linear models.** Journal of Statistical Planning and Inference, 138, 1021-1037. [[article](https://www.sciencedirect.com/science/article/pii/S0378375807002236)]
+* Triantafyllopoulos, K. (2008) **Multivariate stochastic volatility with Bayesian dynamic linear models.** Journal of Statistical Planning and Inference, 138, 1021-1037. [[article](https://www.sciencedirect.com/science/article/pii/S0378375807002236)] [[my notes]()]
 
-* Triantafyllopoulos, K. (2007) **Covariance estimation for multivariate conditionally Gaussian dynamic linear models.** Journal of Forecasting, 26, 551-569. [[article](https://onlinelibrary.wiley.com/doi/abs/10.1002/for.1039)]
+* Triantafyllopoulos, K. (2007) **Covariance estimation for multivariate conditionally Gaussian dynamic linear models.** Journal of Forecasting, 26, 551-569. [[article](https://onlinelibrary.wiley.com/doi/abs/10.1002/for.1039)] [[my notes]()]
 
-* WILLIAMSON, Stephen D. **Monetary policy and distribution.** Journal of monetary economics, v. 55, n. 6, p. 1038-1053, 2008.[[article](https://www.sciencedirect.com/science/article/pii/S0304393208000974)]
+* WILLIAMSON, Stephen D. **Monetary policy and distribution.** Journal of monetary economics, v. 55, n. 6, p. 1038-1053, 2008.[[article](https://www.sciencedirect.com/science/article/pii/S0304393208000974)] [[my notes]()]
 
 # In progress or finished
 
@@ -87,7 +88,7 @@ This folder is where I intend to save my notes on the articles and related liter
 
 * AUCLERT, Adrien. **Monetary policy and the redistribution channel**. National Bureau of Economic Research, 2017. [[working paper (2017)](http://www.nber.org/papers/w23451)] [[slides (2014)](https://bfi.uchicago.edu/sites/default/files/file_uploads/auclert_slides.pdf)] [[slides from D'Ávila (2015)](http://edavilaresearch.weebly.com/uploads/2/9/7/9/29799977/davila_discussion_auclert.pdf)] [[slides (2015](https://www.dnb.nl/en/binaries/Session%203%20-%20Paper%202%20-%20Presentation%20Adrien%20Auclert%20WEB_tcm47-334164.pdf)] [[slides (2017)](http://web.stanford.edu/~aauclert/slides_warsaw.pdf)] [[my notes](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/monetary-policy-redistribution.pdf)] [[my slides form macro II seminar](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/Semin%C3%A1rio%20Macro%202%20-%20Aishameriane%20e%20Werley.pdf)]
 
-* ALVAREDO, Facundo et al. **Global inequality dynamics: New findings from WID. world.** American Economic Review, v. 107, n. 5, p. 404-09, 2017. [[article](https://www.aeaweb.org/articles?id=10.1257/aer.p20171095)] [[my notes]()]
+* ANAND, Sudhir; SEGAL, Paul. **What do we know about global income inequality?**. Journal of Economic Literature, v. 46, n. 1, p. 57-94, 2008. [[article](https://www.aeaweb.org/articles?id=10.1257/jel.46.1.57)] [[my notes](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/What%20do%20we%20know%20about%20global%20income%20inequality.md)]
 
 * BENGTSSON, Erik; WALDENSTRÖM, Daniel. **Capital shares and income inequality: Evidence from the long run.** Journal of Economic History. 2017. [[working paper (2015)](http://ftp.iza.org/dp9581.pdf)] [[article (2017)](http://www.uueconomics.se/danielw/Research_files/BengtssonWaldenstrom_Capitalshares_long.pdf)] [[my notes](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/Capital%20shares%20and%20income%20inequality.md)]
 
