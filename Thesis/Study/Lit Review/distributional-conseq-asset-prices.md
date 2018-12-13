@@ -1,0 +1,22 @@
+# Distributional consequences of asset price inflation in the euro area
+
+Original reference: ADAM, Klaus; TZAMOURANI, Panagiota. **Distributional consequences of asset price inflation in the euro area**. European Economic Review, v. 89, p. 172-192, 2016.
+Link to paper: [https://www.sciencedirect.com/science/article/pii/S0014292116301234](https://www.sciencedirect.com/science/article/pii/S0014292116301234)
+
+Why I think this is important: Since monetary policy can affect inflation prices, if the inflation prices play a role in inequality, it would imply a redistribution effect of monetary policy through the asset prices channel.
+
+* **What's the difference between equity and bonds?**
+
+    * See [this link](https://budgeting.thenest.com/difference-between-bonds-equity-stock-portfolio-24441.html) and [this other link](https://www.quora.com/What-is-the-difference-between-bond-and-equity). 
+    I would translate them as "ações" e "títulos", but probably it's a good idea to check later if this is a good interpretation. Basically, equities are related to ownership and pay dividends, whilst bonds have a fixed interest rate and what you gain or loose depends on the interest rates of the market after you purchase the bond.
+
+# Abstract key points
+
+* They want to investigate redistributional effects of a rise in prices in three different asset markets: houses (H), bonds (B) and equity (E) 
+* Data come from the Household Finance and Consumption Survey (HFSC) - Euro area households
+* Main findings:
+    * When B prices rise (in comparison to H and E), the capital gains from this are not correlated with the household net wealth or income: no change in inequality;
+    * Rises in E prices represents gain to those in the higher percentiles of wealth and income distribution, which magnify inequality;
+    * H prices play a role in the medium income households, but this effect is heterogeneous across Europe.
+    
+# 
