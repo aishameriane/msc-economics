@@ -5,6 +5,8 @@ Link to paper: [https://www.sciencedirect.com/science/article/pii/S0014292116301
 
 Why I think this is important: Since monetary policy can affect inflation prices, if the inflation prices play a role in inequality, it would imply a redistribution effect of monetary policy through the asset prices channel.
 
+I find this somewhat curious: **"We then investigate the distributional consequences associated with a surprise drop in the monetary policy rate. We find that an unexpected loosening of monetary policy leads to disproportionately large capital gains at the top end of the net wealth distribution: the 5% richest households gain on average about 5 times as much as the remaining households. Correspondingly, of course, these households experience 5 times larger capital losses following an unexpected monetary tightening."** 
+
 * **What's the difference between equity and bonds?**
 
     * See [this link](https://budgeting.thenest.com/difference-between-bonds-equity-stock-portfolio-24441.html) and [this other link](https://www.quora.com/What-is-the-difference-between-bond-and-equity). 
@@ -15,8 +17,12 @@ Why I think this is important: Since monetary policy can affect inflation prices
 * They want to investigate redistributional effects of a rise in prices in three different asset markets: houses (H), bonds (B) and equity (E) 
 * Data come from the Household Finance and Consumption Survey (HFSC) - Euro area households
 * Main findings:
-    * When B prices rise (in comparison to H and E), the capital gains from this are not correlated with the household net wealth or income: no change in inequality;
-    * Rises in E prices represents gain to those in the higher percentiles of wealth and income distribution, which magnify inequality;
-    * H prices play a role in the medium income households, but this effect is heterogeneous across Europe.
+    * When B prices rise (in comparison to H and E), the capital gains from this are not correlated with the household net wealth or income: no change in inequality. This is explained by the fact that the bond owners are evenly scattered in the distribution of wealth;
+    * Rises in E prices represents gain to those in the higher percentiles of wealth and income distribution, which magnify inequality. This is explained by the fact that equity owners are the ones whithin the top 5% of the net wealth distribution;
+    * H prices play a role in the medium income households, but this effect is heterogeneous across Europe. This result is explained by the distribution of houses between families: 1) the poorest families do not own houses, therefore they cannot benefit from rises in prices; 2) richer families have other assets, so the houses do not represent a large proportion of their wealth; 3) this leaves us with middle (median) income families, whose primary (or most valuable) asset is a house. However, this result changes depending of the country (there are countries where it is easier to buy a house).
     
-# 
+# Introduction
+
+Financial markets were subjected by the unconventional monetary policies in the aftermath of the 2008 economic crisis. Asset prices increased in response to the economic incentives by the European Central Bank. 
+
+
