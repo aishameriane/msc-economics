@@ -40,4 +40,4 @@ They just talk about the survey but it is not clear for me if they used more tha
 
 _"We use the portfolio information available from the HFCS to compute household net wealth, which is defined as *the difference between all houshold assets minus all liabilities*. We then scale the household's bond, housing and equity holdings by its net wealth position. Multiplying the resulting ratios with the considered 10% price increase delivers the household's capital gain of the considered asset class in relation to its net wealth position"_
 
-      * is it ok to consider that only ONE type of asset will increase at a given time?
+      * How realistic is to expect that only one asset will change price each time and the overall effect will not cancel/add?
