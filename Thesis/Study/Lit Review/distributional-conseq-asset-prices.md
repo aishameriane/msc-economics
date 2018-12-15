@@ -21,8 +21,16 @@ I find this somewhat curious: **"We then investigate the distributional conseque
     * Rises in E prices represents gain to those in the higher percentiles of wealth and income distribution, which magnify inequality. This is explained by the fact that equity owners are the ones whithin the top 5% of the net wealth distribution;
     * H prices play a role in the medium income households, but this effect is heterogeneous across Europe. This result is explained by the distribution of houses between families: 1) the poorest families do not own houses, therefore they cannot benefit from rises in prices; 2) richer families have other assets, so the houses do not represent a large proportion of their wealth; 3) this leaves us with middle (median) income families, whose primary (or most valuable) asset is a house. However, this result changes depending of the country (there are countries where it is easier to buy a house).
     
-# Introduction
+# Other remarks
 
 Financial markets were subjected by the unconventional monetary policies in the aftermath of the 2008 economic crisis. Asset prices increased in response to the economic incentives by the European Central Bank. 
 
+## Data
 
+They just talk about the survey but it is not clear for me if they used more than a year. 
+
+# My thoughts 
+
+* I have the impression that they took the survey and analized the distribution of assets. Then, they hold the prices of two assets and increased the third one, to see how the distribution would change. 
+_"We use the portfolio information available from the HFCS to compute household net wealth, which is defined as *the difference between all houshold assets minus all liabilities*. We then scale the household's bond, housing and equity holdings by its net wealth position. Multiplying the resulting ratios with the considered 10% price increase delivers the household's capital gain of the considered asset class in relation to its net wealth position"_
+      * is it ok to consider that only ONE type of asset will increase at a given time?
