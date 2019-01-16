@@ -4,7 +4,7 @@
 
 In this repository are the folders related to my research, including the thesis' proposal.
 
-Comics from [PhD Comics](http://phdcomics.com/comics/archive.php?comicid=149)_.
+_Comic from [PhD Comics](http://phdcomics.com/comics/archive.php?comicid=149)_.
 
 
 
