@@ -134,6 +134,6 @@ This folder is where I intend to save my notes on the articles and related liter
 
 * MISHKIN, Frederic S. **Symposium on the monetary transmission mechanism**. Journal of Economic perspectives, v. 9, n. 4, p. 3-10, 1995. [[article](https://www.aeaweb.org/articles?id=10.1257/jep.9.4.3)] [[my notes]()]
 
-* TAYLOR, John B. **Discretion versus policy rules in practice.** In: Carnegie-Rochester conference series on public policy. North-Holland, 1993. p. 195-214. [[article](https://www.sciencedirect.com/science/article/pii/016722319390009L)] [[my notes]()]
+* TAYLOR, John B. **Discretion versus policy rules in practice.** In: Carnegie-Rochester conference series on public policy. North-Holland, 1993. p. 195-214. [[article](https://www.sciencedirect.com/science/article/pii/016722319390009L)] [[my notes](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Study/Lit%20Review/symposium_mishkin.md)]
 
 
