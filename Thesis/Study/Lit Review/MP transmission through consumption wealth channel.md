@@ -42,3 +42,15 @@ Response to a monetary shock:
 Wealth shock:
 * Interest rates rise after a positive shock in wealth. A possible explanation would be that the wealth shock can have impacts in real variables, which would require a response from FED whenever the differente in wealth was hihg enough.
 
+Inflation shock:
+* Lowers labor income, consumption and wealth.
+
+Other:
+* Shocks in consumption, wealth and labor income raise both inflation and fed rate
+* **A shock in labor income diminishes wealth and vice-versa**
+
+# Shutting off the Consumption-wealth channel
+
+What they do here is to insert zeros in the identification matrix of the structural VAR in order to cancel out any spillover that wealth could have on consumption. They found out that the effect of the interest rate on the consumption of nondurable goods and services through the wealth channel is small. When considering the personal consumption expenditure, there is a little more difference between the baseline and the counterfactual case, but it is not so different when we consider the error bands.
+
+
