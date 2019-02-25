@@ -7,6 +7,22 @@ Neste diretório serão disponibilizados os slides, as notas de aula e eventuais
 
 - 24/02: Criação do diretório.
 
+## Arquivos
+
+### Revisão de Probabilidade e Estatística
+
+* [Notas de aula]() (atualizadas conforme avançamos nas aulas)
+      * [Notas de aula com as soluções dos exercícios]() (talvez eu poste, mas não conte com isso)
+* [Slides Aula 1]()
+* [Slides Aula 2]()
+* [Slides Aula 3]()
+* [Slides Aula 4]()
+* [Slides Aula 5]()
+
+### Aulas de R
+
+* [Slides Aula 1]()
+* [Slides Aula 2]()
 
 ## Conteúdo a ser (re)visto
 
