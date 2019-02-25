@@ -8,7 +8,7 @@ Neste diretório serão disponibilizados os slides, as notas de aula e eventuais
 
 ## Últimas alterações (em ordem cronológica inversa)
 
-- 24/02: Criação do diretório.
+- 24/02: Criação do diretório e arquivos da aula 1 adicionados.
 
 ## Arquivos
 
