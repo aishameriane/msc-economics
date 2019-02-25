@@ -12,7 +12,7 @@ Neste diretório serão disponibilizados os slides, as notas de aula e eventuais
 ### Revisão de Probabilidade e Estatística
 
 * [Notas de aula]() (atualizadas conforme avançamos nas aulas)
-      * [Notas de aula com as soluções dos exercícios]() (talvez eu poste, mas não conte com isso)
+     * [Notas de aula com as soluções dos exercícios]() (talvez eu poste, mas não conte com isso)
 * [Slides Aula 1]()
 * [Slides Aula 2]()
 * [Slides Aula 3]()
