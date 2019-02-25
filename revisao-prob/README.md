@@ -14,9 +14,9 @@ Neste diretório serão disponibilizados os slides, as notas de aula e eventuais
 
 ### Revisão de Probabilidade e Estatística
 
-* [Notas de aula]() (atualizadas conforme avançamos nas aulas)
+* [Notas de aula](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Notas%20de%20aula%201.pdf) (atualizadas conforme avançamos nas aulas)
      * [Notas de aula com as soluções dos exercícios]() (talvez eu poste, mas não conte com isso)
-* [Slides Aula 1]()
+* Slides Aula 1 - [Parte 1](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%201%20parte%201.pdf) e [Parte 2](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%201%20parte%202.pdf)
 * [Slides Aula 2]()
 * [Slides Aula 3]()
 * [Slides Aula 4]()
