@@ -1,5 +1,8 @@
-# Boothcamp de Probabilidade, Estatística e Programação em R - 2019
+# Boothcamp de Probabilidade, Estatística e R - 2019
 PPGEco/UFSC
+
+<p align = "right">
+    <img src="https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/war.png" alt="Choose your destiny" width="200" align = "right">
 
 Neste diretório serão disponibilizados os slides, as notas de aula e eventuais materiais extras.
 
@@ -54,3 +57,6 @@ Neste diretório serão disponibilizados os slides, as notas de aula e eventuais
 * Manipulação de dados: estruturas, concatenação, manipulação de subconjuntos, leitura e escrita de dados externos, tabelas de contingência, data frames.
 * Introdução à análise de dados usando funções de estatística: medidas descritivas, gráficos (histograma, boxplot, diagrama de dispersão), testes de hipóteses, regressão linear simples.
 * Alguns tópicos de estatística (se sobrar tempo)
+
+------
+_Figurinha do PhD Comics: http://phdcomics.com/comics/archive.php?comicid=898_
