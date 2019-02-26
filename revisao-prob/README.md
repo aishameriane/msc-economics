@@ -17,7 +17,7 @@ Neste diretório serão disponibilizados os slides, as notas de aula e eventuais
 * [Notas de aula](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Notas%20de%20aula%201.pdf) (atualizadas conforme avançamos nas aulas)
      * [Notas de aula com as soluções dos exercícios]() (talvez eu poste, mas não conte com isso)
 * Slides Aula 1 - [Parte 1](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%201%20parte%201.pdf) e [Parte 2](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%201%20parte%202.pdf)
-* [Slides Aula 2 - versão do ano passado](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%202%20-%20Parte%201%20-%20v1.pdf)
+* [Slides Aula 2](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%202.pdf)
 * [Slides Aula 3 - versão do ano passado](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%203%20-%20Parte%201%20-%20v2.pdf)
 * [Slides Aula 4 - versão do ano passado](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%204%20-%20Parte%201%20-%20v1.pdf)
 * [Slides Aula 5]()
