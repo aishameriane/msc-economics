@@ -20,13 +20,18 @@ Neste diretório serão disponibilizados os slides, as notas de aula e eventuais
 * Slides Aula 1 - [Parte 1](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%201%20parte%201.pdf) e [Parte 2](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%201%20parte%202.pdf)
 * [Slides Aula 2](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%202.pdf)
 * [Slides Aula 3](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%203.pdf)
-* [Slides Aula 4 - versão do ano passado](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%204%20-%20Parte%201%20-%20v1.pdf)
+* [Slides Aula 4](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%204.pdf)
 * [Slides Aula 5]()
 
 ### Aulas de R
 
-* [Slides Aula 1]()
-* [Slides Aula 2]()
+* [Slides 1](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%201%20-%20Parte%201.pdf)
+* [Slides 2](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%201%20-%20Parte%202.pdf)
+* [Slides 3](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%201%20-%20Parte%203.pdf)
+* [Exemplo agregados monetários](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Agregados%20monet%C3%A1rios%20-%20html.html)
+* [Exemplo análise de dados da Rais](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Exemplo%20de%20an%C3%A1lise%20descritiva%20com%20dados%20da%20RAIS.pdf)
+* [Exemplo Markdown html](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Exemplo%20RMarkdown.html)
+* [Exemplo Markdown Rmd](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Exemplo%20RMarkdown.Rmd)
 
 ## Conteúdo a ser (re)visto
 
