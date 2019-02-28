@@ -1,0 +1,147 @@
+---
+title: "Exemplo curso de R"
+author: "A. Schmidt"
+date: "23 de maio de 2018"
+output: html_document
+---
+
+# Introdução
+
+Este é um relatório de exemplo de uso do R Markdown. Nosso objetivo será analisar alguns dados da [RAIS](http://www.rais.gov.br/sitio/index.jsf) (Fonte: Ministério do Trabalho). Estes dados podem ser utilizados como nos trabalhos de [Bonini e Pozzobon (2016)](http://www.seer.ufrgs.br/AnaliseEconomica/article/download/52900/38611) ou [Schmidt (2017)](http://sistemabu.udesc.br/pergamumweb/vinculos/000042/000042c2.pdf), que é o trabalho no qual iremos basear nossa análise para fazer as estatísticas descritivas.
+
+## Carregamento dos dados
+
+Para carregar os dados, faremos uso do pacote `foreign`, para leitura de dados em formato dta (do Stata). A função `glimpse` do pacote `dplyr` auxilia para verificar como estão os dados.
+
+```{r}
+library(foreign)
+library(dplyr)
+
+dadosraistisc <- read.dta("C:\\Users\\Aishameriane\\Dropbox\\Mini Curso de R - Congresso de Economia da UFSC 2018\\Dados\\dadosraistisc.dta")
+head(dadosraistisc)
+glimpse(dadosraistisc)
+tail(dadosraistisc)
+summary(dadosraistisc)
+```
+
+E se quisermos salvar em csv?
+
+```{r}
+write.csv(dadosraistisc, "C:\\Users\\Aishameriane\\Dropbox\\Mini Curso de R - Congresso de Economia da UFSC 2018\\Dados\\dadosraistisc.csv")
+```
+
+## Tratamento dos dados
+
+Existem 24 observações faltantes na coluna do logaritmo do salário hora. Iremos usar a função `complete.cases` para removê-las, mas primeiro vamos criar uma variável que tenha os dados para evitar ter que carregá-los novamente caso algo dê errado. Além disso, vamos ficar apenas com algumas colunas selecionadas:
+* ln do salário hora;
+* se a pessoa tem ensino superior incompleto;
+* se a pessoa tem ensino superior completo;
+* se a pessoa tem pós graduação;
+* idade, em anos;
+* idade ao quadrado;
+* tempo de emprego, em meses;
+* gênero (masc/feminino).
+
+```{r}
+dados <- cbind(dadosraistisc$lnsalh, dadosraistisc[,c(17,18,21,6,14,11,10)])
+dados <- data.frame(dados)
+dados <- dados[complete.cases(dados),]
+colnames(dados) <- c("lnsalh", "supinc", "sup", "pos", "idade", "idade2", "tempemp", "genero")
+summary(dados)
+sd(dados[,1])
+```
+
+Nós vamos querer que a variável de gênero assuma valor 1 para mulheres e 0 para homens (atualmente está 1 para homem e 2 para mulher). A mesma coisa para a dummy (variável binária) que indica se a pessoa tem pós graduação.
+
+```{r}
+dados$genero[dados$genero == 1] <- 0
+dados$genero[dados$genero == 2] <- 1
+
+dados$pos[dados$pos == 2] <- 1
+```
+
+## Estatísticas descritivas
+
+Iremos fazer algumas tabelas simples de frequências para as variáveis qualitativas e calcular as estatísticas descritivas para as variáveis quantitativas.
+
+```{r}
+summary(dados[,"idade"])
+sd(dados[,"idade"])
+nrow(dados)
+
+summary(dados[,"idade2"])
+sd(dados[,"idade2"])
+
+summary(dados[,"tempemp"])
+sd(dados[,"tempemp"])
+
+summary(dados[,"lnsalh"])
+sd(dados[,"lnsalh"])
+
+table(dados[,"genero"])
+round(table(dados[,"genero"])/nrow(dados), 4)
+
+table(dados[,"supinc"])
+round(table(dados[,"supinc"])/nrow(dados), 4)
+
+table(dados[,"sup"])
+round(table(dados[,"sup"])/nrow(dados), 4)
+
+table(dados[,"pos"])
+round(table(dados[,"pos"])/nrow(dados), 4)
+```
+
+O pacote [`stargazer`](https://cran.r-project.org/web/packages/stargazer/vignettes/stargazer.pdf) pode tanto criar tabelas em latex ou html.
+
+```{r, results = 'asis'}
+library(stargazer)
+
+quantitativas <- data.frame(dados[,"idade"], dados[, "lnsalh"])
+stargazer(quantitativas, type = "html")
+```
+
+## Gráficos
+
+* Para duas variáveis **quantitativas**, podemos usar um gráfico de *dispersão*;
+* Para uma variável **quantitativa** e uma _qualitativa_, podemos usar box plots.
+
+Iremos usar os recursos básicos de plotagem do R, através da função `plot()`.
+
+```{r}
+plot(dados[, "lnsalh"], dados[, "idade"])
+
+plot(dados[, "idade"], dados[, "lnsalh"], xlab = "Idade", ylab = "ln(salário hora)", main = "Gráfico de dispersão do salário versus idade")
+```
+
+Podemos ainda usar recursos gráficos mais modernos para fazer o mesmo gráfico.
+
+```{r}
+library(ggplot2)
+
+p <- ggplot(as.data.frame(dados), aes(idade, lnsalh)) +
+  geom_point(color = "#65b39d") +
+  geom_smooth(method=lm, se=FALSE, linetype="dashed", color="black") +
+  labs(title="", x = "Idade (anos)", y= "Logaritmo do Salário Hora") +
+  theme_bw()
+p
+```
+
+E agora vamos fazer dois boxplots, comparando o salário de homens e mulheres.
+
+```{r}
+boxplot(dados$lnsalh ~ dados$genero, names = c("Homem", "Mulher"), main = "Salário hora por gênero")
+```
+
+Podemos usar o `ggplot2` novamente.
+
+```{r}
+p <- ggplot(dados, aes(factor(genero),lnsalh, fill=factor(genero))) + 
+  geom_boxplot(alpha = 0.5) +
+  ggtitle("Salário hora por gênero") +
+  scale_fill_manual(values = c("#3146bc", "#d14f5a"), name = "", labels = c("Homem", "Mulher")) +
+  scale_x_discrete(breaks=c(0,1), labels = c("Homem", "Mulher")) +
+  labs(y = "Logaritmo do Salário Hora", x= "Gênero") +
+  theme_bw()
+p <-p + theme(legend.position="none")
+p
+```
