@@ -9,7 +9,7 @@ Neste diretório serão disponibilizados os slides, as notas de aula e eventuais
 ## Últimas alterações (em ordem cronológica inversa)
 _Esqueci de atualizar essa parte nos outros dias D:_
 
-- 01/03: Adicionei a lista 0 de Econometria I, adicionei uns arquivos na seção de R (mas não mexi nos slides)
+- 01/03: Adicionei a lista 0 de Econometria I, adicionei uns arquivos na seção de R (mas não mexi nos slides), adicionei os slides da aula 5 e as notas de aula na versão completa.
 - 24/02: Criação do diretório e arquivos da aula 1 adicionados.
 0
 
