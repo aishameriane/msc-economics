@@ -22,14 +22,13 @@ _Data da entrega_: 13/03/2019 (quarta feira) em papel (não é por e-mail nem pe
 
 ### Revisão de Probabilidade e Estatística
 
-* [Notas de aula](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Notas%20de%20aula%201.pdf) (atualizadas conforme avançamos nas aulas)
-     * [Notas de aula meio bagunçadas ainda](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Notas%20de%20aula.pdf) (para quem quiser se arriscar, aqui tem a verão correta até a aula 2 mais o rascunho do que vem pela frente, que não está organizado/revisado)
-     * [Notas de aula com as soluções dos exercícios]() (talvez eu poste, mas não conte com isso)
+* [Notas de aula - Organizadas até a aula 2](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Notas%20de%20aula%201.pdf)
+    * [Notas de aula com as soluções dos exercícios](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Notas%20de%20aula.pdf) - Até a aula 2 estão revisadas, a partir dali elas estão fora da ordem do que vimos nas aulas. Se tiverem problemas com algum link ou alguma solução que esteja faltando é só me avisar.
 * Slides Aula 1 - [Parte 1](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%201%20parte%201.pdf) e [Parte 2](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%201%20parte%202.pdf)
 * [Slides Aula 2](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%202.pdf)
 * [Slides Aula 3](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%203.pdf)
 * [Slides Aula 4](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%204.pdf)
-* [Slides Aula 5]()
+* [Slides Aula 5](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Aula%205.pdf)
 
 ### Aulas de R
 
