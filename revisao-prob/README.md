@@ -17,7 +17,7 @@ _Esqueci de atualizar essa parte nos outros dias D:_
 
 ### Lista 0 de Econometria
 
-_Data da entrega_: 13/03/2019 (quarta feira) em papel (não é por e-mail nem pelo Moodle) diretamente para o Professor Guilherme na aula.
+_Data da entrega_: 19/03/2019 (quarta feira) em papel (não é por e-mail nem pelo Moodle) diretamente para o Professor Guilherme na aula.
 [Link para a lista](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/ListaRevisao_2019.pdf).
 
 ### Revisão de Probabilidade e Estatística
