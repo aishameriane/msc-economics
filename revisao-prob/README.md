@@ -9,7 +9,7 @@ Neste diretório serão disponibilizados os slides, as notas de aula e eventuais
 ## Últimas alterações (em ordem cronológica inversa)
 _Esqueci de atualizar essa parte nos outros dias D:_
 
-- 01/03: Adicionei a lista 0 de Econometria I
+- 01/03: Adicionei a lista 0 de Econometria I, adicionei uns arquivos na seção de R (mas não mexi nos slides)
 - 24/02: Criação do diretório e arquivos da aula 1 adicionados.
 0
 
@@ -40,6 +40,8 @@ _Data da entrega_: 13/03/2019 (quarta feira) em papel (não é por e-mail nem pe
 * [Exemplo análise de dados da Rais](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Exemplo%20de%20an%C3%A1lise%20descritiva%20com%20dados%20da%20RAIS.pdf)
 * [Exemplo Markdown html](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Exemplo%20RMarkdown.html)
 * [Exemplo Markdown Rmd](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Exemplo%20RMarkdown.Rmd)
+* [Listas com bons ~drinks~ links](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/Links%20%C3%BAteis%20e%20fun%C3%A7%C3%B5es.pdf)
+* [Como incluir códigos de R no seu documento Latex](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/LaTeXandR.pdf)
 
 ## Conteúdo a ser (re)visto
 
@@ -71,6 +73,8 @@ _Data da entrega_: 13/03/2019 (quarta feira) em papel (não é por e-mail nem pe
 * Manipulação de dados: estruturas, concatenação, manipulação de subconjuntos, leitura e escrita de dados externos, tabelas de contingência, data frames.
 * Introdução à análise de dados usando funções de estatística: medidas descritivas, gráficos (histograma, boxplot, diagrama de dispersão), testes de hipóteses, regressão linear simples.
 * Alguns tópicos de estatística (se sobrar tempo)
+
+Referência legal para quem quiser continuar estudando depois: https://www.econometrics-with-r.org
 
 ------
 _Figurinha do PhD Comics: http://phdcomics.com/comics/archive.php?comicid=898_
