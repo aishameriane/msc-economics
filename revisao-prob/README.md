@@ -7,10 +7,18 @@ PPGEco/UFSC
 Neste diretório serão disponibilizados os slides, as notas de aula e eventuais materiais extras.
 
 ## Últimas alterações (em ordem cronológica inversa)
+_Esqueci de atualizar essa parte nos outros dias D:_
 
+- 01/03: Adicionei a lista 0 de Econometria I
 - 24/02: Criação do diretório e arquivos da aula 1 adicionados.
+0
 
 ## Arquivos
+
+### Lista 0 de Econometria
+
+_Data da entrega_: 13/03/2019 (quarta feira) em papel (não é por e-mail nem pelo Moodle) diretamente para o Professor Guilherme na aula.
+[Link para a lista](https://github.com/aishameriane/msc-economics/blob/master/revisao-prob/ListaRevisao_2019.pdf).
 
 ### Revisão de Probabilidade e Estatística
 
