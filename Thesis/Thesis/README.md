@@ -4,7 +4,7 @@
 
 Repository for the thesis files.
 
-This is the thesis (latest version, from 14/03): [Thesis](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Thesis/Thesis_Aisha1403.pdf)
+This is the thesis (latest version, after defense): [Thesis](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Thesis/Disserta%C3%A7%C3%A3o%20Aisha%20-%20final%20A4.pdf)
 
 These are the slides from my defense (I recommend using adobe because of the animations): [Slides](https://github.com/aishameriane/msc-economics/blob/master/Thesis/Thesis/Slides_defesa_Aisha.pdf)
 
