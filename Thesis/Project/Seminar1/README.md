@@ -2,7 +2,7 @@
 ## First seminar
 
 This folder contains the files for my first Thesis' Seminar. 
-This first presentation was intended for the students present their subjects and main goals.
+This [first presentation](https://htmlpreview.github.io/?https://github.com/aishameriane/msc-economics/blob/master/Thesis/Project/Seminar1/seminario.html) was intended for the students present their subjects and main goals.
 
 Use this site to visualize html files: https://htmlpreview.github.io/
 
